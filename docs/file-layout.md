@@ -135,7 +135,7 @@ default/**                     ──►  omarchy-settings    /usr/share/omarchy
 logo.{txt,svg}, icon.{txt,png}  ──► omarchy-settings    /usr/share/omarchy/  (resync source)
                                                         /usr/share/pixmaps/omarchy.png
                                                         /usr/share/icons/hicolor/256x256/apps/omarchy.png
-                                                        /etc/skel/.config/omarchy/branding/{about,screensaver}.txt
+                                                        /etc/skel/.config/lunor/branding/{about,screensaver}.txt
 ```
 
 The hardware-conditional `force-igpu` and `keyboard-backlight` sources also live under `default/systemd/system-sleep/`, but their setup commands publish root-owned copies only on machines that need them; they are not installed by `omarchy-settings`.
