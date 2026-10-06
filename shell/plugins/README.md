@@ -9,7 +9,7 @@ First-party non-bar plugins are enabled unless listed in `disabledPlugins[]`;
 at startup; other panels, overlays, and menus are loaded on demand.
 
 User-installed plugins live alongside these conceptually but on disk under
-`~/.config/omarchy/plugins/<plugin-id>/` rather than in this directory.
+`~/.config/lunor/plugins/<plugin-id>/` rather than in this directory.
 
 | Plugin        | id                        | kinds                   | entry point                           |
 |---------------|---------------------------|-------------------------|---------------------------------------|
@@ -45,7 +45,7 @@ own plugin directories, each with its own `manifest.json`.
 ## Bar
 
 The built-in status bar and default full-bar option. Layout lives in the
-top-level `bar:` subtree of `~/.config/omarchy/shell.json` (with the shell
+top-level `bar:` subtree of `~/.config/lunor/shell.json` (with the shell
 providing [`config/omarchy/shell.json`](../../config/omarchy/shell.json) when
 the user has no file). See [`bar/README.md`](bar/README.md) for the widget catalogue
 and customization schema.
@@ -108,7 +108,7 @@ second Quickshell instance.
 The menu definition lives outside the shell host code:
 
 - defaults: `default/omarchy/omarchy-menu.jsonc`
-- user extensions: `~/.config/omarchy/extensions/omarchy-menu.jsonc`
+- user extensions: `~/.config/lunor/extensions/omarchy-menu.jsonc`
 
 The shell parses both JSONC files at startup (with `watchChanges: true`
 so edits take effect without a restart), evaluates `when:` / `checked:`

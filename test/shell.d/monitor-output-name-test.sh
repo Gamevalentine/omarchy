@@ -12,7 +12,7 @@ trap 'rm -rf "$tmpdir"' EXIT
 stub_dir="$tmpdir/bin"
 home_dir="$tmpdir/home"
 monitors_json="$tmpdir/monitors.json"
-flag_dir="$home_dir/.local/state/omarchy/toggles/hypr"
+flag_dir="$home_dir/.local/state/lunor/toggles/hypr"
 mkdir -p "$stub_dir" "$flag_dir"
 
 make_stub() {

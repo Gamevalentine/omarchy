@@ -153,7 +153,7 @@ SH
 chmod +x "$setter_bin/omarchy-cmd-present"
 
 setter_home="$test_tmp/home"
-theme_dir="$setter_home/.local/state/omarchy/current/theme"
+theme_dir="$setter_home/.local/state/lunor/current/theme"
 mkdir -p "$theme_dir"
 
 color_for_theme() {

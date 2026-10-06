@@ -77,7 +77,7 @@ files committed.
 ## LUNOR OS conventions
 
 - **Follow the theme live.** Read `accent` from
-  `~/.local/state/omarchy/current/theme/colors.toml` and watch it; a theme
+  `~/.local/state/lunor/current/theme/colors.toml` and watch it; a theme
   switch replaces files and symlinks, so re-arm the watcher on every change.
   Fall back to `#FFD60A` when LUNOR OS isn't there. `templates.md` has the
   `Theme` class. Never change LUNOR OS's config.

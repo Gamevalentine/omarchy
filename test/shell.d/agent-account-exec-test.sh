@@ -13,7 +13,7 @@ trap 'rm -rf "$test_tmp"' EXIT
 account_test_home="$test_tmp/home"
 real_bin="$test_tmp/real/bin"
 mise_data="$test_tmp/data/mise"
-registry_dir="$account_test_home/.local/state/omarchy/agents/accounts"
+registry_dir="$account_test_home/.local/state/lunor/agents/accounts"
 mkdir -p "$account_test_home" "$real_bin" "$registry_dir"
 
 # Use real mise dispatch and real account resolution, with fake agent binaries.
@@ -97,8 +97,8 @@ for provider in claude codex grok; do
   [[ $output == $'default\ndefault' ]] || fail "$provider Main sessions keep their account after a switch" "$output"
   pass "$provider Main sessions keep their account after a switch"
 
-  mkdir -p "$account_test_home/.config/omarchy/defaults"
-  printf '%s\n' "$provider" >"$account_test_home/.config/omarchy/defaults/agent"
+  mkdir -p "$account_test_home/.config/lunor/defaults"
+  printf '%s\n' "$provider" >"$account_test_home/.config/lunor/defaults/agent"
   select_account "$provider" main
   output=$(run_isolated env OMARCHY_TEST_SWITCH_ACCOUNT=yes OMARCHY_TEST_NEW_SESSION=yes "$provider")
   [[ $(sed -n '2p' <<<"$output") == "$account_dir" ]] || fail "$provider new sessions follow a switch from Main" "$output"

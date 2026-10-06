@@ -10,7 +10,7 @@ system = root / 'etc/xdg/kitty/kitty.conf'
 template = root / 'config/kitty/kitty.conf'
 legacy = root / 'test/shell.d/fixtures/kitty/legacy.conf'
 active_lines = [line for line in template.read_text().splitlines() if line and not line.startswith('#')]
-assert active_lines == ['include ~/.local/state/omarchy/current/theme/kitty.conf']
+assert active_lines == ['include ~/.local/state/lunor/current/theme/kitty.conf']
 
 with TemporaryDirectory() as tmp:
   user = Path(tmp) / 'kitty.conf'

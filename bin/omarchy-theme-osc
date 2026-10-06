@@ -3,7 +3,7 @@
 # omarchy:summary=Print OSC sequences for an LUNOR OS color theme
 # omarchy:hidden=true
 
-theme="${1:-$HOME/.local/state/omarchy/current/theme/colors.toml}"
+theme="${1:-$HOME/.local/state/lunor/current/theme/colors.toml}"
 
 [[ -f $theme ]] || exit 0
 

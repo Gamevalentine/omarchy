@@ -1,6 +1,6 @@
 echo "Move the bar indicators to the left of the clock"
 
-config_file="$HOME/.config/omarchy/shell.json"
+config_file="$HOME/.config/lunor/shell.json"
 
 if [[ -s $config_file ]]; then
   tmp=$(mktemp)

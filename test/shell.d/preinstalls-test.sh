@@ -9,9 +9,9 @@ trap 'rm -rf "$test_tmp"' EXIT
 
 mock_bin="$test_tmp/bin"
 test_home="$test_tmp/home"
-marker="$test_home/.local/state/omarchy/preinstalls-removed"
+marker="$test_home/.local/state/lunor/preinstalls-removed"
 pkg_log="$test_tmp/packages"
-mkdir -p "$mock_bin" "$test_home/.local/state/omarchy"
+mkdir -p "$mock_bin" "$test_home/.local/state/lunor"
 
 for command in omarchy-webapp-remove-all omarchy-tui-remove-all omarchy-refresh-applications hyprctl; do
   printf '#!/bin/bash\nexit 0\n' >"$mock_bin/$command"

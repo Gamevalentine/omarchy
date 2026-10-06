@@ -226,7 +226,7 @@ LUA
 pass "Hyprland bootstrap reloads cached LUNOR OS config modules"
 
 TMPDIR=$(mktemp -d)
-mkdir -p "$TMPDIR/home/.config/omarchy"
+mkdir -p "$TMPDIR/home/.config/lunor"
 
 ipc_mock_bin="$TMPDIR/ipc-mock"
 mkdir -p "$ipc_mock_bin"
@@ -234,14 +234,14 @@ cat >"$ipc_mock_bin/omarchy-shell" <<'SH'
 #!/bin/bash
 set -euo pipefail
 
-mkdir -p "$HOME/.local/state/omarchy"
-printf '%s\n' "$*" >>"$HOME/.local/state/omarchy/shell-ipc-calls"
+mkdir -p "$HOME/.local/state/lunor"
+printf '%s\n' "$*" >>"$HOME/.local/state/lunor/shell-ipc-calls"
 printf 'ok\n'
 SH
 chmod +x "$ipc_mock_bin/omarchy-shell"
 export PATH="$ipc_mock_bin:$PATH"
 
-cat >"$TMPDIR/home/.config/omarchy/shell.json" <<'JSON'
+cat >"$TMPDIR/home/.config/lunor/shell.json" <<'JSON'
 {
   "version": 1,
   "bar": {
@@ -255,8 +255,8 @@ cat >"$TMPDIR/home/.config/omarchy/shell.json" <<'JSON'
 }
 JSON
 
-mkdir -p "$TMPDIR/home/.config/omarchy/plugins/local.demo-bar"
-cat >"$TMPDIR/home/.config/omarchy/plugins/local.demo-bar/manifest.json" <<'JSON'
+mkdir -p "$TMPDIR/home/.config/lunor/plugins/local.demo-bar"
+cat >"$TMPDIR/home/.config/lunor/plugins/local.demo-bar/manifest.json" <<'JSON'
 {
   "schemaVersion": 1,
   "id": "local.demo-bar",
@@ -268,7 +268,7 @@ cat >"$TMPDIR/home/.config/omarchy/plugins/local.demo-bar/manifest.json" <<'JSON
   "entryPoints": { "bar": "Bar.qml" }
 }
 JSON
-touch "$TMPDIR/home/.config/omarchy/plugins/local.demo-bar/Bar.qml"
+touch "$TMPDIR/home/.config/lunor/plugins/local.demo-bar/Bar.qml"
 
 if HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar use local.nonexistent-bar 2>/dev/null; then
   fail "bar use accepted an unknown bar option"
@@ -276,21 +276,21 @@ fi
 pass "bar use rejects an unknown bar option"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar use local.demo-bar
-jq -e '.bar.id == "local.demo-bar"' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
+jq -e '.bar.id == "local.demo-bar"' "$TMPDIR/home/.config/lunor/shell.json" >/dev/null
 pass "shell config selects a bar option"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar reset
-jq -e '.bar.id == null' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
+jq -e '.bar.id == null' "$TMPDIR/home/.config/lunor/shell.json" >/dev/null
 pass "shell config resets to built-in bar option"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar move omarchy.active-window right
 grep -Fqx 'shell moveBarWidget omarchy.active-window {"section":"right"}' \
-  "$TMPDIR/home/.local/state/omarchy/shell-ipc-calls"
+  "$TMPDIR/home/.local/state/lunor/shell-ipc-calls"
 pass "bar move accepts a positional target section"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar move omarchy.active-window left
 grep -Fqx 'shell moveBarWidget omarchy.active-window {"section":"left"}' \
-  "$TMPDIR/home/.local/state/omarchy/shell-ipc-calls"
+  "$TMPDIR/home/.local/state/lunor/shell-ipc-calls"
 pass "bar move can restore a widget with positional syntax"
 
 if HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar move omarchy.active-window left --section right 2>/dev/null; then
@@ -302,7 +302,7 @@ HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar position bottom
 jq -e '
   .bar.position == "bottom" and
   .plugins == []
-' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
+' "$TMPDIR/home/.config/lunor/shell.json" >/dev/null
 pass "shell config sets bar position"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar transparent true
@@ -310,21 +310,21 @@ jq -e '
   .bar.transparent == true and
   .bar.position == "bottom" and
   .plugins == []
-' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
+' "$TMPDIR/home/.config/lunor/shell.json" >/dev/null
 pass "shell config sets bar transparency"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar transparent toggle
-jq -e '.bar.transparent == false' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
+jq -e '.bar.transparent == false' "$TMPDIR/home/.config/lunor/shell.json" >/dev/null
 pass "shell config toggles bar transparency"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar set omarchy.bluetooth enabled false --json
 grep -Fqx 'shell setBarWidget omarchy.bluetooth enabled false {}' \
-  "$TMPDIR/home/.local/state/omarchy/shell-ipc-calls"
+  "$TMPDIR/home/.local/state/lunor/shell-ipc-calls"
 pass "bar set accepts false JSON values"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar set omarchy.bluetooth optional null --json
 grep -Fqx 'shell setBarWidget omarchy.bluetooth optional null {}' \
-  "$TMPDIR/home/.local/state/omarchy/shell-ipc-calls"
+  "$TMPDIR/home/.local/state/lunor/shell-ipc-calls"
 pass "bar set accepts null JSON values"
 
 if HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar set omarchy.bluetooth broken '{' --json 2>/dev/null; then
@@ -354,8 +354,8 @@ cat >"$mock_bin/omarchy-restart-shell" <<'SH'
 #!/bin/bash
 set -euo pipefail
 
-mkdir -p "$HOME/.local/state/omarchy"
-touch "$HOME/.local/state/omarchy/restart-shell-called"
+mkdir -p "$HOME/.local/state/lunor"
+touch "$HOME/.local/state/lunor/restart-shell-called"
 SH
 
 cat >"$mock_bin/omarchy-shell" <<'SH'
@@ -385,7 +385,7 @@ HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" PATH="$mock_path" OMARCHY_TEST_DROPBOX=
 jq -e --slurpfile defaults "$ROOT/config/omarchy/shell.json" '
   .bar == $defaults[0].bar and
   .plugins == []
-' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
+' "$TMPDIR/home/.config/lunor/shell.json" >/dev/null
 pass "bar defaults restores the stock bar"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" PATH="$mock_path" OMARCHY_TEST_DROPBOX=1 OMARCHY_TEST_TAILSCALE=1 omarchy-bar defaults
@@ -396,7 +396,7 @@ jq -e '
   ($right | index("omarchy.tailscale") == $tray + 1) and
   ($right | index("omarchy.dropbox") == $tray + 2) and
   (.bar.layout.center | ids | index("omarchy.tailscale") == null)
-' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
+' "$TMPDIR/home/.config/lunor/shell.json" >/dev/null
 pass "bar defaults places plugins for running optional services"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" PATH="$mock_path" \
@@ -409,7 +409,7 @@ jq -e '
   ($right | index("omarchy.tailscale") == $tray + 1) and
   ($right | index("omarchy.dropbox") == $tray + 2) and
   (.bar.layout.center | ids | index("omarchy.tailscale") == null)
-' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
+' "$TMPDIR/home/.config/lunor/shell.json" >/dev/null
 pass "bar defaults places service widgets without a running shell"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" PATH="$mock_path" OMARCHY_TEST_DROPBOX=0 OMARCHY_TEST_TAILSCALE=0 omarchy-refresh-shell
@@ -418,7 +418,7 @@ jq -e '
   ([.bar.layout.left, .bar.layout.center, .bar.layout.right] | map(ids) | add) as $all |
   ($all | index("omarchy.dropbox") == null) and
   ($all | index("omarchy.tailscale") == null)
-' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
+' "$TMPDIR/home/.config/lunor/shell.json" >/dev/null
 pass "shell refresh keeps optional service widgets absent when services are unavailable"
 
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" PATH="$mock_path" OMARCHY_TEST_DROPBOX=1 OMARCHY_TEST_TAILSCALE=1 omarchy-refresh-shell
@@ -429,8 +429,8 @@ jq -e '
   ($right | index("omarchy.tailscale") == $tray + 1) and
   ($right | index("omarchy.dropbox") == $tray + 2) and
   (.bar.layout.center | ids | index("omarchy.tailscale") == null)
-' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
-[[ -f $TMPDIR/home/.local/state/omarchy/restart-shell-called ]] || fail "shell refresh restarts shell"
+' "$TMPDIR/home/.config/lunor/shell.json" >/dev/null
+[[ -f $TMPDIR/home/.local/state/lunor/restart-shell-called ]] || fail "shell refresh restarts shell"
 pass "shell refresh places optional service widgets when services are available"
 
 if grep -RIl 'upgrade-to-quattro\|LUNOR OS 4\.0 is upgraded' "$ROOT/migrations" >/dev/null; then

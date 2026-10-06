@@ -173,7 +173,7 @@ OMARCHY_TEST_LOGIN_UUID=acct-1 OMARCHY_TEST_LOGIN_EMAIL=me@example.com \
 [[ -f $HOME/.codex/auth.json && ! -d $accounts/codex ]] || fail "the first Codex account signs in to ~/.codex itself"
 grep -qx "default https://auth.openai.com/oauth/authorize" "$OMARCHY_TEST_BROWSER_LOG" ||
   fail "the first Codex account signs in through the normal browser" "$(cat "$OMARCHY_TEST_BROWSER_LOG")"
-[[ ! -e $HOME/.config/omarchy/defaults/agent ]] || fail "a first sign-in leaves an existing default agent alone"
+[[ ! -e $HOME/.config/lunor/defaults/agent ]] || fail "a first sign-in leaves an existing default agent alone"
 pass "the first account of a provider signs in to its own home in the normal browser"
 
 OMARCHY_TEST_LOGIN_UUID=acct-2 OMARCHY_TEST_LOGIN_EMAIL=side@example.com \
@@ -186,7 +186,7 @@ grep -qx -- "--private https://auth.openai.com/oauth/authorize" "$OMARCHY_TEST_B
 pass "Codex accounts are added the same way"
 
 OMARCHY_TEST_DEFAULT_AGENT="" omarchy-agent-account-add grok </dev/null >/dev/null
-[[ $(cat "$HOME/.config/omarchy/defaults/agent") == "grok" ]] ||
+[[ $(cat "$HOME/.config/lunor/defaults/agent") == "grok" ]] ||
   fail "the first agent signed in on a machine with no default becomes the default"
 [[ -s $HOME/.grok/auth.json ]] && grep -qx "default https://auth.x.ai/oauth/authorize" "$OMARCHY_TEST_BROWSER_LOG" ||
   fail "a first Grok sign-in lands in ~/.grok through the normal browser"

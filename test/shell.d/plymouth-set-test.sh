@@ -43,7 +43,7 @@ allowlisted_sddm_assets=$(printf '%s\n' "${sddm_default_assets[@]}" | LC_ALL=C s
 pass "SDDM refresh allowlist covers every packaged asset"
 
 # omarchy-plymouth-set-by-theme hands over a theme's unlock.png from
-# ~/.config/omarchy/themes. Both installed copies are world-readable, so a
+# ~/.config/lunor/themes. Both installed copies are world-readable, so a
 # symlink there must not republish whatever it points at.
 printf 'not yours\n' >"$secret"
 ln -s "$secret" "$test_tmp/logo-link.png"
@@ -77,7 +77,7 @@ pass "the logo descriptor can only be opened by an unprivileged caller"
 # omarchy-launch-floating-terminal-with-presentation, which joins its arguments
 # into a script and runs that with `bash -c`. So the name is shell source
 # unless the action quotes it -- and the name is a directory name under
-# ~/.config/omarchy/themes, which a theme installed from a git repo gets from
+# ~/.config/lunor/themes, which a theme installed from a git repo gets from
 # the repo URL. `a';id;'b` is a legal directory name.
 require_command node
 
@@ -636,7 +636,7 @@ assert_no_temporary_files "$fake_root"
 pass "root never follows a packaged asset symlink"
 
 # A random user-owned OMARCHY_PATH remains untrusted. Only the exact canonical
-# checkout recorded by root in /etc/omarchy.conf is the supported dev-link
+# checkout recorded by root in /etc/lunor.conf is the supported dev-link
 # exception; an unrelated or stale authorization must not weaken the check.
 setup_run
 output=$(run_set 022 env TEST_UNTRUSTED_SOURCE="$ROOT" 2>&1)
@@ -656,7 +656,7 @@ status=$?
 
 (( status != 0 )) || fail "a stale dev-link authorization is rejected"
 [[ $(cat "$theme/bullet.png") == 'old plymouth bullet.png' ]] || fail "a stale dev-link authorization leaves the live theme unchanged"
-# The refusal has to name the authorization. Validating /etc/omarchy.conf walks
+# The refusal has to name the authorization. Validating /etc/lunor.conf walks
 # its parents and leaves that walk's subject in failure_context, so without
 # restoring ours this refuses with "directory / must be root-owned and not
 # group- or world-writable" -- accusing a directory that passed and pointing the

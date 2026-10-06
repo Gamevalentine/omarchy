@@ -124,7 +124,7 @@ EOF
 first_run_variants=(
   'installer ALL=(ALL) NOPASSWD: /usr/bin/ufw
 installer ALL=(ALL) NOPASSWD: /usr/bin/ufw-docker
-installer ALL=(ALL) NOPASSWD: /bin/rm -f /home/installer/.local/state/omarchy/first-run.mode'
+installer ALL=(ALL) NOPASSWD: /bin/rm -f /home/installer/.local/state/lunor/first-run.mode'
   'installer ALL=(ALL) NOPASSWD: /usr/bin/ufw
 installer ALL=(ALL) NOPASSWD: /usr/bin/ufw-docker
 installer ALL=(ALL) NOPASSWD: /bin/rm -f /etc/sudoers.d/first-run'
@@ -236,7 +236,7 @@ pass "migration does not delete an administrator grant that uses a generated com
 # line was edited or hand-written and makes the whole file administrator-owned.
 reset_machine
 cat >"$first_run" <<'EOF'
-alice ALL=(ALL) NOPASSWD: /bin/rm -f /home/bob/.local/state/omarchy/first-run.mode
+alice ALL=(ALL) NOPASSWD: /bin/rm -f /home/bob/.local/state/lunor/first-run.mode
 EOF
 before=$(cat "$first_run")
 run_migration

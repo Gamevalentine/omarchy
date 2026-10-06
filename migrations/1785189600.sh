@@ -81,7 +81,7 @@ fi
 # Only a hand-picked indicator list names TmuxAlert; the default list lives in
 # the widget. An emptied list would read as "show them all", so a widget that
 # has nothing left to show goes with it.
-config_file="$HOME/.config/omarchy/shell.json"
+config_file="$HOME/.config/lunor/shell.json"
 
 if [[ -s $config_file ]] && grep -q 'TmuxAlert' "$config_file"; then
   tmp=$(mktemp)

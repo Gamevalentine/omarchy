@@ -28,7 +28,7 @@ omarchy_security_install_sudo_cleanup_traps
 omarchy_security_revoke_sudo_timestamp || exit 1
 omarchy_security_enable_no_update_sudo
 
-stay_awake_state="$HOME/.local/state/omarchy/indicators/stay-awake"
+stay_awake_state="$HOME/.local/state/lunor/indicators/stay-awake"
 caller_uid=""
 state_base=""
 state_dir=""

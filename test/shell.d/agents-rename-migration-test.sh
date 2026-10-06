@@ -23,14 +23,14 @@ chmod +x "$test_dir/bin/"*
 export USAGE_UPDATES="$test_dir/usage-updates"
 
 home="$test_dir/home"
-config="$home/.config/omarchy/shell.json"
+config="$home/.config/lunor/shell.json"
 
 run_migration() {
   : >"$USAGE_UPDATES"
   HOME="$home" PATH="$test_dir/bin:$PATH" bash -euo pipefail "$migration" >/dev/null
 }
 
-mkdir -p "$home/.config/omarchy" "$home/.cache/omarchy/model-usage"
+mkdir -p "$home/.config/lunor" "$home/.cache/omarchy/model-usage"
 cat >"$config" <<'JSON'
 {
   "bar": {

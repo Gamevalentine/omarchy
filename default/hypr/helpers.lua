@@ -132,7 +132,7 @@ function o.preinstalled_bindings_enabled()
     return _G.omarchy_preinstalled_bindings == true
   end
 
-  return not file_exists((os.getenv("HOME") or "") .. "/.local/state/omarchy/preinstalls-removed")
+  return not file_exists((os.getenv("HOME") or "") .. "/.local/state/lunor/preinstalls-removed")
 end
 
 function o.bind(keys, description, dispatcher, options)

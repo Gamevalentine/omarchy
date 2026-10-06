@@ -5,7 +5,7 @@ echo "Put Elsewhen, the world clock, on the bar"
 omarchy-shell -q shell rescanPlugins
 
 # A legacy omacom.elsewhen entry is renamed in place by a later migration.
-config_file="$HOME/.config/omarchy/shell.json"
+config_file="$HOME/.config/lunor/shell.json"
 if [[ -s $config_file ]] && jq -e '[.bar.layout[]?[]? | if type == "object" then .id else . end] | index("omacom.elsewhen")' "$config_file" >/dev/null 2>&1; then
   echo "Elsewhen is already on the bar"
 else

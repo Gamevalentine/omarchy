@@ -9,14 +9,14 @@ if [[ -z $1 ]]; then
   exit 1
 fi
 
-CURRENT_THEME_PATH="$HOME/.local/state/omarchy/current/theme"
-CURRENT_THEME_NAME_PATH="$HOME/.local/state/omarchy/current/theme.name"
-NEXT_THEME_PATH="$HOME/.local/state/omarchy/current/next-theme"
-CURRENT_BACKGROUND_LINK="$HOME/.local/state/omarchy/current/background"
-THEME_BACKGROUND_STATE_PATH="$HOME/.local/state/omarchy/theme-backgrounds"
+CURRENT_THEME_PATH="$HOME/.local/state/lunor/current/theme"
+CURRENT_THEME_NAME_PATH="$HOME/.local/state/lunor/current/theme.name"
+NEXT_THEME_PATH="$HOME/.local/state/lunor/current/next-theme"
+CURRENT_BACKGROUND_LINK="$HOME/.local/state/lunor/current/background"
+THEME_BACKGROUND_STATE_PATH="$HOME/.local/state/lunor/theme-backgrounds"
 BACKGROUND_TRANSITION_CACHE="$HOME/.cache/omarchy/background-transitions"
 THEME_SET_LOCK="${XDG_RUNTIME_DIR:-/tmp}/omarchy-theme-set.lock"
-USER_THEMES_PATH="$HOME/.config/omarchy/themes"
+USER_THEMES_PATH="$HOME/.config/lunor/themes"
 OMARCHY_THEMES_PATH="$OMARCHY_PATH/themes"
 
 # What a theme installed from a git repo may not ship, because these run code.
@@ -110,7 +110,7 @@ choose_theme_background() {
 
   CHOSEN_THEME_BACKGROUND=""
   mapfile -d '' -t backgrounds < <(
-    find -L "$HOME/.config/omarchy/backgrounds/$THEME_NAME/" "$theme_path/backgrounds/" -maxdepth 1 -type f \
+    find -L "$HOME/.config/lunor/backgrounds/$THEME_NAME/" "$theme_path/backgrounds/" -maxdepth 1 -type f \
       \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \
          -o -iname '*.mp4' -o -iname '*.m4v' -o -iname '*.mov' -o -iname '*.webm' -o -iname '*.mkv' -o -iname '*.avi' \) \
       -print0 2>/dev/null | sort -z
@@ -272,7 +272,7 @@ stage_installed_dir() {
   done
 }
 
-# `omarchy theme install` clones into ~/.config/omarchy/themes, so a .git
+# `omarchy theme install` clones into ~/.config/lunor/themes, so a .git
 # directory there means the contents came from a stranger and are held to the
 # list above. A directory the user wrote themselves, and a symlink to their own
 # working copy, are theirs to fill however they like -- the same distinction
@@ -443,7 +443,7 @@ if [[ $THEME_HEADLESS != "1" ]]; then
   omarchy-hook theme-set "$THEME_NAME" >/dev/null
 
   # Mirror the theme to herdr machines. SSH can take a while, so this never holds up the theme change.
-  setsid omarchy-theme-set-herdr-machines >>"$HOME/.local/state/omarchy/theme-set-herdr-machines.log" 2>&1 </dev/null &
+  setsid omarchy-theme-set-herdr-machines >>"$HOME/.local/state/lunor/theme-set-herdr-machines.log" 2>&1 </dev/null &
 
   # Warm the background selector's thumbnails. The theme picker keeps its own
   # rows in the shell and refreshes them each time it opens.

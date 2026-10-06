@@ -34,7 +34,7 @@ wait_until "emoji picker selection closes" 15 layer_off_overlay "omarchy-emojis"
 # Seed two clipboard entries, search for the older one, and copy it back out.
 clipboard_token="LUNOR OS acceptance clipboard $(date +%s)"
 printf '%s' "$clipboard_token" | wl-copy
-wait_until "clipboard history captures test text" 15 grep -Fq "$clipboard_token" "$HOME/.local/state/omarchy/clipboard-history.json"
+wait_until "clipboard history captures test text" 15 grep -Fq "$clipboard_token" "$HOME/.local/state/lunor/clipboard-history.json"
 printf '%s' "clipboard decoy" | wl-copy
 sleep 1
 

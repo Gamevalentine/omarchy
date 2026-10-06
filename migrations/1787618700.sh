@@ -5,7 +5,7 @@ echo "Store Hyprland input-device names as data instead of generated Lua"
 # so recover the plain device name as data and delete the generated Lua. A name
 # that could have broken out of the old Lua string literal is discarded, not
 # trusted. The old script wrote to ~/.local/state regardless of XDG_STATE_HOME.
-toggles_dir="$HOME/.local/state/omarchy/toggles/hypr"
+toggles_dir="$HOME/.local/state/lunor/toggles/hypr"
 
 reapply=0
 

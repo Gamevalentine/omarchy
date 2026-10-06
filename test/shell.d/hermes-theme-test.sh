@@ -55,7 +55,7 @@ cat >"$mock_bin/omarchy-theme-refresh" <<'SH'
 #!/bin/bash
 echo "refresh" >>"$OMARCHY_TEST_HERMES_CALLS"
 printf 'name: omarchy\ndescription: LUNOR OS system theme\ncolors:\n  background: "#1a1b26"\n' \
-  >"$HOME/.local/state/omarchy/current/theme/hermes.yaml"
+  >"$HOME/.local/state/lunor/current/theme/hermes.yaml"
 SH
 
 # --wait sleeps between its polls and once more after activating; the stub
@@ -64,7 +64,7 @@ cat >"$mock_bin/sleep" <<'SH'
 #!/bin/bash
 printf 'sleep %s\n' "$1" >>"$OMARCHY_TEST_HERMES_CALLS"
 if [[ $1 == 60 && -n ${OMARCHY_TEST_SWAP_SOURCE:-} ]]; then
-  printf '%s\n' "$OMARCHY_TEST_SWAP_SOURCE" >"$HOME/.local/state/omarchy/current/theme/hermes.yaml"
+  printf '%s\n' "$OMARCHY_TEST_SWAP_SOURCE" >"$HOME/.local/state/lunor/current/theme/hermes.yaml"
 fi
 if [[ $1 == 60 && ${OMARCHY_TEST_DROP_SKINS:-0} == 1 ]]; then
   rm -f "$HOME/.hermes/skins/omarchy.yaml" "$HOME"/.hermes/profiles/*/skins/omarchy.yaml
@@ -93,7 +93,7 @@ reset_home() {
   local source="$good_skin"
 
   rm -rf "$test_home"
-  mkdir -p "$test_home/.local/state/omarchy/current/theme" "$test_home/.local/bin" "$hermes_home/skills"
+  mkdir -p "$test_home/.local/state/lunor/current/theme" "$test_home/.local/bin" "$hermes_home/skills"
   cp "$mock_bin/hermes-stub" "$test_home/.local/bin/hermes"
   : >"$hermes_calls"
 
@@ -106,7 +106,7 @@ reset_home() {
     shift
   done
 
-  printf '%s\n' "$source" >"$test_home/.local/state/omarchy/current/theme/hermes.yaml"
+  printf '%s\n' "$source" >"$test_home/.local/state/lunor/current/theme/hermes.yaml"
 }
 
 run_hook() {
@@ -135,7 +135,7 @@ pass "a theme switch leaves a machine that never ran Hermes alone"
 reset_home --set-up
 mkdir -p "$hermes_home/profiles/work"
 run_hook 2>"$test_tmp/stderr"
-diff -q "$test_home/.local/state/omarchy/current/theme/hermes.yaml" "$skin" >/dev/null ||
+diff -q "$test_home/.local/state/lunor/current/theme/hermes.yaml" "$skin" >/dev/null ||
   fail "the generated skin is published to ~/.hermes/skins/omarchy.yaml"
 diff -q "$skin" "$hermes_home/profiles/work/skins/omarchy.yaml" >/dev/null ||
   fail "an existing Hermes profile gets the skin too"
@@ -188,7 +188,7 @@ pass "a skin is held to the shape Hermes loads, on the lines Hermes' YAML reader
 # A NUL cannot travel through a shell string, so it is written straight to the
 # source; grep reads past one where YAML stops.
 reset_home --set-up
-printf 'name: omarchy\ncolors:\n  background: "#1a1b26"\0\n' >"$test_home/.local/state/omarchy/current/theme/hermes.yaml"
+printf 'name: omarchy\ncolors:\n  background: "#1a1b26"\0\n' >"$test_home/.local/state/lunor/current/theme/hermes.yaml"
 run_hook 2>/dev/null
 [[ ! -e $skin ]] || fail "a NUL byte in the skin is rejected"
 pass "a skin carrying a NUL byte is not published"
@@ -343,14 +343,14 @@ pass "--activate reports a Hermes that refused the skin and moves on"
 # -- a skin the current theme has not rendered yet -------------------------------
 
 reset_home --set-up
-rm "$test_home/.local/state/omarchy/current/theme/hermes.yaml"
+rm "$test_home/.local/state/lunor/current/theme/hermes.yaml"
 run_hook
 [[ ! -e $hermes_home/skins && ! -s $hermes_calls ]] ||
   fail "a theme switch without a rendered skin publishes nothing" "$(cat "$hermes_calls")"
 pass "a theme switch has nothing to do without a rendered skin"
 
 reset_home --set-up
-rm "$test_home/.local/state/omarchy/current/theme/hermes.yaml"
+rm "$test_home/.local/state/lunor/current/theme/hermes.yaml"
 if run_hook --activate 2>"$test_tmp/stderr"; then
   fail "--activate fails when no theme has been selected"
 fi
@@ -358,8 +358,8 @@ grep -q 'Select an LUNOR OS theme' "$test_tmp/stderr" || fail "a missing theme i
 pass "--activate fails without a current theme to render the skin from"
 
 reset_home --set-up
-rm "$test_home/.local/state/omarchy/current/theme/hermes.yaml"
-echo tokyo-night >"$test_home/.local/state/omarchy/current/theme.name"
+rm "$test_home/.local/state/lunor/current/theme/hermes.yaml"
+echo tokyo-night >"$test_home/.local/state/lunor/current/theme.name"
 OMARCHY_TEST_HERMES_READY=1 run_hook --activate 2>/dev/null
 [[ $(head -1 "$hermes_calls") == "refresh" ]] || fail "a theme applied before the template existed is re-staged" "$(cat "$hermes_calls")"
 [[ -f $skin ]] || fail "the freshly rendered skin is published"

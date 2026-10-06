@@ -23,7 +23,7 @@ SH
 chmod +x "$TMPDIR/bin/systemctl" "$TMPDIR/bin/omarchy-notification-send"
 
 test_home="$TMPDIR/home"
-flag="$test_home/.local/state/omarchy/toggles/crash-capture-off"
+flag="$test_home/.local/state/lunor/toggles/crash-capture-off"
 
 toggle_crash_capture() {
   PATH="$TMPDIR/bin:$ROOT/bin:$PATH" \
@@ -46,7 +46,7 @@ grep -Fqx -- "--user start omarchy-crash-watch.service" "$SYSTEMCTL_LOG" ||
 pass "crash capture toggle re-enables the watcher"
 
 service="$ROOT/default/systemd/user/omarchy-crash-watch.service"
-grep -Fx 'ConditionPathExists=!%h/.local/state/omarchy/toggles/crash-capture-off' "$service" >/dev/null ||
+grep -Fx 'ConditionPathExists=!%h/.local/state/lunor/toggles/crash-capture-off' "$service" >/dev/null ||
   fail "the watcher is pulled back in at every login, so disabling it never survives a logout"
 pass "crash watcher stays disabled across logins"
 
@@ -198,7 +198,7 @@ pass "a muted crash does not stop the watcher reading the next one"
 # for dropping all of them.
 reset_entries
 crash_entry a/../bar-off -
-sibling_flag="$watch_home/.local/state/omarchy/toggles/bar-off"
+sibling_flag="$watch_home/.local/state/lunor/toggles/bar-off"
 touch "$sibling_flag"
 run_watch
 announced bar-off ||
@@ -263,7 +263,7 @@ crash_mute() {
 
 mute_flag() {
   [[ $1 == "--" ]] && shift
-  printf '%s' "$mute_home/.local/state/omarchy/toggles/crash-ignore/$1"
+  printf '%s' "$mute_home/.local/state/lunor/toggles/crash-ignore/$1"
 }
 
 crash_mute | grep -Fq "No programs muted" ||
@@ -323,7 +323,7 @@ grep -Fq "Not an action" <<<"$refusal" ||
 pass "the command names the action it refused"
 
 crash_mute ../bar-off >/dev/null
-[[ ! -e "$mute_home/.local/state/omarchy/toggles/bar-off" ]] ||
+[[ ! -e "$mute_home/.local/state/lunor/toggles/bar-off" ]] ||
   fail "a name that climbs out writes a sibling toggle, so muting a crash could turn off the bar instead"
 pass "the command cannot be talked into writing outside crash-ignore/"
 

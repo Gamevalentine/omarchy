@@ -2,7 +2,7 @@ echo "Retire the stock user icon font missed by the Quattro upgrade"
 
 legacy_font="$HOME/.local/share/fonts/omarchy.ttf"
 
-# The upgrader treated this as ~/.config/omarchy.ttf and left the old family
+# The upgrader treated this as ~/.config/lunor.ttf and left the old family
 # registered alongside the packaged font. Preserve custom fonts and symlinks.
 if [[ -f $legacy_font && ! -L $legacy_font ]]; then
   legacy_hash=$(sha256sum "$legacy_font")

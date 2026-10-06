@@ -32,6 +32,6 @@ if gum confirm "Are you sure you want to restore all preinstalled web apps, TUI 
 
   # Last, so a failure above leaves the opt-out intact rather than restoring
   # keybindings for apps that never came back
-  rm -f ~/.local/state/omarchy/preinstalls-removed
+  rm -f ~/.local/state/lunor/preinstalls-removed
   hyprctl reload
 fi

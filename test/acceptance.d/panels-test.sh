@@ -4,7 +4,7 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
-WEATHER_FILE="$HOME/.local/state/omarchy/settings/weather.json"
+WEATHER_FILE="$HOME/.local/state/lunor/settings/weather.json"
 weather_backup=$(mktemp)
 weather_existed=0
 

@@ -6,7 +6,7 @@ echo "Add the agents widget to the bar"
 # active days, or a rate limit. So adding it to every existing bar is free:
 # machines without Claude Code or Codex never see it.
 
-config_file="$HOME/.config/omarchy/shell.json"
+config_file="$HOME/.config/lunor/shell.json"
 
 if [[ -s $config_file ]]; then
   tmp=$(mktemp)

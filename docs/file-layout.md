@@ -55,7 +55,7 @@ behind, which arms `omarchy-provision-owner.service` (shipped from
 user on tty1 and runs the finalize step itself.
 
 Current generated theme state lives under
-`~/.local/state/omarchy/current/`. Keep `~/.config/omarchy/` for files a user
+`~/.local/state/lunor/current/`. Keep `~/.config/lunor/` for files a user
 may intentionally version in a dotfile manager, such as user themes, hooks,
 shell layout, plugins, and themed template overrides.
 
@@ -79,7 +79,7 @@ migrations/**                  ──►  omarchy             /usr/share/omarchy
 themes/**                      ──►  omarchy             /usr/share/omarchy/themes/
 shell/**                       ──►  omarchy             /usr/share/omarchy/shell/
 version                        ──►  omarchy             /usr/share/omarchy/version
-                                                        + /etc/skel/.local/state/omarchy/migrations/*
+                                                        + /etc/skel/.local/state/lunor/migrations/*
 
 config/**                      ──►  omarchy-settings    /etc/skel/.config/**         (seeds new users)
                                                         /usr/share/omarchy/config/** (resync source)
@@ -114,7 +114,7 @@ default/**                     ──►  omarchy-settings    /usr/share/omarchy
   ├─ bashrc                                             /usr/share/omarchy/etc-overrides/dot.bashrc
   │                                                       → /etc/skel/.bashrc (post_install cp -f)
   ├─ hypr/toggles/*.lua (flags,
-  │    single-window-aspect-ratio, window-no-gaps)      /etc/skel/.local/state/omarchy/toggles/hypr/
+  │    single-window-aspect-ratio, window-no-gaps)      /etc/skel/.local/state/lunor/toggles/hypr/
   ├─ nautilus-python/extensions/*.py                    /etc/skel/.local/share/nautilus-python/extensions/
   ├─ uwsm/env.d/10-omarchy                              /usr/share/uwsm/env.d/
   ├─ environment.d/*.conf                               /usr/lib/environment.d/
@@ -165,7 +165,7 @@ Arch's systemd package hook reloads units when the vendor drop-in is installed o
 
 Single source of truth for `OMARCHY_PATH` and dev-link-aware `PATH`. It:
 
-- Sources `/etc/omarchy.conf` (written by `omarchy-dev-link`, reset to the
+- Sources `/etc/lunor.conf` (written by `omarchy-dev-link`, reset to the
   package path by `omarchy-dev-unlink`) if present; otherwise forces
   `OMARCHY_PATH=/usr/share/omarchy` so a stale inherited value can't survive
   an `omarchy-dev-unlink`.
@@ -196,7 +196,7 @@ Defaults secure_path="<checkout>/bin:/usr/local/sbin:/usr/local/bin:/usr/bin"
 Without it, `sudo omarchy-*` fails for a command the package has not shipped
 yet and silently runs the packaged copy of one it has. The drop-in is validated
 with `visudo -c` before install and removed by `omarchy-dev-unlink`; unlike
-`/etc/omarchy.conf`, it takes effect without a reboot.
+`/etc/lunor.conf`, it takes effect without a reboot.
 
 ## Runtime finalization (`omarchy-provision-user`)
 
@@ -217,7 +217,7 @@ It only does the things `/etc/skel` can't:
 - On `--first-install`, marks every shipped user migration as already applied
   for the freshly-created user.
 
-Idempotency marker: `~/.local/state/omarchy/done/finalize-user`, managed
+Idempotency marker: `~/.local/state/lunor/done/finalize-user`, managed
 by `omarchy-done`.
 
 The ISO calls it as `omarchy-provision-user --force --first-install` in the
@@ -233,7 +233,7 @@ guidelines, and troubleshooting notes.
 
 LUNOR OS migrations live in `migrations/*.sh` and run per-user through
 `omarchy-migrate`. Completion state lives in
-`~/.local/state/omarchy/migrations/`, so every user gets a chance to run every
+`~/.local/state/lunor/migrations/`, so every user gets a chance to run every
 migration. Migrations run as the user; privileged work should invoke the
 appropriate helper or privilege prompt. Migrations must be idempotent;
 machine-wide repairs should no-op when another user already applied them.
@@ -289,16 +289,16 @@ and/or a working user systemd instance:
   `nm-online` so the update prompt only lands once there is a connection).
 
 The entire sequence has one idempotency marker:
-`~/.local/state/omarchy/done/first-run-user`, managed by `omarchy-done`.
+`~/.local/state/lunor/done/first-run-user`, managed by `omarchy-done`.
 Completed users exit before any first-run step. On failure the marker is not
 written and the sequence retries next login.
 
-Completion markers live under `~/.local/state/omarchy/done/`. Use
+Completion markers live under `~/.local/state/lunor/done/`. Use
 `omarchy-done check <name>` to check one and `omarchy-done mark <name>` to record it.
 Use `omarchy-done ensure <name>` as a conditional when the guarded work should
 run only once; it records completion before returning success.
 The Quattro upgrade completes graphical first-run for upgraded users and moves
-the legacy finalization marker from `~/.local/state/omarchy/` into `done/`.
+the legacy finalization marker from `~/.local/state/lunor/` into `done/`.
 
 ## Root-side install orchestration
 
@@ -355,8 +355,8 @@ return to the packaged default.
 | Package-owned path something else may already write | Prefer a path nothing else writes, such as a vendor drop-in under `/usr/lib`. Otherwise the `--overwrite` entry in `bin/omarchy-update-system-pkgs` has to ship a release before the file |
 | User-facing `omarchy-*` command | `bin/omarchy-<group>-<verb>` — see `GROUP_DESCRIPTIONS` in `bin/omarchy` |
 | New stock theme | `themes/<name>/` (+ matching templates under `default/themed/` if they need theme colors) |
-| User-installed theme | `~/.config/omarchy/themes/<name>/` |
-| Generated current theme/background state | `~/.local/state/omarchy/current/` |
+| User-installed theme | `~/.config/lunor/themes/<name>/` |
+| Generated current theme/background state | `~/.local/state/lunor/current/` |
 
 ## Kitty defaults and user overrides
 

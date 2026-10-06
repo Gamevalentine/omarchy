@@ -1,7 +1,7 @@
 echo "Move Elsewhen, the world clock, into LUNOR OS as omarchy.elsewhen"
 
 # The widget keeps its entry, and with it the cities and settings stored there.
-config_file="$HOME/.config/omarchy/shell.json"
+config_file="$HOME/.config/lunor/shell.json"
 if [[ -s $config_file ]]; then
   tmp=$(mktemp)
   jq '
@@ -20,7 +20,7 @@ fi
 
 # Dev checkouts found the packaged plugin through this link; one the user made
 # elsewhere is left alone.
-user_plugin="$HOME/.config/omarchy/plugins/omacom.elsewhen"
+user_plugin="$HOME/.config/lunor/plugins/omacom.elsewhen"
 if [[ -L $user_plugin && $(readlink "$user_plugin") == /usr/share/omarchy/* ]]; then
   rm "$user_plugin"
 fi

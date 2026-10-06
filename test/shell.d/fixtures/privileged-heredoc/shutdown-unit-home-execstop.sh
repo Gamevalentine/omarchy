@@ -59,7 +59,7 @@ else
 fi
 
 # Touch .plymouth-sync-needed to signal rebuild on shutdown / reboot
-touch "$HOME/.config/omarchy/.plymouth-sync-needed"
+touch "$HOME/.config/lunor/.plymouth-sync-needed"
 
 # Create the systemd service
 sudo tee /etc/systemd/system/omarchy-plymouth-shutdown.service >/dev/null <<EOF

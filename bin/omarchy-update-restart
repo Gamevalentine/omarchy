@@ -36,7 +36,7 @@ if [[ $mode != "--services-only" ]]; then
 
   if [[ $kernel_updated == "true" ]]; then
     confirm_reboot "Linux kernel has been updated. Reboot?"
-  elif [[ -f $HOME/.local/state/omarchy/reboot-required ]]; then
+  elif [[ -f $HOME/.local/state/lunor/reboot-required ]]; then
     confirm_reboot "Updates require reboot. Ready?"
   fi
 
@@ -47,7 +47,7 @@ if [[ $mode != "--services-only" ]]; then
 fi
 
 if [[ $mode != "--reboot-only" ]]; then
-  for file in "$HOME"/.local/state/omarchy/restart-*-required; do
+  for file in "$HOME"/.local/state/lunor/restart-*-required; do
     if [[ -f $file ]]; then
       filename=$(basename "$file")
       service=$(echo "$filename" | sed 's/restart-\(.*\)-required/\1/')

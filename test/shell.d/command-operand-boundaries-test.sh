@@ -164,8 +164,8 @@ pass "restart-app treats the application name as one literal pkill pattern"
 
 fake_home="$test_tmp/home"
 editor_calls="$test_tmp/editor-calls"
-mkdir -p "$fake_home/.local/state/omarchy/defaults"
-printf 'nvim\n' >"$fake_home/.local/state/omarchy/defaults/editor"
+mkdir -p "$fake_home/.local/state/lunor/defaults"
+printf 'nvim\n' >"$fake_home/.local/state/lunor/defaults/editor"
 
 cat >"$mock_bin/nvim" <<'STUB'
 #!/bin/bash
@@ -200,7 +200,7 @@ editor_argv=$(<"$editor_calls")
 pass "launch-editor separates a terminal editor path from editor options"
 
 setsid_calls="$test_tmp/setsid-calls"
-printf 'code\n' >"$fake_home/.local/state/omarchy/defaults/editor"
+printf 'code\n' >"$fake_home/.local/state/lunor/defaults/editor"
 cat >"$mock_bin/code" <<'STUB'
 #!/bin/bash
 
@@ -253,7 +253,7 @@ chmod +x "$mock_bin/basename" "$mock_bin/cp" "$mock_bin/mkdir" "$mock_bin/chmod"
 )
 
 hook_argv=$(<"$hook_calls")
-expected_hook_argv=$'basename <--> <--help>\ncp <--> <--help> <'"$hook_home"'/.config/omarchy/hooks/post-update.d/literal-hook>'
+expected_hook_argv=$'basename <--> <--help>\ncp <--> <--help> <'"$hook_home"'/.config/lunor/hooks/post-update.d/literal-hook>'
 [[ $hook_argv == $expected_hook_argv ]] ||
   fail "hook-install treats its source file as an operand" "$hook_argv"
 pass "hook-install treats its source file as an operand"

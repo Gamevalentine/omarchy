@@ -2,7 +2,7 @@ echo "Replace the Gemini coding agent with Antigravity"
 
 OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
 
-agent_file="$HOME/.config/omarchy/defaults/agent"
+agent_file="$HOME/.config/lunor/defaults/agent"
 skills_source="$OMARCHY_PATH/default/agents/skills"
 
 # Read the default the way omarchy-default-agent reads it, so this migration and
@@ -16,7 +16,7 @@ fi
 # someone who removed the preinstalls. Otherwise the default rewritten below
 # would name a command that is not there.
 if omarchy-cmd-missing agy &&
-  { [[ $selected_agent == "gemini" ]] || [[ ! -f $HOME/.local/state/omarchy/preinstalls-removed ]]; }; then
+  { [[ $selected_agent == "gemini" ]] || [[ ! -f $HOME/.local/state/lunor/preinstalls-removed ]]; }; then
   omarchy-mise-install antigravity-cli agy
 fi
 

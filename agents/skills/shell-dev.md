@@ -14,7 +14,7 @@ Run `omarchy-restart-shell` after making changes to QML files.
 - First-party plugins live directly under `shell/plugins/` or one category
   level deeper, such as `shell/plugins/panels/weather/`. First-party bar-only
   widgets may use adjacent `*.manifest.json` files. Third-party plugins live
-  at `~/.config/omarchy/plugins/<id>/` with a `manifest.json` at the root.
+  at `~/.config/lunor/plugins/<id>/` with a `manifest.json` at the root.
 - Every plugin manifest declares `schemaVersion`, `id`, `name`, `version`,
   `kinds`, and `entryPoints`. See
   [`docs/omarchy-shell.md`](../../docs/omarchy-shell.md) and

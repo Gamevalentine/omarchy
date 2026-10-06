@@ -108,7 +108,7 @@ omarchy plugin disable omarchy.weather
 
 ## The config file
 
-All of it is stored in `~/.config/omarchy/shell.json`, under the `bar` key. Here's a trimmed version:
+All of it is stored in `~/.config/lunor/shell.json`, under the `bar` key. Here's a trimmed version:
 
 ```json
 {

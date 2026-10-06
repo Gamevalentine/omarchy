@@ -245,7 +245,7 @@ process_alive() {
   [[ -n $stat && $stat != Z* ]]
 }
 
-mkdir -p "$TMPDIR/bin" "$TMPDIR/home/.local/state/omarchy"
+mkdir -p "$TMPDIR/bin" "$TMPDIR/home/.local/state/lunor"
 
 cat >"$TMPDIR/bin/wl-copy" <<'SH'
 #!/bin/bash
@@ -515,7 +515,7 @@ kill "$owner_pid" 2>/dev/null || true
 process_gone "$watch_pid" || fail "clipboard watcher dies with its owner via pdeathsig"
 pass "clipboard watcher dies with its owner via pdeathsig"
 
-jq -n --arg text "$(printf 'large block line 1\nlarge block line 2\n')" '[{type:"text", text:"ignored"}, {type:"text", text:$text}]' >"$TMPDIR/home/.local/state/omarchy/clipboard-history.json"
+jq -n --arg text "$(printf 'large block line 1\nlarge block line 2\n')" '[{type:"text", text:"ignored"}, {type:"text", text:$text}]' >"$TMPDIR/home/.local/state/lunor/clipboard-history.json"
 
 WL_COPY_OUT="$TMPDIR/copied" WTYPE_OUT="$TMPDIR/wtype" HOME="$TMPDIR/home" PATH="$TMPDIR/bin:$PATH" \
   "$ROOT/bin/omarchy-clipboard-paste-text" --shift-insert --history-index 1
@@ -548,7 +548,7 @@ pass "clipboard file paste helper copy-only copies file content"
 pass "clipboard file paste helper copy-only skips paste keystroke"
 
 jq -n --arg url 'https://example.com/docs' --arg text "$(printf 'plain text\nsecond line')" --arg image "$TMPDIR/image.png" \
-  '[{type:"text", text:$url}, {type:"text", text:$text}, {type:"image", mime:"image/png", path:$image}]' >"$TMPDIR/home/.local/state/omarchy/clipboard-history.json"
+  '[{type:"text", text:$url}, {type:"text", text:$text}, {type:"image", mime:"image/png", path:$image}]' >"$TMPDIR/home/.local/state/lunor/clipboard-history.json"
 
 BROWSER_OUT="$TMPDIR/browser" HOME="$TMPDIR/home" PATH="$TMPDIR/bin:$PATH" \
   "$ROOT/bin/omarchy-clipboard-open" --history-index 0

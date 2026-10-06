@@ -42,7 +42,7 @@ touch "${REBOOT_CALLED:?}"
 STUB
 chmod +x "$stub_bin"/*
 
-reboot_flag="$home/.local/state/omarchy/reboot-required"
+reboot_flag="$home/.local/state/lunor/reboot-required"
 gum_called="$test_dir/gum-called"
 reboot_called="$test_dir/reboot-called"
 gpasswd_calls="$test_dir/gpasswd-calls"

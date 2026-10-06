@@ -3,7 +3,7 @@
 The menu is the `omarchy.menu` plugin of the Quickshell desktop, with its
 content defined as data in `default/omarchy/omarchy-menu.jsonc` (read at
 runtime from `$OMARCHY_PATH`) and overlaid by the user's
-`~/.config/omarchy/extensions/omarchy-menu.jsonc`. The shell parses both files
+`~/.config/lunor/extensions/omarchy-menu.jsonc`. The shell parses both files
 at startup and watches them for changes, so the keybind → IPC → visible path
 never shells out to parse anything, and edits to either file take effect
 without restarting the shell. Rendering and behavior live in

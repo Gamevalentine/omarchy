@@ -251,7 +251,7 @@ fi
 write_stub omarchy-snapshot 'exit 0'
 write_stub omarchy-update-keyring 'exit 0'
 write_stub omarchy-toggle-idle '
-state_file="$SUDO_TEST_HOME/.local/state/omarchy/indicators/stay-awake"
+state_file="$SUDO_TEST_HOME/.local/state/lunor/indicators/stay-awake"
 case "$1" in
   stay-awake)
     mkdir -p "$(dirname "$state_file")"
@@ -262,21 +262,21 @@ case "$1" in
     ;;
 esac'
 write_stub omarchy-update-restart '
-state_file="$SUDO_TEST_HOME/.local/state/omarchy/indicators/stay-awake"
+state_file="$SUDO_TEST_HOME/.local/state/lunor/indicators/stay-awake"
 if [[ ${1:-} == "--services-only" || ${EXPECT_STAY_AWAKE:-0} == "1" ]]; then
   [[ -f $state_file ]]
 else
   [[ ! -f $state_file ]]
 fi'
 
-rm -f "$test_home/.local/state/omarchy/indicators/stay-awake"
+rm -f "$test_home/.local/state/lunor/indicators/stay-awake"
 OMARCHY_UPDATE_LOGGED=1 run_with_lock_env "$SUDO_TEST_ROOT/bin/omarchy-update" -y
-[[ ! -f $test_home/.local/state/omarchy/indicators/stay-awake ]] || fail "update clears its Stay Awake state before restart handling"
+[[ ! -f $test_home/.local/state/lunor/indicators/stay-awake ]] || fail "update clears its Stay Awake state before restart handling"
 
-mkdir -p "$test_home/.local/state/omarchy/indicators"
-touch "$test_home/.local/state/omarchy/indicators/stay-awake"
+mkdir -p "$test_home/.local/state/lunor/indicators"
+touch "$test_home/.local/state/lunor/indicators/stay-awake"
 OMARCHY_UPDATE_LOGGED=1 EXPECT_STAY_AWAKE=1 run_with_lock_env "$SUDO_TEST_ROOT/bin/omarchy-update" -y
-[[ -f $test_home/.local/state/omarchy/indicators/stay-awake ]] || fail "update preserves pre-existing Stay Awake state"
+[[ -f $test_home/.local/state/lunor/indicators/stay-awake ]] || fail "update preserves pre-existing Stay Awake state"
 pass "omarchy-update restores only its own Stay Awake state before restart handling"
 
 # Model package replacement while the existing updater is still running:
@@ -288,21 +288,21 @@ set -e
 [[ $1 == "start" ]]
 umask 022
 state="$XDG_RUNTIME_DIR/$LEGACY_STATE_NAME"
-mkdir -p "$state" "$SUDO_TEST_HOME/.local/state/omarchy/indicators"
+mkdir -p "$state" "$SUDO_TEST_HOME/.local/state/lunor/indicators"
 ( exec {OMARCHY_UPDATE_LOCK_FD}>&-; exec sleep infinity ) &
 pid=$!
 printf "%s %s\n" "$pid" "$(awk '\''{ print $22 }'\'' /proc/$pid/stat)" >"$state/inhibit-pid"
 printf "%s:1:1\n" "$$" >"$state/idle-owner"
-/usr/bin/cp "$state/idle-owner" "$SUDO_TEST_HOME/.local/state/omarchy/indicators/stay-awake"'
+/usr/bin/cp "$state/idle-owner" "$SUDO_TEST_HOME/.local/state/lunor/indicators/stay-awake"'
 write_stub omarchy-update-system-pkgs '
 /usr/bin/cp "$INHIBITOR_AFTER_UPGRADE" "$OMARCHY_PATH/bin/omarchy-update-stay-awake"'
 write_stub omarchy-update-restart '
 if [[ $1 == "--reboot-only" ]]; then
-  [[ ! -e $SUDO_TEST_HOME/.local/state/omarchy/indicators/stay-awake ]] || exit 91
+  [[ ! -e $SUDO_TEST_HOME/.local/state/lunor/indicators/stay-awake ]] || exit 91
   [[ ! -e $XDG_RUNTIME_DIR/$LEGACY_STATE_NAME ]] || exit 92
   touch "$UPGRADE_RESTARTED"
 fi'
-rm -f "$test_home/.local/state/omarchy/indicators/stay-awake"
+rm -f "$test_home/.local/state/lunor/indicators/stay-awake"
 OMARCHY_UPDATE_LOGGED=1 LEGACY_STATE_NAME="$stay_awake_dir_name" \
   INHIBITOR_AFTER_UPGRADE="$test_tmp/inhibitor-after-upgrade" \
   UPGRADE_RESTARTED="$test_tmp/upgrade-restarted" \
@@ -313,7 +313,7 @@ pass "first upgrade cleans old inhibitor state with the newly installed helper"
 # Stale cleanup state from a killed update must not override a Stay Awake choice
 # the user made afterward.
 stay_awake_helper_state="$runtime_dir/$stay_awake_dir_name"
-stay_awake_state="$test_home/.local/state/omarchy/indicators/stay-awake"
+stay_awake_state="$test_home/.local/state/lunor/indicators/stay-awake"
 mkdir -m 700 -p "$stay_awake_helper_state"
 mkdir -p "$(dirname "$stay_awake_state")"
 printf '%s\n' "123:456:789" >"$stay_awake_helper_state/idle-owner"

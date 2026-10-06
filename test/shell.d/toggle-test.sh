@@ -17,8 +17,8 @@ trap cleanup EXIT
 
 TMPDIR=$(mktemp -d)
 test_home="$TMPDIR/home"
-flag="$test_home/.local/state/omarchy/toggles/example"
-bar_flag="$test_home/.local/state/omarchy/toggles/bar-off"
+flag="$test_home/.local/state/lunor/toggles/example"
+bar_flag="$test_home/.local/state/lunor/toggles/bar-off"
 
 HOME="$test_home" omarchy-toggle example on
 [[ -f $flag ]] || fail "generic toggle enables explicit on state"
@@ -62,7 +62,7 @@ printf '#!/bin/bash\nexit 0\n' >"$stub_bin/hyprctl"
 chmod +x "$stub_bin/hyprctl"
 export PATH="$stub_bin:$PATH"
 
-gaps_flag="$test_home/.local/state/omarchy/toggles/hypr/window-no-gaps.lua"
+gaps_flag="$test_home/.local/state/lunor/toggles/hypr/window-no-gaps.lua"
 
 HOME="$test_home" omarchy-toggle-fullscreen-desktop
 [[ -f $bar_flag && -f $gaps_flag ]] || fail "fullscreen toggle hides the bar and the gaps together"
@@ -88,7 +88,7 @@ pass "fullscreen on enters full screen"
 # The flag records animations being off, so on and off are the other way round.
 printf '#!/bin/bash\nexit 0\n' >"$stub_bin/omarchy-notification-send"
 chmod +x "$stub_bin/omarchy-notification-send"
-animations_flag="$test_home/.local/state/omarchy/toggles/hypr/no-animations.lua"
+animations_flag="$test_home/.local/state/lunor/toggles/hypr/no-animations.lua"
 
 HOME="$test_home" omarchy-toggle-animations off
 [[ -f $animations_flag ]] || fail "animations off places the no-animations flag"
@@ -100,7 +100,7 @@ pass "animations toggle turns the no-animations flag the right way round"
 
 # A VM install starts without animations; other machines keep them.
 for virt in vm none; do
-  rm -rf "$test_home/.local/state/omarchy/toggles/hypr"
+  rm -rf "$test_home/.local/state/lunor/toggles/hypr"
   printf '#!/bin/bash\n[[ %s == vm ]]\n' "$virt" >"$stub_bin/omarchy-hw-vm"
   chmod +x "$stub_bin/omarchy-hw-vm"
   HOME="$test_home" OMARCHY_PATH="$ROOT" bash "$ROOT/install/user/hardware/vm-no-animations.sh" >/dev/null

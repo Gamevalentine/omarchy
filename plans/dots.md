@@ -23,7 +23,7 @@ desktop."
 - **`git init ~/.config`**: dumping ground — Chromium profile, fcitx5 state,
   app tokens, machine churn. A `.git` there gets discovered by editors and
   prompts. Can't cover `~/.bashrc` or `~/.XCompose`.
-- **`~/.config/omarchy` only**: too narrow; misses hypr, terminals, `.bashrc`.
+- **`~/.config/lunor` only**: too narrow; misses hypr, terminals, `.bashrc`.
 - **Stow**: inverted model requiring file migration; organization, not history.
 - **chezmoi / yadm**: third-party DSLs we'd be wrapping; overkill.
 - **Raw git passthrough / lazygit over `$HOME`** (rejected in review):
@@ -63,12 +63,12 @@ a hand-audited file shipped with LUNOR OS — explicitly **not** derived from
 `$OMARCHY_PATH/config` (which ships Chromium Preferences, fcitx5,
 `opencode/opencode.json` where users put API keys, etc.):
 
-- Include: `.config/hypr/*.{lua,conf}`, `.config/omarchy/shell.json`,
-  `.config/omarchy/extensions/**`, `.config/omarchy/hooks/**`,
+- Include: `.config/hypr/*.{lua,conf}`, `.config/lunor/shell.json`,
+  `.config/lunor/extensions/**`, `.config/lunor/hooks/**`,
   terminal configs (alacritty/foot/ghostty/kitty), `.config/btop/btop.conf`,
   `.config/starship.toml`, `.bashrc`, `.XCompose`.
-- Exclude (deliberately): `.config/omarchy/plugins/**` and
-  `.config/omarchy/themes/**` (nested git clones managed by
+- Exclude (deliberately): `.config/lunor/plugins/**` and
+  `.config/lunor/themes/**` (nested git clones managed by
   `omarchy-plugin-*` / `omarchy-theme-update`), backgrounds (multi-MB
   binaries), `.config/btop/themes/` (symlink into `~/.local/state`), anything
   Chromium/fcitx5/opencode/xournalpp.
@@ -195,8 +195,8 @@ No raw git surface. No lazygit integration.
 
 1. Manifest location: `default/omarchy/dots-manifest` vs alongside the
    helper; and whether users may extend it via
-   `~/.config/omarchy/dots-manifest.d/`.
-2. Whether `.config/omarchy/hooks/**` belongs in the manifest at all (small
+   `~/.config/lunor/dots-manifest.d/`.
+2. Whether `.config/lunor/hooks/**` belongs in the manifest at all (small
    scripts, but the likeliest place for a pasted token).
 3. Harden `omarchy-refresh-config` against `..` path escape (documented today
    in AGENTS.md) as part of this work or separately.

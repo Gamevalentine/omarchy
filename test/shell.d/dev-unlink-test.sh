@@ -56,7 +56,7 @@ run_unlink() {
 : >"$log_file"
 run_unlink --no-reboot
 
-grep -Fx $'sudo\ttee\t/etc/omarchy.conf' "$log_file" >/dev/null ||
+grep -Fx $'sudo\ttee\t/etc/lunor.conf' "$log_file" >/dev/null ||
   fail "dev unlink writes the package path without rebooting" "$(cat "$log_file")"
 [[ $(<"$conf_file") == 'export OMARCHY_PATH="/usr/share/omarchy"' ]] ||
   fail "dev unlink writes the package path guard" "$(<"$conf_file")"

@@ -4,6 +4,6 @@
 # directly rather than through omarchy-hyprland-toggle, which reloads Hyprland.
 if omarchy-hw-vm; then
   echo "Detected a virtual machine. Turning off animations and transparency."
-  mkdir -p "$HOME/.local/state/omarchy/toggles/hypr"
-  cp "$OMARCHY_PATH/default/hypr/toggles/no-animations.lua" "$HOME/.local/state/omarchy/toggles/hypr/"
+  mkdir -p "$HOME/.local/state/lunor/toggles/hypr"
+  cp "$OMARCHY_PATH/default/hypr/toggles/no-animations.lua" "$HOME/.local/state/lunor/toggles/hypr/"
 fi

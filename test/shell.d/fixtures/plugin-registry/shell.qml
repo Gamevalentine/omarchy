@@ -464,7 +464,7 @@ ShellRoot {
   PluginRegistry {
     id: registry
     firstPartyDir: ""
-    pluginsDir: Quickshell.env("HOME") + "/.config/omarchy/plugins"
+    pluginsDir: Quickshell.env("HOME") + "/.config/lunor/plugins"
     shellConfigProvider: function() { return root.config }
     shellConfigMutator: function(mutator) {
       var next = JSON.parse(JSON.stringify(root.config || {}))

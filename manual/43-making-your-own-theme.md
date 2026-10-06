@@ -1,6 +1,6 @@
 # Making your own theme
 
-You can add your own themes to `~/.config/omarchy/themes`. Just copy one of the existing ones as a base (look in `/usr/share/omarchy/themes`), then tweak to your delight. As long as your theme is inside that folder, it'll be included in the theme selection menu.
+You can add your own themes to `~/.config/lunor/themes`. Just copy one of the existing ones as a base (look in `/usr/share/omarchy/themes`), then tweak to your delight. As long as your theme is inside that folder, it'll be included in the theme selection menu.
 
 The main file you have to tweak is `colors.toml`. That defines the color set that's then used to generate configurations for the terminal (Foot/Alacritty/Ghostty/Kitty), btop, Chromium, Hyprland, Neovim, Helix, VSCode, Obsidian, and the entire LUNOR OS shell (top bar, menu, notifications, OSD, and lock screen).
 
@@ -8,7 +8,7 @@ You can also use the included Aether application to create a new theme using a l
 
 ### What an installed theme can contain
 
-A theme you write yourself in `~/.config/omarchy/themes` can contain whatever you like — it's your machine and your file, and LUNOR OS applies all of it.
+A theme you write yourself in `~/.config/lunor/themes` can contain whatever you like — it's your machine and your file, and LUNOR OS applies all of it.
 
 A theme you install from someone else's repo with `omarchy theme install` keeps everything that's colour, and loses the handful of files that would run code on your machine: any `.lua` file, the terminal configs (`alacritty.toml`, `foot.ini`, `ghostty.conf`, `kitty.conf`), and `vscode.json`. A theme's `hyprland.lua` is Lua your compositor runs at login, a terminal config names the program your terminal starts, and `vscode.json` names a VSCode extension to install. Installing someone's theme should change what your desktop looks like, never what it runs.
 
@@ -30,7 +30,7 @@ Themes supplied with `unlock.png` and `preview-unlock.png` images will be listed
 
 ### Theming apps LUNOR OS doesn't cover
 
-If you use an app that isn't in that list, you can teach LUNOR OS to theme it yourself with a template. Drop a file in `~/.config/omarchy/themed/` named after the config it generates plus a `.tpl` extension, and write the config with `{{ background }}`, `{{ foreground }}`, `{{ accent }}`, `{{ red }}`, `{{ color0 }}` through `{{ color15 }}`, and the rest of the palette as placeholders. Every time you switch themes, the file is regenerated with that theme's colors.
+If you use an app that isn't in that list, you can teach LUNOR OS to theme it yourself with a template. Drop a file in `~/.config/lunor/themed/` named after the config it generates plus a `.tpl` extension, and write the config with `{{ background }}`, `{{ foreground }}`, `{{ accent }}`, `{{ red }}`, `{{ color0 }}` through `{{ color15 }}`, and the rest of the palette as placeholders. Every time you switch themes, the file is regenerated with that theme's colors.
 
 There's a fully commented `alacritty.toml.tpl.sample` in that folder to copy from — it lists every variable you can use, plus the `_strip` and `_rgb` modifiers for apps that want their colors without the `#` or as decimal RGB. Your templates take priority over LUNOR OS's own, so you can also use this to override how a built-in app gets themed.
 

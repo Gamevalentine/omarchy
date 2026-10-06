@@ -47,10 +47,10 @@ run_migration() {
 
 reset_fonts
 cp "$fixture" "$legacy_font"
-cp "$fixture" "$FONT_TEST_HOME/.config/omarchy.ttf"
+cp "$fixture" "$FONT_TEST_HOME/.config/lunor.ttf"
 run_migration
 [[ ! -e $legacy_font ]] || fail "stock font is removed from the actual user font directory"
-cmp "$fixture" "$FONT_TEST_HOME/.config/omarchy.ttf" || fail "unrelated config path is untouched"
+cmp "$fixture" "$FONT_TEST_HOME/.config/lunor.ttf" || fail "unrelated config path is untouched"
 cmp "$ROOT/default/fonts/omarchy/omarchy.ttf" "$FONT_TEST_PACKAGE" || fail "packaged font is untouched"
 [[ $(cat "$FONT_TEST_CACHE_LOG") == "-f" ]] || fail "font cache is refreshed after retirement"
 pass "retire the known stock font at its real path and refresh the cache"

@@ -58,7 +58,7 @@ Full schema: [`shell/services/PluginRegistry.qml`](../shell/services/PluginRegis
 ## Installing a third-party plugin
 
 A plugin is a **git repo** with a `manifest.json` at its root. Adding one
-clones it straight into `~/.config/omarchy/plugins/<id>/`; updating is a
+clones it straight into `~/.config/lunor/plugins/<id>/`; updating is a
 fast-forward pull:
 
 ```bash
@@ -74,7 +74,7 @@ no checkout to delete. Add, Clone, and Remove open a terminal so their warning,
 editor, confirmation, and output stay visible.
 
 Cloning `omarchy.clock`, for example, creates and switches to
-`~/.config/omarchy/plugins/<username>.clock/` (e.g. `dhh.clock`), names it
+`~/.config/lunor/plugins/<username>.clock/` (e.g. `dhh.clock`), names it
 `My Clock`, and preserves the built-in IPC identity so existing shortcuts keep
 working. The username prefix keeps a shared clone from colliding with anyone
 else's. Saving files in any installed plugin reloads its code automatically,
@@ -91,7 +91,7 @@ widgets that omit it default to `center`.
 Plugins run as **unsandboxed code** inside `omarchy-shell`. Adding warns you before cloning, plugins land disabled so you can review the code before `omarchy plugin enable`, and updates show a diff before touching anything. Commands confirm in a terminal even when given arguments; without one they refuse rather than guess. Add `--yes` to skip every prompt (the path for scripts and agents). The scoped interfaces remove direct access to authentication services and avoid handing generic cross-plugin service factories to replacement bars, but visual plugins can still traverse ordinary objects in their shared QML scene. Plugin code also has the same user-level file and process access as the shell.
 
 You can still install by hand: drop a plugin into
-`~/.config/omarchy/plugins/<id>/`, run `omarchy-shell shell rescanPlugins`, then
+`~/.config/lunor/plugins/<id>/`, run `omarchy-shell shell rescanPlugins`, then
 `omarchy plugin enable <id>`. A bar widget starts in its declared default
 section; enabling a full bar replaces the one in use. `omarchy bar` drives the
 bar from the CLI — `use | reset | defaults | position | transparent | put |
@@ -183,7 +183,7 @@ customizes, `shell.json` is canonical — there is no deep-merge.
 
 `shell.json` is shell configuration; theme tokens live in `shell.toml`
 (next section). Both are current — they answer different questions. A
-machine-level `~/.config/omarchy/shell.toml` is watched live by the
+machine-level `~/.config/lunor/shell.toml` is watched live by the
 shell and its keys win over the active theme's `shell.toml`, so
 overrides like `omarchy display text size` survive theme switches.
 
@@ -388,7 +388,7 @@ If a full plugin is overkill, declare a one-off module inline in
 `bar.layout.<section>`:
 
 ```json
-{ "id": "vpn", "type": "command", "exec": "~/.config/omarchy/bar/scripts/vpn-status",
+{ "id": "vpn", "type": "command", "exec": "~/.config/lunor/bar/scripts/vpn-status",
   "interval": 5, "tooltip": "VPN", "onClick": "nm-connection-editor" }
 ```
 
@@ -400,7 +400,7 @@ For a custom QML widget:
 { "id": "gpu", "type": "qml" }
 ```
 
-Then `~/.config/omarchy/bar/modules/gpu.qml` (or set `source` to point
+Then `~/.config/lunor/bar/modules/gpu.qml` (or set `source` to point
 elsewhere). The module is an `Item` and receives `bar`, `moduleName`,
 `settings` properties. `bar` exposes `foreground` / `background` /
 `urgent` / `fontFamily` / `position` / `vertical` / `barSize`, plus

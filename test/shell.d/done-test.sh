@@ -7,7 +7,7 @@ source "$(dirname "$0")/base-test.sh"
 test_home=$(mktemp -d)
 trap 'rm -rf "$test_home"' EXIT
 
-done_marker="$test_home/.local/state/omarchy/done/example"
+done_marker="$test_home/.local/state/lunor/done/example"
 
 if HOME="$test_home" "$ROOT/bin/omarchy-done" check example; then
   fail "done reports an unmarked task as complete"
@@ -18,7 +18,7 @@ HOME="$test_home" "$ROOT/bin/omarchy-done" mark example
 HOME="$test_home" "$ROOT/bin/omarchy-done" check example || fail "done reports a marked task as complete"
 
 HOME="$test_home" "$ROOT/bin/omarchy-done" ensure once || fail "done ensures an unmarked task"
-[[ -f $test_home/.local/state/omarchy/done/once ]] || fail "done ensure marks a task complete"
+[[ -f $test_home/.local/state/lunor/done/once ]] || fail "done ensure marks a task complete"
 if HOME="$test_home" "$ROOT/bin/omarchy-done" ensure once; then
   fail "done ensures a completed task again"
 fi

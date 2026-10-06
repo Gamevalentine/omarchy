@@ -74,16 +74,16 @@ grep -q "omarchy.elsewhen was not put on the bar" "$test_dir/output" || fail "an
 pass "an absent shell leaves the update running"
 
 # An entry under the legacy id is left for the rename, not joined by a second widget.
-mkdir -p "$test_dir/home/.config/omarchy"
+mkdir -p "$test_dir/home/.config/lunor"
 printf '{"bar":{"layout":{"center":[{"id":"omacom.elsewhen","zones":"Tokyo|Asia/Tokyo"},"omarchy.clock"]}}}\n' \
-  >"$test_dir/home/.config/omarchy/shell.json"
+  >"$test_dir/home/.config/lunor/shell.json"
 run
 [[ $(cat "$CALL_LOG") == "-q shell rescanPlugins" ]] || fail "a legacy entry skips placement" "$(cat "$CALL_LOG")"
 migration="$ROOT/migrations/1790528634.sh"
 run
-[[ $(jq -c '[.bar.layout.center[] | if type == "object" then .id else . end]' "$test_dir/home/.config/omarchy/shell.json") == '["omarchy.elsewhen","omarchy.clock"]' ]] ||
-  fail "the legacy entry becomes the only Elsewhen" "$(cat "$test_dir/home/.config/omarchy/shell.json")"
-rm "$test_dir/home/.config/omarchy/shell.json"
+[[ $(jq -c '[.bar.layout.center[] | if type == "object" then .id else . end]' "$test_dir/home/.config/lunor/shell.json") == '["omarchy.elsewhen","omarchy.clock"]' ]] ||
+  fail "the legacy entry becomes the only Elsewhen" "$(cat "$test_dir/home/.config/lunor/shell.json")"
+rm "$test_dir/home/.config/lunor/shell.json"
 migration="$ROOT/migrations/1790042972.sh"
 pass "a legacy entry is renamed rather than duplicated"
 
@@ -98,18 +98,18 @@ pass "a machine that applied the placement under its old name runs it again"
 
 # Package retirement
 migration="$ROOT/migrations/1790528634.sh"
-plugin="$test_dir/home/.config/omarchy/plugins/omacom.elsewhen"
+plugin="$test_dir/home/.config/lunor/plugins/omacom.elsewhen"
 mkdir -p "${plugin%/*}"
 
 mkdir -p "$test_dir/home/.cache/omacom-elsewhen"
 touch "$test_dir/home/.cache/omacom-elsewhen/data.json"
 run
 [[ $(cat "$CALL_LOG") == "drop elsewhen" ]] || fail "the package is dropped" "$(cat "$CALL_LOG")"
-[[ ! -e $test_dir/home/.config/omarchy/shell.json ]] || fail "a missing config is not created"
+[[ ! -e $test_dir/home/.config/lunor/shell.json ]] || fail "a missing config is not created"
 [[ ! -e $test_dir/home/.cache/omacom-elsewhen ]] || fail "the old cache is removed"
 pass "the retired package and its old cache are removed"
 
-config="$test_dir/home/.config/omarchy/shell.json"
+config="$test_dir/home/.config/lunor/shell.json"
 cat >"$config" <<'JSON'
 {
   "bar": {

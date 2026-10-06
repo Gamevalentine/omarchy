@@ -24,7 +24,7 @@ drop_npm_grok() {
   fi
 }
 
-if [[ ! -f $HOME/.local/state/omarchy/preinstalls-removed ]]; then
+if [[ ! -f $HOME/.local/state/lunor/preinstalls-removed ]]; then
   # The shim is ahead of ~/.local/bin, so drop the npm tool before looking for
   # grok. A removed wrapper still looks installed until the tool is gone.
   drop_npm_grok

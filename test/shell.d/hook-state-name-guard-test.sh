@@ -8,14 +8,14 @@ work_dir=$(mktemp -d)
 trap 'rm -rf "$work_dir"' EXIT
 
 fake_home="$work_dir/home"
-mkdir -p "$fake_home/.config/omarchy/hooks" "$fake_home/.local/state/omarchy"
+mkdir -p "$fake_home/.config/lunor/hooks" "$fake_home/.local/state/lunor"
 
 # --- omarchy-hook --------------------------------------------------------------
 
 # A hook name is a label, not a path. One carrying a slash, or one that is a
 # bare `.` or `..`, would run a script from outside the hooks directory.
 
-cat >"$fake_home/.config/omarchy/hooks/test-hook" <<'SH'
+cat >"$fake_home/.config/lunor/hooks/test-hook" <<'SH'
 touch "$HOME/hook-ran"
 SH
 
@@ -25,7 +25,7 @@ HOME="$fake_home" "$ROOT/bin/omarchy-hook" test-hook
 pass "omarchy hook runs a named hook from the hooks directory"
 
 # Dots inside a name are not a path. a..b stays inside the hooks directory.
-cat >"$fake_home/.config/omarchy/hooks/a..b" <<'SH'
+cat >"$fake_home/.config/lunor/hooks/a..b" <<'SH'
 touch "$HOME/dotted-hook-ran"
 SH
 
@@ -65,7 +65,7 @@ pass "omarchy hook refuses a hook name with a slash"
 
 # --- omarchy-hook-install ------------------------------------------------------
 
-# The installer joins the type into ~/.config/omarchy/hooks/<type>.d before
+# The installer joins the type into ~/.config/lunor/hooks/<type>.d before
 # mkdir/cp. The runner already refuses a slashed type; install must too, or a
 # name the runner will not run still lands on disk.
 
@@ -76,12 +76,12 @@ true
 SH
 
 HOME="$fake_home" "$ROOT/bin/omarchy-hook-install" post-update "$source_hook" >/dev/null
-[[ -f $fake_home/.config/omarchy/hooks/post-update.d/source-hook ]] ||
+[[ -f $fake_home/.config/lunor/hooks/post-update.d/source-hook ]] ||
   fail "omarchy hook install still installs a named hook"
 pass "omarchy hook install still installs a named hook"
 
 HOME="$fake_home" "$ROOT/bin/omarchy-hook-install" a..b "$source_hook" >/dev/null
-[[ -f $fake_home/.config/omarchy/hooks/a..b.d/source-hook ]] ||
+[[ -f $fake_home/.config/lunor/hooks/a..b.d/source-hook ]] ||
   fail "omarchy hook install accepts a hook name with dots in the middle"
 pass "omarchy hook install accepts a hook name with dots in the middle"
 
@@ -90,7 +90,7 @@ for name in . ..; do
   HOME="$fake_home" "$ROOT/bin/omarchy-hook-install" "$name" "$source_hook" >/dev/null 2>&1 || status=$?
   (( status == 2 )) ||
     fail "omarchy hook install refuses a hook name of $name" "exit: $status"
-  [[ ! -e $fake_home/.config/omarchy/hooks/${name}.d ]] ||
+  [[ ! -e $fake_home/.config/lunor/hooks/${name}.d ]] ||
     fail "omarchy hook install creates no directory for a hook name of $name"
   pass "omarchy hook install refuses a hook name of $name"
 done
@@ -108,13 +108,13 @@ status=0
 HOME="$fake_home" "$ROOT/bin/omarchy-hook-install" "sub/dir" "$source_hook" >/dev/null 2>&1 || status=$?
 (( status == 2 )) ||
   fail "omarchy hook install refuses a hook name with a slash" "exit: $status"
-[[ ! -e $fake_home/.config/omarchy/hooks/sub ]] ||
+[[ ! -e $fake_home/.config/lunor/hooks/sub ]] ||
   fail "omarchy hook install creates no nested directory from a slashed name"
 pass "omarchy hook install refuses a hook name with a slash"
 
 # --- omarchy-state -------------------------------------------------------------
 
-state_dir="$fake_home/.local/state/omarchy"
+state_dir="$fake_home/.local/state/lunor"
 
 HOME="$fake_home" "$ROOT/bin/omarchy-state" set reboot-required
 [[ -f $state_dir/reboot-required ]] ||

@@ -8,8 +8,8 @@ if gum confirm "Are you sure you want to remove all preinstalled web apps, TUI w
   omarchy-webapp-remove-all
   omarchy-tui-remove-all
 
-  mkdir -p ~/.local/state/omarchy
-  touch ~/.local/state/omarchy/preinstalls-removed
+  mkdir -p ~/.local/state/lunor
+  touch ~/.local/state/lunor/preinstalls-removed
   hyprctl reload
 
   # Remove mise stubs

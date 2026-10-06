@@ -6,7 +6,7 @@ TEST_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME"' EXIT
 
 FAKE_BIN="$TEST_HOME/bin"
-CURRENT_THEME="$TEST_HOME/.local/state/omarchy/current/theme"
+CURRENT_THEME="$TEST_HOME/.local/state/lunor/current/theme"
 mkdir -p "$FAKE_BIN" "$CURRENT_THEME"
 
 cat >"$FAKE_BIN/omarchy-cmd-present" <<'EOF'

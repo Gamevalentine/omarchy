@@ -15,8 +15,8 @@ api_key = fw_test
 account_id = example
 EOF
 
-mkdir -p "$TEST_HOME/.config/omarchy/agents"
-cat >"$TEST_HOME/.config/omarchy/agents/fireworks.json" <<'EOF'
+mkdir -p "$TEST_HOME/.config/lunor/agents"
+cat >"$TEST_HOME/.config/lunor/agents/fireworks.json" <<'EOF'
 {
   "accountId": "example",
   "fundedAmount": 20,

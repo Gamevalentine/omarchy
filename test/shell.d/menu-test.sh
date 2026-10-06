@@ -375,7 +375,7 @@ assert(
   'menu always offers Enable and Disable, which cover the built-in plugins too'
 )
 assert(
-  defaultById['setup.plugin.remove'].when.includes('.config/omarchy/plugins'),
+  defaultById['setup.plugin.remove'].when.includes('.config/lunor/plugins'),
   'menu hides Remove until a plugin the user installed exists to delete'
 )
 assert(

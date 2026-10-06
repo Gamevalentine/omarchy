@@ -33,7 +33,7 @@ EOF
 
 chmod +x "$FAKE_OMARCHY/bin/"omarchy-agent-usage-*
 
-usage_dir="$TEST_HOME/.local/state/omarchy/agents/usage"
+usage_dir="$TEST_HOME/.local/state/lunor/agents/usage"
 
 HOME="$TEST_HOME" OMARCHY_PATH="$FAKE_OMARCHY" XDG_STATE_HOME="" \
   "$ROOT/bin/omarchy-agent-usage-update" --except skipped 2>/dev/null && fail "update reports a failing collector"

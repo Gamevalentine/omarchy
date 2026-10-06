@@ -22,7 +22,7 @@ perform machine-wide repairs when needed.
 Completion state is per-user:
 
 ```text
-~/.local/state/omarchy/migrations/<migration filename>
+~/.local/state/lunor/migrations/<migration filename>
 ```
 
 That means every user gets a chance to run every migration. Migrations run as the
@@ -142,7 +142,7 @@ Example:
 echo "Relink Neovim theme to LUNOR OS current state"
 
 theme_link="$HOME/.config/nvim/lua/plugins/theme.lua"
-current_relative_target="../../../../.local/state/omarchy/current/theme/neovim.lua"
+current_relative_target="../../../../.local/state/lunor/current/theme/neovim.lua"
 
 [[ -L $theme_link ]] || exit 0
 ln -sfn "$current_relative_target" "$theme_link"
@@ -159,7 +159,7 @@ HOME=$(mktemp -d) bash -euo pipefail migrations/<timestamp>.sh
 To rerun a migration locally, remove its marker and run the migrator:
 
 ```bash
-rm ~/.local/state/omarchy/migrations/<migration>.sh
+rm ~/.local/state/lunor/migrations/<migration>.sh
 omarchy-migrate
 ```
 

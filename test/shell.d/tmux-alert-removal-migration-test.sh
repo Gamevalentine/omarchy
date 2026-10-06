@@ -61,7 +61,7 @@ export STATE_CALLS="$test_dir/state-calls"
 
 home="$test_dir/home"
 tmux_config="$home/.config/tmux/tmux.conf"
-shell_config="$home/.config/omarchy/shell.json"
+shell_config="$home/.config/lunor/shell.json"
 
 run_migration() {
   : >"$TMUX_CALLS"
@@ -74,7 +74,7 @@ run_migration() {
 
 reset_home() {
   rm -rf "$home"
-  mkdir -p "$home/.config/tmux" "$home/.config/omarchy"
+  mkdir -p "$home/.config/tmux" "$home/.config/lunor"
 }
 
 # ---------------------------------------------------------------- tmux config

@@ -100,8 +100,8 @@ if [[ -f $bindings_file ]]; then
       replace_with_packaged_config bindings.lua
       ;;
     "$plain_bindings_sha")
-      mkdir -p "$HOME/.local/state/omarchy"
-      touch "$HOME/.local/state/omarchy/preinstalls-removed"
+      mkdir -p "$HOME/.local/state/lunor"
+      touch "$HOME/.local/state/lunor/preinstalls-removed"
       replace_with_packaged_config bindings.lua
       ;;
   esac

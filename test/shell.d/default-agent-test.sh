@@ -9,7 +9,7 @@ trap 'rm -rf "$test_tmp"' EXIT
 
 mock_bin="$test_tmp/bin"
 test_home="$test_tmp/home"
-agent_file="$test_home/.config/omarchy/defaults/agent"
+agent_file="$test_home/.config/lunor/defaults/agent"
 notification_history="$test_tmp/notification-history"
 agent_open_log="$test_tmp/agent-open"
 launch_log="$test_tmp/launch"
@@ -178,11 +178,11 @@ grep -Fx "$muse_package muse" "$stub_log" >/dev/null || fail "Muse migration cre
 : >"$stub_log"
 source "$ROOT/migrations/1788724825.sh" >/dev/null
 [[ ! -s $stub_log ]] || fail "Muse migration replaces an existing command"
-mkdir -p "$test_home/.local/state/omarchy"
-touch "$test_home/.local/state/omarchy/preinstalls-removed"
+mkdir -p "$test_home/.local/state/lunor"
+touch "$test_home/.local/state/lunor/preinstalls-removed"
 OMARCHY_TEST_MISSING_COMMAND=muse source "$ROOT/migrations/1788724825.sh" >/dev/null
 [[ ! -s $stub_log ]] || fail "Muse migration ignores the preinstall opt-out"
-rm "$test_home/.local/state/omarchy/preinstalls-removed"
+rm "$test_home/.local/state/lunor/preinstalls-removed"
 pass "Muse migration preserves existing installs and the preinstall opt-out"
 
 
@@ -259,8 +259,8 @@ pass "Antigravity migration provisions Antigravity skills"
 
 
 : >"$stub_log"
-mkdir -p "$test_home/.local/state/omarchy"
-touch "$test_home/.local/state/omarchy/preinstalls-removed"
+mkdir -p "$test_home/.local/state/lunor"
+touch "$test_home/.local/state/lunor/preinstalls-removed"
 export OMARCHY_TEST_MISSING_COMMAND=agy
 source "$ROOT/migrations/1786719479.sh" >/dev/null
 [[ ! -s $stub_log ]] || fail "Antigravity migration preserves removed preinstalls"
@@ -275,13 +275,13 @@ grep -Fx "$agy_package agy" "$stub_log" >/dev/null || fail "Antigravity migratio
 pass "Antigravity migration never leaves the default naming a missing agent"
 
 : >"$stub_log"
-rm "$test_home/.local/state/omarchy/preinstalls-removed"
+rm "$test_home/.local/state/lunor/preinstalls-removed"
 source "$ROOT/migrations/1786719479.sh" >/dev/null
 [[ ! -s $stub_log ]] || fail "Antigravity migration reinstalls an existing Antigravity command"
 pass "Antigravity migration preserves an existing Antigravity install"
 
-mkdir -p "$test_home/.local/state/omarchy"
-touch "$test_home/.local/state/omarchy/preinstalls-removed"
+mkdir -p "$test_home/.local/state/lunor"
+touch "$test_home/.local/state/lunor/preinstalls-removed"
 "$ROOT/bin/omarchy-mise-install" oh-my-pi omp
 : >"$stub_log"
 source "$ROOT/migrations/1785617047.sh" >/dev/null
@@ -345,7 +345,7 @@ unset OMARCHY_TEST_MISE_HAS_NPM_GROK
 grep -Fx "unuse -g $legacy_grok_package" "$mise_history" >/dev/null &&
   fail "Grok registry migration leaves a user-installed npm tool after the preinstall opt-out"
 
-rm "$test_home/.local/state/omarchy/preinstalls-removed"
+rm "$test_home/.local/state/lunor/preinstalls-removed"
 rm -f "$agent_file"
 
 printf '#!/bin/bash\nexport MISE_MINIMUM_RELEASE_AGE=0\nmise use -g --quiet "%s" || exit 1\nexec mise x "%s" -- "grok" "$@"\n' \
@@ -551,7 +551,7 @@ for selection in "${!expected_agents[@]}"; do
     fail "default agent opens $selection after selecting it"
 done
 pass "default agent selects and opens every supported provider and alias"
-[[ -f $agent_file && ! -e $test_home/.local/state/omarchy/defaults/agent ]] ||
+[[ -f $agent_file && ! -e $test_home/.local/state/lunor/defaults/agent ]] ||
   fail "default agent stores its selection in LUNOR OS user config"
 pass "default agent stores its selection in LUNOR OS user config"
 

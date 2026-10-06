@@ -93,7 +93,7 @@ SH
 
 cat >"$stub_bin/omarchy-toggle-idle" <<'SH'
 #!/bin/bash
-state_file="$HOME/.local/state/omarchy/indicators/stay-awake"
+state_file="$HOME/.local/state/lunor/indicators/stay-awake"
 case "$1" in
   stay-awake)
     mkdir -p "$(dirname "$state_file")"
@@ -237,7 +237,7 @@ pass "unsafe inhibitor state directories are rejected"
 
 # Package replacement leaves the preceding helper's PID/start pair and its
 # umask-derived modes for the newly installed stop command to consume.
-idle_marker="$test_home/.local/state/omarchy/indicators/stay-awake"
+idle_marker="$test_home/.local/state/lunor/indicators/stay-awake"
 for modes in '755 644' '750 640' '700 600'; do
   read -r directory_mode file_mode <<<"$modes"
   for idle_choice in update user; do
@@ -430,7 +430,7 @@ pass "state publication failures roll back a launched inhibitor"
 # Hold each cancellation window open, including publication before child exec,
 # readiness before idle setup, and publication of the update-owned idle marker.
 cp "$mapped_helper" "$test_tmp/helper-before-pause"
-idle_marker="$test_home/.local/state/omarchy/indicators/stay-awake"
+idle_marker="$test_home/.local/state/lunor/indicators/stay-awake"
 for cancel_phase in published ready idle-temporary idle user-idle; do
   rm -f "$test_tmp/cancel-ready" "$test_tmp/release-child"
   if [[ $cancel_phase == "user-idle" ]]; then

@@ -8,8 +8,8 @@ test_tmp=$(mktemp -d)
 trap 'rm -rf "$test_tmp"' EXIT
 
 home="$test_tmp/home"
-next="$home/.local/state/omarchy/current/next-theme"
-themed="$home/.config/omarchy/themed"
+next="$home/.local/state/lunor/current/next-theme"
+themed="$home/.config/lunor/themed"
 mkdir -p "$next" "$themed"
 
 cat >"$next/colors.toml" <<'EOF'

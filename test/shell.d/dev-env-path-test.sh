@@ -45,9 +45,9 @@ trap 'rm -rf "$tmpdir"' EXIT
 home="$tmpdir/home"
 mkdir -p "$tmpdir/active/bin" "$tmpdir/unrelated/bin"
 
-# Test against a copy so the test controls /etc/omarchy.conf without mutating the host.
+# Test against a copy so the test controls /etc/lunor.conf without mutating the host.
 bootstrap="$tmpdir/env-bootstrap"
-sed "s#/etc/omarchy.conf#$tmpdir/omarchy.conf#g" "$ROOT/default/bash/env-bootstrap" >"$bootstrap"
+sed "s#/etc/lunor.conf#$tmpdir/omarchy.conf#g" "$ROOT/default/bash/env-bootstrap" >"$bootstrap"
 
 printf 'export OMARCHY_PATH="/usr/share/omarchy"\n' >"$tmpdir/omarchy.conf"
 mapfile -t default_result < <(run_bootstrap bash "$bootstrap" "$home" "$tmpdir/unrelated/bin:/usr/bin")

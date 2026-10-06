@@ -1,7 +1,7 @@
 echo "Repair theme symlinks the state-move migration left dangling"
 
 # 1781043107.sh re-linked legacy theme symlinks whose targets were stored as a
-# literal "~/.config/omarchy/current/..." string. The replacement used the same
+# literal "~/.config/lunor/current/..." string. The replacement used the same
 # literal tilde, which the filesystem never expands inside a symlink target, so
 # btop, Helix, and VS Code/Cursor would have lost their theme while the
 # migration reported success anyway. That migration is already marked applied
@@ -38,7 +38,7 @@ relink_if_dangling() {
   ln -sfn "$expected_target" "$link"
 }
 
-current_state_dir="$HOME/.local/state/omarchy/current"
+current_state_dir="$HOME/.local/state/lunor/current"
 
 relink_if_dangling "$HOME/.config/btop/themes/current.theme" \
   "$current_state_dir/theme/btop.theme"

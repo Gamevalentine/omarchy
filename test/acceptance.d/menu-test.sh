@@ -4,7 +4,7 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
-CONFIG_FILE="$HOME/.config/omarchy/shell.json"
+CONFIG_FILE="$HOME/.config/lunor/shell.json"
 DEFAULTS_FILE="$OMARCHY_PATH/config/omarchy/shell.json"
 config_backup=$(mktemp)
 config_existed=0

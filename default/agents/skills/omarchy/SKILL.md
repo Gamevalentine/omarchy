@@ -2,7 +2,7 @@
 name: omarchy
 description: >
   REQUIRED for end-user customization of Linux desktop, window manager, or system config.
-  Use when editing ~/.config/hypr/, ~/.config/omarchy/,
+  Use when editing ~/.config/hypr/, ~/.config/lunor/,
   ~/.config/alacritty/, ~/.config/foot/, ~/.config/kitty/, or ~/.config/ghostty/.
   Triggers: Hyprland, window rules, animations, keybindings, monitors, gaps, borders,
   blur, opacity, omarchy-shell, bar, terminal config, themes, background,
@@ -23,9 +23,9 @@ It is not for contributing to LUNOR OS source code.
 **ALWAYS invoke this skill for end-user requests involving ANY of these:**
 
 - Editing ANY file in `~/.config/hypr/` (window rules, animations, keybindings, monitors, etc.)
-- Editing `~/.config/omarchy/shell.json` (status bar layout, widgets)
+- Editing `~/.config/lunor/shell.json` (status bar layout, widgets)
 - Editing terminal configs (alacritty, foot, kitty, ghostty)
-- Editing ANY file in `~/.config/omarchy/`
+- Editing ANY file in `~/.config/lunor/`
 - Window behavior, animations, opacity, blur, gaps, borders
 - Layer rules, workspace settings, display/monitor configuration
 - Themes, backgrounds, fonts, appearance changes
@@ -76,8 +76,8 @@ overwritten on the next `omarchy update`.
 
 **Always use these safe locations instead:**
 - `~/.config/` - User configuration (safe to edit)
-- `~/.config/omarchy/themes/<custom-name>/` - Custom themes
-- `~/.config/omarchy/hooks/` - Custom automation hooks
+- `~/.config/lunor/themes/<custom-name>/` - Custom themes
+- `~/.config/lunor/hooks/` - Custom automation hooks
 
 If the request is to develop LUNOR OS itself, this skill is out of scope. Follow repository development instructions instead of this skill.
 
@@ -101,8 +101,8 @@ LUNOR OS is built on:
 |-----------|---------|-----------------|
 | **Arch Linux** | Base OS | `/etc/`, `~/.config/` |
 | **Hyprland** | Wayland compositor/WM | `~/.config/hypr/` |
-| **LUNOR OS shell** | Status bar + notifications (Quickshell) | `~/.config/omarchy/shell.json` |
-| **Launcher/menus** | Quickshell menu | `~/.config/omarchy/extensions/omarchy-menu.jsonc` |
+| **LUNOR OS shell** | Status bar + notifications (Quickshell) | `~/.config/lunor/shell.json` |
+| **Launcher/menus** | Quickshell menu | `~/.config/lunor/extensions/omarchy-menu.jsonc` |
 | **Alacritty/Foot/Kitty/Ghostty** | Terminals | `~/.config/<terminal>/` |
 | **LUNOR OS OSD** | On-screen display | Quickshell plugin |
 
@@ -154,7 +154,7 @@ Run `omarchy --help` for the full list. The most common groups:
 
 Hyprland config lives in `~/.config/hypr/` — see [`hyprland.md`](hyprland.md).
 The LUNOR OS shell (bar, notifications, plugins, idle) is configured in
-`~/.config/omarchy/shell.json` — see [`plugins.md`](plugins.md).
+`~/.config/lunor/shell.json` — see [`plugins.md`](plugins.md).
 
 ### Terminals
 
@@ -194,8 +194,8 @@ cp ~/.config/hypr/bindings.lua ~/.config/hypr/bindings.lua.bak.$(date +%s)
 
 # 4. Apply changes
 # - Hyprland: auto-reloads on save, but MUST validate with `hyprctl reload` and `hyprctl configerrors`
-# - LUNOR OS shell: shell.json and user plugin code under ~/.config/omarchy/plugins/ hot-reload on save
-# - Menus/launcher: ~/.config/omarchy/extensions/omarchy-menu.jsonc hot-reloads on save
+# - LUNOR OS shell: shell.json and user plugin code under ~/.config/lunor/plugins/ hot-reload on save
+# - Menus/launcher: ~/.config/lunor/extensions/omarchy-menu.jsonc hot-reloads on save
 # - Terminals: apply with `omarchy restart terminal` (reloads running terminals; foot picks changes up in new windows)
 ```
 
@@ -285,10 +285,10 @@ This skill intentionally does not cover LUNOR OS source development. Do not use 
 - "Set a reminder to pickup jack in 15 minutes" -> `omarchy reminder 15 "Pickup Jack"`
 - "Show my reminders" -> `omarchy reminder show`
 - "Clear all reminders" -> `omarchy reminder clear`
-- "Customize the catppuccin theme colors" -> Overlay: put an edited `colors.toml` in `~/.config/omarchy/themes/catppuccin/`, then re-apply the theme (see `theming.md`)
+- "Customize the catppuccin theme colors" -> Overlay: put an edited `colors.toml` in `~/.config/lunor/themes/catppuccin/`, then re-apply the theme (see `theming.md`)
 - "Run a script every time I change themes" -> Install it with `omarchy hook install theme-set <script>`
 - "Change how workspace labels are rendered" -> Clone `omarchy.workspaces`, which switches the bar to `<username>.workspaces`, then edit the clone
-- "Lock after ten minutes" -> Set `idle.lock` to `600` in `~/.config/omarchy/shell.json`
+- "Lock after ten minutes" -> Set `idle.lock` to `600` in `~/.config/lunor/shell.json`
 - "Reset shell/bar to defaults" -> `omarchy refresh shell`
 - "Record my screen" -> `omarchy screenrecord --fullscreen`, then `omarchy screenrecord --stop-recording` (see `capture.md`)
 - "Report this bug to LUNOR OS" -> Gather diagnostics and a capture of the problem, then file it (see `contributing.md`)

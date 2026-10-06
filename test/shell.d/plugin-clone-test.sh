@@ -6,7 +6,7 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
-mkdir -p "$TMPDIR/home/.config/omarchy" "$TMPDIR/bin"
+mkdir -p "$TMPDIR/home/.config/lunor" "$TMPDIR/bin"
 CALLS="$TMPDIR/calls"
 
 cat >"$TMPDIR/bin/omarchy-shell" <<'SH'
@@ -21,7 +21,7 @@ elif [[ $* == *"listPlugins"* ]]; then
   if [[ ${FAKE_NO_DISCOVERY:-0} == 1 ]]; then
     printf '[]\n'
   else
-    find "$HOME/.config/omarchy/plugins" -mindepth 2 -maxdepth 2 -name manifest.json -print0 |
+    find "$HOME/.config/lunor/plugins" -mindepth 2 -maxdepth 2 -name manifest.json -print0 |
       xargs -0 -r jq -s 'map({id: .id, enabled: true})'
   fi
 elif [[ $* == *"setPluginEnabled"* ]]; then
@@ -56,7 +56,7 @@ clone_plugin() {
 }
 
 clone_plugin omarchy.clock >/dev/null
-clock="$TMPDIR/home/.config/omarchy/plugins/tester.clock"
+clock="$TMPDIR/home/.config/lunor/plugins/tester.clock"
 
 for file in manifest.json BarWidget.qml Panel.qml Model.js; do
   [[ -f $clock/$file ]] || fail "clock clone is missing $file"
@@ -94,7 +94,7 @@ grep -qx 'omarchy-plugin-enable tester.keyboard-layout' "$CALLS" ||
 pass "clone enables clones of legacy string-form bar entries"
 
 clone_plugin omarchy.menu >/dev/null
-menu="$TMPDIR/home/.config/omarchy/plugins/tester.menu"
+menu="$TMPDIR/home/.config/lunor/plugins/tester.menu"
 
 for file in manifest.json Menu.qml MenuModel.js BarWidget.qml; do
   [[ -f $menu/$file ]] || fail "menu clone is missing $file"
@@ -119,7 +119,7 @@ grep -q 'Restored omarchy.menu.' <<<"$remove_output" ||
 pass "removing an enabled clone goes through plugin disable and reports its source"
 
 clone_plugin omarchy.active-window >/dev/null
-[[ -f $TMPDIR/home/.config/omarchy/plugins/tester.active-window/ActiveWindow.qml ]] ||
+[[ -f $TMPDIR/home/.config/lunor/plugins/tester.active-window/ActiveWindow.qml ]] ||
   fail "flat bar plugin clone is incomplete"
 pass "flat bar plugins clone from adjacent manifests"
 
@@ -128,7 +128,7 @@ grep -qx 'omarchy-plugin-enable tester.active-window' "$CALLS" ||
 pass "clone activates an absent bar widget"
 
 clone_plugin omarchy.indicators >/dev/null
-indicators="$TMPDIR/home/.config/omarchy/plugins/tester.indicators"
+indicators="$TMPDIR/home/.config/lunor/plugins/tester.indicators"
 for file in Indicators.qml indicators/Dnd.qml indicators/Reminder.qml; do
   [[ -f $indicators/$file ]] || fail "indicators clone is missing $file"
 done
@@ -137,7 +137,7 @@ grep -q 'Qt.resolvedUrl("indicators/"' "$indicators/Indicators.qml" ||
 pass "flat bar plugins declare extra clone dependencies"
 
 clone_plugin omarchy.tray >/dev/null
-[[ -f $TMPDIR/home/.config/omarchy/plugins/tester.tray/TrayModel.js ]] ||
+[[ -f $TMPDIR/home/.config/lunor/plugins/tester.tray/TrayModel.js ]] ||
   fail "tray clone is missing its model"
 pass "flat bar plugins keep local script dependencies"
 
@@ -152,13 +152,13 @@ grep -qx 'omarchy-plugin-enable tester.background' "$CALLS" ||
 pass "clone switches ordinary plugins"
 
 EDITOR=fake-editor clone_plugin omarchy.weather --edit >/dev/null
-grep -qx "fake-editor $TMPDIR/home/.config/omarchy/plugins/tester.weather" "$CALLS" ||
+grep -qx "fake-editor $TMPDIR/home/.config/lunor/plugins/tester.weather" "$CALLS" ||
   fail "clone --edit does not open the clone in EDITOR"
 pass "clone --edit opens the clone in EDITOR"
-rm -rf "$TMPDIR/home/.config/omarchy/plugins/tester.weather"
+rm -rf "$TMPDIR/home/.config/lunor/plugins/tester.weather"
 
-mkdir -p "$TMPDIR/home/.config/omarchy/plugins/acme.example"
-cat >"$TMPDIR/home/.config/omarchy/plugins/acme.example/manifest.json" <<'JSON'
+mkdir -p "$TMPDIR/home/.config/lunor/plugins/acme.example"
+cat >"$TMPDIR/home/.config/lunor/plugins/acme.example/manifest.json" <<'JSON'
 {"id":"acme.example","name":"Example","kinds":["bar-widget"],"entryPoints":{"barWidget":"Widget.qml"}}
 JSON
 if clone_plugin acme.example >/dev/null 2>&1; then
@@ -169,14 +169,14 @@ pass "clone is limited to built-in plugins"
 if clone_plugin omarchy.weather custom.weather >/dev/null 2>&1; then
   fail "clone accepts a custom id"
 fi
-[[ ! -e $TMPDIR/home/.config/omarchy/plugins/tester.weather ]] ||
+[[ ! -e $TMPDIR/home/.config/lunor/plugins/tester.weather ]] ||
   fail "rejected custom id leaves a clone behind"
 pass "clone derives the personal id from the username"
 
 if clone_plugin omarchy.weather --replace >/dev/null 2>&1; then
   fail "clone still accepts bar layout actions"
 fi
-[[ ! -e $TMPDIR/home/.config/omarchy/plugins/tester.weather ]] ||
+[[ ! -e $TMPDIR/home/.config/lunor/plugins/tester.weather ]] ||
   fail "rejected bar action leaves a clone behind"
 pass "clone does not accept manual switch options"
 
@@ -188,6 +188,6 @@ pass "clone requires an explicit source id"
 if FAKE_NO_DISCOVERY=1 clone_plugin omarchy.osd >/dev/null 2>&1; then
   fail "clone succeeds before the shell discovers it"
 fi
-[[ ! -e $TMPDIR/home/.config/omarchy/plugins/tester.osd ]] ||
+[[ ! -e $TMPDIR/home/.config/lunor/plugins/tester.osd ]] ||
   fail "failed clone discovery leaves a partial clone behind"
 pass "clone removes a partial clone when switching fails"

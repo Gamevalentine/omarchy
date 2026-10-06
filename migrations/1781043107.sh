@@ -1,9 +1,9 @@
 echo "Move current LUNOR OS theme state to ~/.local/state"
 
-legacy_current_dir="$HOME/.config/omarchy/current"
-current_state_dir="$HOME/.local/state/omarchy/current"
+legacy_current_dir="$HOME/.config/lunor/current"
+current_state_dir="$HOME/.local/state/lunor/current"
 
-mkdir -p "$HOME/.local/state/omarchy"
+mkdir -p "$HOME/.local/state/lunor"
 
 if [[ -e $legacy_current_dir || -L $legacy_current_dir ]]; then
   if [[ ! -e $current_state_dir && ! -L $current_state_dir ]]; then
@@ -46,9 +46,9 @@ replace_current_path() {
 
   [[ -f $file ]] || return 0
 
-  replace_literal_in_file "$file" "$HOME/.config/omarchy/current" "$HOME/.local/state/omarchy/current"
-  replace_literal_in_file "$file" "~/.config/omarchy/current" "~/.local/state/omarchy/current"
-  replace_literal_in_file "$file" "../omarchy/current" "../../.local/state/omarchy/current"
+  replace_literal_in_file "$file" "$HOME/.config/lunor/current" "$HOME/.local/state/lunor/current"
+  replace_literal_in_file "$file" "~/.config/lunor/current" "~/.local/state/lunor/current"
+  replace_literal_in_file "$file" "../omarchy/current" "../../.local/state/lunor/current"
 }
 
 ensure_hyprland_state_path() {
@@ -98,10 +98,10 @@ relink_current_symlink() {
       suffix=${target#"$legacy_current_dir"/}
       ln -sfn "$current_state_dir/$suffix" "$link"
       ;;
-    "~/.config/omarchy/current/"*)
+    "~/.config/lunor/current/"*)
       # The filesystem never expands a literal ~ in a symlink target, so keep
       # $HOME out of the quoted string and let the shell expand it instead.
-      suffix=${target#"~/.config/omarchy/current/"}
+      suffix=${target#"~/.config/lunor/current/"}
       ln -sfn "$current_state_dir/$suffix" "$link"
       ;;
   esac

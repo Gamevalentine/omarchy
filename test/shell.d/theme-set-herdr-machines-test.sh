@@ -13,7 +13,7 @@ export SYNC_TEST
 local_home="$SYNC_TEST/home"
 stub_bin="$SYNC_TEST/bin"
 remote_bin="$SYNC_TEST/remote-bin"
-mkdir -p "$local_home/.local/state/omarchy/current" "$stub_bin" "$remote_bin" "$SYNC_TEST/run"
+mkdir -p "$local_home/.local/state/lunor/current" "$stub_bin" "$remote_bin" "$SYNC_TEST/run"
 
 # herdr lists one unreachable machine first, this machine, and a disabled one.
 cat >"$stub_bin/herdr" <<'EOF'
@@ -64,17 +64,17 @@ reset_remotes() {
   rm -rf "$SYNC_TEST/remotes" "$SYNC_TEST/ssh-calls"
   local machine
   for machine in alpha beta gamma local-box; do
-    mkdir -p "$SYNC_TEST/remotes/$machine/.local/state/omarchy/current"
-    echo "tokyo-night" >"$SYNC_TEST/remotes/$machine/.local/state/omarchy/current/theme.name"
-    mkdir -p "$SYNC_TEST/remotes/$machine/.local/state/omarchy/toggles"
-    touch "$SYNC_TEST/remotes/$machine/.local/state/omarchy/toggles/herdr-theme-sync"
+    mkdir -p "$SYNC_TEST/remotes/$machine/.local/state/lunor/current"
+    echo "tokyo-night" >"$SYNC_TEST/remotes/$machine/.local/state/lunor/current/theme.name"
+    mkdir -p "$SYNC_TEST/remotes/$machine/.local/state/lunor/toggles"
+    touch "$SYNC_TEST/remotes/$machine/.local/state/lunor/toggles/herdr-theme-sync"
   done
 }
 
-local_toggle="$local_home/.local/state/omarchy/toggles/herdr-theme-sync"
+local_toggle="$local_home/.local/state/lunor/toggles/herdr-theme-sync"
 
 set_local_theme() {
-  echo "$1" >"$local_home/.local/state/omarchy/current/theme.name"
+  echo "$1" >"$local_home/.local/state/lunor/current/theme.name"
 }
 
 run_sync() {
@@ -97,8 +97,8 @@ touch "$local_toggle"
 # Syncs every enabled machine except this one, skipping machines already on the theme.
 reset_remotes
 set_local_theme lumon
-echo "lumon" >"$SYNC_TEST/remotes/beta/.local/state/omarchy/current/theme.name"
-echo "lumon" >"$SYNC_TEST/remotes/local-box/.local/state/omarchy/current/theme.name"
+echo "lumon" >"$SYNC_TEST/remotes/beta/.local/state/lunor/current/theme.name"
+echo "lumon" >"$SYNC_TEST/remotes/local-box/.local/state/lunor/current/theme.name"
 output=$(run_sync)
 [[ $(set_log alpha) == "theme set lumon from=local-box session=wayland-1" ]] || fail "sets the theme inside the newest Hyprland session"
 pass "sets the theme inside the newest Hyprland session"
@@ -117,7 +117,7 @@ pass "connects to machines one at a time in order"
 
 # A machine with the toggle off refuses themes from other machines.
 reset_remotes
-rm "$SYNC_TEST/remotes/gamma/.local/state/omarchy/toggles/herdr-theme-sync"
+rm "$SYNC_TEST/remotes/gamma/.local/state/lunor/toggles/herdr-theme-sync"
 output=$(run_sync)
 [[ -z $(set_log gamma) && $output == *"gamma: theme sync is off"* ]] || fail "a remote with theme sync off keeps its theme"
 pass "a remote with theme sync off keeps its theme"

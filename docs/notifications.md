@@ -21,7 +21,7 @@ it — new text deserves a full look. Left-click invokes the default action,
 right-click or the hover-revealed close button dismisses.
 
 Every on-screen popup is mirrored to its own file under
-`~/.local/state/omarchy/notifications/` (one JSON line per file, named
+`~/.local/state/lunor/notifications/` (one JSON line per file, named
 `<timestamp>-<id>.json`), so live toasts survive the shell restart that
 `omarchy-update` performs. When a toast leaves the screen — expiry, dismissal,
 or click — its file moves into `notifications/history/`, trimmed to the newest
@@ -40,7 +40,7 @@ fresh notification reusing an old id must not dismiss or replace them.
 ## Silencing
 
 Do-not-disturb is a single boolean, persisted as the `dnd` key in
-`~/.local/state/omarchy/notifications.json` and toggled via shell IPC
+`~/.local/state/lunor/notifications.json` and toggled via shell IPC
 (`omarchy-shell notifications toggleDnd` / `setDnd` / `dndState`).
 `omarchy-toggle-notification-silencing` wraps the toggle and refreshes the
 bar's `omarchy.indicators` widget, whose Dnd indicator binds directly to the

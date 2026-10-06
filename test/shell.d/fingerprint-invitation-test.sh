@@ -12,7 +12,7 @@ test_home=$(mktemp -d)
 test_bin=$(mktemp -d)
 log_file=$(mktemp)
 hw_marker=$(mktemp -u)
-hook_path="$test_home/.config/omarchy/hooks/post-update.d/setup-fingerprint.hook"
+hook_path="$test_home/.config/lunor/hooks/post-update.d/setup-fingerprint.hook"
 
 cleanup() {
   rm -rf "$test_home" "$test_bin"
@@ -55,13 +55,13 @@ run_invitation_hook() {
 
 run_invitation_hook
 
-[[ ! -f $test_home/.local/state/omarchy/done/fingerprint-setup-invitation ]] || fail "fingerprint invitation stays pending without a reader"
+[[ ! -f $test_home/.local/state/lunor/done/fingerprint-setup-invitation ]] || fail "fingerprint invitation stays pending without a reader"
 [[ ! -s $log_file ]] || fail "fingerprint invitation does nothing without a reader"
 
 touch "$hw_marker"
 run_invitation_hook
 
-[[ -f $test_home/.local/state/omarchy/done/fingerprint-setup-invitation ]] || fail "fingerprint invitation records completion"
+[[ -f $test_home/.local/state/lunor/done/fingerprint-setup-invitation ]] || fail "fingerprint invitation records completion"
 [[ -f $hook_path ]] || fail "fingerprint invitation keeps its hook installed"
 [[ $(grep -c '^notification$' "$log_file") -eq 1 ]] || fail "fingerprint invitation sends one notification"
 grep -qx 'exec:omarchy-launch-floating-terminal-with-presentation omarchy-setup-security-fingerprint' "$log_file" ||

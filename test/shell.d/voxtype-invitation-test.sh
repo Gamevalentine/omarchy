@@ -5,7 +5,7 @@ source "$(dirname "$0")/base-test.sh"
 test_home=$(mktemp -d)
 test_bin=$(mktemp -d)
 log_file=$(mktemp)
-hook_path="$test_home/.config/omarchy/hooks/post-update.d/install-voxtype.hook"
+hook_path="$test_home/.config/lunor/hooks/post-update.d/install-voxtype.hook"
 
 cleanup() {
   rm -rf "$test_home" "$test_bin"
@@ -42,7 +42,7 @@ run_invitation_hook() {
 
 run_invitation_hook
 
-[[ -f $test_home/.local/state/omarchy/done/voxtype-install-invitation ]] || fail "Voxtype invitation records completion"
+[[ -f $test_home/.local/state/lunor/done/voxtype-install-invitation ]] || fail "Voxtype invitation records completion"
 [[ -f $hook_path ]] || fail "Voxtype invitation keeps its hook installed"
 [[ $(grep -c '^notification$' "$log_file") -eq 1 ]] || fail "Voxtype invitation sends one notification"
 grep -qx 'exec:omarchy-launch-floating-terminal-with-presentation omarchy-voxtype-install' "$log_file" ||

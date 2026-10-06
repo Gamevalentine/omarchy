@@ -1,6 +1,6 @@
 echo "Remove the obsolete Voxtype Hyprland toggle"
 
-rm -f "$HOME/.local/state/omarchy/toggles/hypr/voxtype.lua"
+rm -f "$HOME/.local/state/lunor/toggles/hypr/voxtype.lua"
 
 # The Quattro upgrade runs the packaged migrations against a still-running
 # LUNOR OS 3 session whose config is mid-swap, so a reload here only re-parses a

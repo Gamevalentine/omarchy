@@ -16,7 +16,7 @@ log_file="$tmpdir/hyprctl.log"
 marker="$tmpdir/marker"
 mkdir -p "$stub_dir" "$home_dir" "$xdg_decoy"
 
-state_dir="$home_dir/.local/state/omarchy/toggles/hypr"
+state_dir="$home_dir/.local/state/lunor/toggles/hypr"
 name_file="$state_dir/touchpad-disabled-name"
 state_lua="$state_dir/touchpad-disabled.lua"
 
@@ -265,7 +265,7 @@ pass "migration no-ops with nothing left to migrate"
 # must not source it. toggles.lua excludes those two names from require_all, so the
 # payload never runs, while a current name-file disable still applies.
 reload_home="$tmpdir/reload-home"
-reload_state="$reload_home/.local/state/omarchy/toggles/hypr"
+reload_state="$reload_home/.local/state/lunor/toggles/hypr"
 mkdir -p "$reload_state"
 reload_marker="$tmpdir/reload-executed"
 rm -f "$reload_marker"

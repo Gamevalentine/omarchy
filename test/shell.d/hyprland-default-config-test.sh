@@ -120,8 +120,8 @@ fi
 pass "universal clipboard shortcuts avoid virtual keyboard modifier merging"
 
 removed_home="$tmpdir/removed-home"
-mkdir -p "$removed_home/.local/state/omarchy"
-touch "$removed_home/.local/state/omarchy/preinstalls-removed"
+mkdir -p "$removed_home/.local/state/lunor"
+touch "$removed_home/.local/state/lunor/preinstalls-removed"
 removed_output=$(run_application_bindings "$removed_home")
 grep -Fq $'SUPER + RETURN	Terminal' <<<"$removed_output" || fail "preinstall removal keeps essential bindings"
 if grep -Fq $'SUPER + SHIFT + A	ChatGPT' <<<"$removed_output"; then
@@ -244,7 +244,7 @@ LUA
 HOME="$migration_home" OMARCHY_PATH="$ROOT" bash -euo pipefail "$migration" >/dev/null
 cmp -s "$ROOT/config/hypr/bindings.lua" "$migration_home/.config/hypr/bindings.lua" ||
   fail "plain legacy bindings migrate to the user override stub"
-[[ -f $migration_home/.local/state/omarchy/preinstalls-removed ]] ||
+[[ -f $migration_home/.local/state/lunor/preinstalls-removed ]] ||
   fail "plain legacy bindings preserve preinstall removal state"
 pass "migration converts plain legacy bindings to package-owned defaults"
 

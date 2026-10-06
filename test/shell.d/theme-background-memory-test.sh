@@ -9,8 +9,8 @@ trap 'rm -rf "$test_tmp"' EXIT
 
 test_home="$test_tmp/home"
 runtime_dir="$test_tmp/runtime"
-current_state="$test_home/.local/state/omarchy/current"
-background_state="$test_home/.local/state/omarchy/theme-backgrounds"
+current_state="$test_home/.local/state/lunor/current"
+background_state="$test_home/.local/state/lunor/theme-backgrounds"
 mkdir -p "$test_home" "$runtime_dir"
 
 set_theme() {
@@ -69,7 +69,7 @@ set_theme "$theme_b"
 pass "reapplying a theme with an external background falls back to the first image"
 
 set_theme "$theme_a"
-user_background_dir="$test_home/.config/omarchy/backgrounds/$theme_a"
+user_background_dir="$test_home/.config/lunor/backgrounds/$theme_a"
 user_background="$user_background_dir/$theme_a_first"
 mkdir -p "$user_background_dir"
 cp "${theme_a_backgrounds[0]}" "$user_background"
@@ -92,7 +92,7 @@ pass "reapplying the active theme still cycles backgrounds"
 
 printf '%s\n' "../escaped" >"$current_state/theme.name"
 set_theme "$theme_b"
-[[ ! -e $test_home/.local/state/omarchy/escaped ]] || fail "invalid theme names cannot escape the background state directory"
+[[ ! -e $test_home/.local/state/lunor/escaped ]] || fail "invalid theme names cannot escape the background state directory"
 pass "invalid theme names cannot escape the background state directory"
 
 # Interactive switches choose before swapping the staged theme into place.

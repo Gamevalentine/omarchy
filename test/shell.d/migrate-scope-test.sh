@@ -36,8 +36,8 @@ TEST_CALLS="$calls" \
   "$ROOT/bin/omarchy-migrate" >"$test_tmp/first-run.out"
 [[ $(sed -n '1p' "$calls") == "first" ]] || fail "migration runner runs first migration"
 [[ $(sed -n '2p' "$calls") == "second" ]] || fail "migration runner runs second migration"
-[[ -f $test_home/.local/state/omarchy/migrations/100-first.sh ]] || fail "migration runner records first migration marker"
-[[ -f $test_home/.local/state/omarchy/migrations/200-second.sh ]] || fail "migration runner records second migration marker"
+[[ -f $test_home/.local/state/lunor/migrations/100-first.sh ]] || fail "migration runner records first migration marker"
+[[ -f $test_home/.local/state/lunor/migrations/200-second.sh ]] || fail "migration runner records second migration marker"
 pass "migration runner runs all migrations"
 
 HOME="$test_home" \
@@ -71,7 +71,7 @@ TEST_CALLS="$calls" \
 failure_status=$?
 set -e
 [[ $failure_status -ne 0 ]] || fail "migration runner exits non-zero when a migration fails"
-[[ ! -f $failure_home/.local/state/omarchy/migrations/500-fail.sh ]] || fail "migration runner does not mark failed migration complete"
+[[ ! -f $failure_home/.local/state/lunor/migrations/500-fail.sh ]] || fail "migration runner does not mark failed migration complete"
 grep -q '^before-fail$' "$calls" || fail "migration runner started failing migration"
 ! grep -q '^after-fail$' "$calls" || fail "migration runner stops failing migration under strict mode"
 pass "migration runner does not mark failed migrations complete"
@@ -99,7 +99,7 @@ grep -q '^reader:migration input$' "$stdin_calls" ||
   fail "migration runner preserves the caller's stdin for a migration" "$(cat "$stdin_calls")"
 grep -q '^after-reader$' "$stdin_calls" ||
   fail "a migration reading stdin does not swallow later queue entries" "$(cat "$stdin_calls")"
-[[ -f $stdin_home/.local/state/omarchy/migrations/100-reader.sh &&
-  -f $stdin_home/.local/state/omarchy/migrations/200-after.sh ]] ||
+[[ -f $stdin_home/.local/state/lunor/migrations/100-reader.sh &&
+  -f $stdin_home/.local/state/lunor/migrations/200-after.sh ]] ||
   fail "migration runner marks both stdin-isolated migrations complete"
 pass "migration queue uses a private file descriptor instead of migration stdin"

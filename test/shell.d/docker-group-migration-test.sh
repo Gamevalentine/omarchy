@@ -53,7 +53,7 @@ touch "${REBOOT_CALLED:?}"
 STUB
 chmod +x "$stub_bin/id" "$stub_bin/sudo" "$stub_bin/gpasswd" "$stub_bin/gum" "$stub_bin/omarchy-system-reboot"
 
-reboot_flag="$home/.local/state/omarchy/reboot-required"
+reboot_flag="$home/.local/state/lunor/reboot-required"
 gpasswd_calls="$test_dir/gpasswd-calls"
 reboot_called="$test_dir/reboot-called"
 launcher="$home/.local/share/applications/Docker.desktop"

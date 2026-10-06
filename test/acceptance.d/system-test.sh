@@ -119,10 +119,10 @@ verify_user_setup() {
   done
   pass "XDG user directories exist"
 
-  [[ -e $HOME/.local/state/omarchy/current/theme ]] || fail "current theme state exists"
-  [[ -e $HOME/.local/state/omarchy/current/background ]] || fail "current background state exists"
-  [[ -s $HOME/.config/omarchy/shell.json ]] || fail "shell configuration exists"
-  jq empty "$HOME/.config/omarchy/shell.json" || fail "shell configuration is valid JSON"
+  [[ -e $HOME/.local/state/lunor/current/theme ]] || fail "current theme state exists"
+  [[ -e $HOME/.local/state/lunor/current/background ]] || fail "current background state exists"
+  [[ -s $HOME/.config/lunor/shell.json ]] || fail "shell configuration exists"
+  jq empty "$HOME/.config/lunor/shell.json" || fail "shell configuration is valid JSON"
   pass "LUNOR OS user state and shell configuration exist"
 }
 

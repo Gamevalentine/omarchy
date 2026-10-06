@@ -257,9 +257,9 @@ pass "safe dispatch works for font list"
 pass "safe dispatch works for font current"
 
 make_tmpdir PI_TMPDIR
-NEXT_THEME="$PI_TMPDIR/.local/state/omarchy/current/next-theme"
-CURRENT_THEME="$PI_TMPDIR/.local/state/omarchy/current/theme"
-USER_THEMED="$PI_TMPDIR/.config/omarchy/themed"
+NEXT_THEME="$PI_TMPDIR/.local/state/lunor/current/next-theme"
+CURRENT_THEME="$PI_TMPDIR/.local/state/lunor/current/theme"
+USER_THEMED="$PI_TMPDIR/.config/lunor/themed"
 mkdir -p "$NEXT_THEME" "$CURRENT_THEME" "$USER_THEMED"
 
 cat >"$NEXT_THEME/colors.toml" <<'EOF'
@@ -418,7 +418,7 @@ EOF
 pass "legacy short palette resolves every canonical neutral color"
 
 LEGACY_THEME_HOME="$PI_TMPDIR/legacy-theme-home"
-LEGACY_NEXT_THEME="$LEGACY_THEME_HOME/.local/state/omarchy/current/next-theme"
+LEGACY_NEXT_THEME="$LEGACY_THEME_HOME/.local/state/lunor/current/next-theme"
 mkdir -p "$LEGACY_NEXT_THEME"
 cp "$LEGACY_COLORS_FILE" "$LEGACY_NEXT_THEME/colors.toml"
 OMARCHY_PATH="$ROOT" HOME="$LEGACY_THEME_HOME" "$ROOT/bin/omarchy-theme-set-templates"
@@ -521,11 +521,11 @@ pass "claude theme activation preserves configured settings"
 
 make_tmpdir THEME_TMPDIR
 OMARCHY_PATH="$ROOT" HOME="$THEME_TMPDIR" OMARCHY_THEME_HEADLESS=1 "$ROOT/bin/omarchy-theme-set" "Tokyo Night"
-background_path=$(readlink -f "$THEME_TMPDIR/.local/state/omarchy/current/background" 2>/dev/null || true)
-expected_background="$THEME_TMPDIR/.local/state/omarchy/current/theme/backgrounds/0-winding-road.webp"
+background_path=$(readlink -f "$THEME_TMPDIR/.local/state/lunor/current/background" 2>/dev/null || true)
+expected_background="$THEME_TMPDIR/.local/state/lunor/current/theme/backgrounds/0-winding-road.webp"
 [[ $background_path == "$expected_background" ]] || fail "headless theme set creates current background symlink"
 [[ -f $background_path ]] || fail "headless theme background target exists"
-[[ ! -e $THEME_TMPDIR/.config/omarchy/current ]] || fail "headless theme set avoids config current state"
+[[ ! -e $THEME_TMPDIR/.config/lunor/current ]] || fail "headless theme set avoids config current state"
 pass "headless theme set creates current background symlink"
 
 cp "$NEXT_THEME/colors.toml" "$CURRENT_THEME/colors.toml"
@@ -609,13 +609,13 @@ EOF
 chmod +x "$FAKE_BIN/omarchy-toggle-enabled"
 
 mkdir -p "$PI_TMPDIR/.vscode/extensions"
-generated_version="1.0.$(cksum "$PI_TMPDIR/.local/state/omarchy/current/theme/vscode-theme.json" | cut -d' ' -f1)"
+generated_version="1.0.$(cksum "$PI_TMPDIR/.local/state/lunor/current/theme/vscode-theme.json" | cut -d' ' -f1)"
 jq -n --arg key "local.omarchy-theme-$generated_version" '{($key):true}' >"$PI_TMPDIR/.vscode/extensions/.obsolete"
 PATH="$FAKE_BIN:$ROOT/bin:$PATH" HOME="$PI_TMPDIR" "$ROOT/bin/omarchy-theme-set-vscode"
 jq -e '.contributes.themes[0].uiTheme == "vs"' "$PI_TMPDIR/.vscode/extensions/omarchy-theme/package.json" >/dev/null || fail "vscode generated light theme uses VS Code light uiTheme"
 pass "vscode generated light theme uses VS Code light uiTheme"
 [[ ! -L $PI_TMPDIR/.vscode/extensions/omarchy-theme/themes/omarchy-color-theme.json ]] || fail "vscode generated theme survives current theme replacement"
-cmp "$PI_TMPDIR/.local/state/omarchy/current/theme/vscode-theme.json" "$PI_TMPDIR/.vscode/extensions/omarchy-theme/themes/omarchy-color-theme.json" || fail "vscode generated theme contains the current palette"
+cmp "$PI_TMPDIR/.local/state/lunor/current/theme/vscode-theme.json" "$PI_TMPDIR/.vscode/extensions/omarchy-theme/themes/omarchy-color-theme.json" || fail "vscode generated theme contains the current palette"
 pass "vscode generated theme contains a copy of the current palette"
 [[ ! -f $PI_TMPDIR/.vscode/extensions/.obsolete ]] || fail "vscode generated theme clears obsolete extension marker"
 pass "vscode generated theme clears obsolete extension marker"

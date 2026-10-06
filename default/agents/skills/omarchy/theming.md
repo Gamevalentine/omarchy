@@ -14,17 +14,17 @@ omarchy theme install <url>     # Install from git repo
 
 ## Making a New Theme
 
-1. Create a directory under `~/.config/omarchy/themes`.
+1. Create a directory under `~/.config/lunor/themes`.
 2. See how an existing theme is done via `/usr/share/omarchy/themes/catppuccin`.
-3. Download a matching background (or several) from the internet and put them in `~/.config/omarchy/themes/<name-of-new-theme>/backgrounds/`.
+3. Download a matching background (or several) from the internet and put them in `~/.config/lunor/themes/<name-of-new-theme>/backgrounds/`.
 4. When done with the theme, run `omarchy theme set "Name of new theme"`.
 
 Additional user backgrounds for any theme (stock or custom) go in
-`~/.config/omarchy/backgrounds/<theme-slug>/`.
+`~/.config/lunor/backgrounds/<theme-slug>/`.
 
 ## What a Theme Installed From a Repo May Not Contain
 
-A theme the user wrote by hand in `~/.config/omarchy/themes` is unrestricted, as
+A theme the user wrote by hand in `~/.config/lunor/themes` is unrestricted, as
 are LUNOR OS's own themes. From a theme cloned by `omarchy theme install`, LUNOR OS
 drops only what runs code: any `*.lua` (Hyprland requires a theme's
 `hyprland.lua` and `gum_env.lua` at login, Neovim loads `neovim.lua` at startup),
@@ -39,7 +39,7 @@ LUNOR OS tells a cloned theme from the user's own by the `.git` directory a clon
 leaves behind.
 
 To change how LUNOR OS themes an app for every theme, write the template rather
-than the theme: `~/.config/omarchy/themed/<config-name>.tpl` overrides the
+than the theme: `~/.config/lunor/themed/<config-name>.tpl` overrides the
 built-in one. See `docs/theming.md` in the LUNOR OS repo.
 
 ## Customizing a Stock Theme
@@ -47,7 +47,7 @@ built-in one. See `docs/theming.md` in the LUNOR OS repo.
 Never edit stock themes under `/usr/share/omarchy/themes/` — changes are lost
 on update. Two safe options:
 
-Both write into `~/.config/omarchy/themes`, where a theme the user wrote is
+Both write into `~/.config/lunor/themes`, where a theme the user wrote is
 unrestricted — the list above applies only to a theme cloned from a repo.
 
 **Overlay (preferred for small tweaks):** create a user theme directory with
@@ -55,8 +55,8 @@ the SAME slug containing only the files you want to change. When the theme is
 applied, the stock theme is copied first and your files win on top:
 
 ```bash
-mkdir -p ~/.config/omarchy/themes/catppuccin
-cp /usr/share/omarchy/themes/catppuccin/colors.toml ~/.config/omarchy/themes/catppuccin/
+mkdir -p ~/.config/lunor/themes/catppuccin
+cp /usr/share/omarchy/themes/catppuccin/colors.toml ~/.config/lunor/themes/catppuccin/
 # Edit the copied colors.toml, then re-apply:
 omarchy theme set catppuccin
 ```
@@ -65,8 +65,8 @@ omarchy theme set catppuccin
 variant:
 
 ```bash
-cp -r /usr/share/omarchy/themes/catppuccin ~/.config/omarchy/themes/catppuccin-custom
-# Edit ~/.config/omarchy/themes/catppuccin-custom/, then:
+cp -r /usr/share/omarchy/themes/catppuccin ~/.config/lunor/themes/catppuccin-custom
+# Edit ~/.config/lunor/themes/catppuccin-custom/, then:
 omarchy theme set catppuccin-custom
 ```
 

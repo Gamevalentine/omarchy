@@ -14,7 +14,7 @@ Here's a list of the key files in `~/.config` and what they control:
 | `~/.config/hypr/input.lua` | Controls your keyboard layout, mouse, and trackpad settings. |
 | `~/.config/hypr/looknfeel.lua` | Controls gaps, borders, animations, and the rest of the look. |
 | `~/.config/hypr/autostart.lua` | Controls extra processes started with the session. |
-| `~/.config/omarchy/shell.json` | Controls the LUNOR OS shell: bar position, layout, and widgets, plus screensaver, lock, and idle timings. |
+| `~/.config/lunor/shell.json` | Controls the LUNOR OS shell: bar position, layout, and widgets, plus screensaver, lock, and idle timings. |
 | `~/.config/foot/foot.ini` | Controls your terminal (foot is the default). |
 | `~/.XCompose` | Defines your quick-access emoji and name/email autocomplete. Make sure to run `omarchy-restart-xcompose` after making changes. |
 
@@ -32,7 +32,7 @@ That starts the command as part of the session, so it's properly cleaned up when
 
 ### Running scripts on system events
 
-LUNOR OS fires hooks at a handful of moments, and you can hang your own scripts off them. They live in `~/.config/omarchy/hooks/<event>.d/`, one directory per event, and every executable file in there runs when the event happens:
+LUNOR OS fires hooks at a handful of moments, and you can hang your own scripts off them. They live in `~/.config/lunor/hooks/<event>.d/`, one directory per event, and every executable file in there runs when the event happens:
 
 | Event | When it runs |
 | ----- | ------------ |
@@ -49,7 +49,7 @@ Each of those directories already holds a `.sample` file showing the shape of a 
 
 ### Adding your own menu entries
 
-The LUNOR OS menu (`Super + Space`) can be extended with your own rows by editing `~/.config/omarchy/extensions/omarchy-menu.jsonc`. Entries are keyed by a dotted id, and the id is what places them in the tree, so `personal` shows up on the root menu and `personal.notes` shows up inside it:
+The LUNOR OS menu (`Super + Space`) can be extended with your own rows by editing `~/.config/lunor/extensions/omarchy-menu.jsonc`. Entries are keyed by a dotted id, and the id is what places them in the tree, so `personal` shows up on the root menu and `personal.notes` shows up inside it:
 
 ```jsonc
 "personal": {"icon":"","label":"Personal"},

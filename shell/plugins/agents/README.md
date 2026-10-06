@@ -2,7 +2,7 @@
 
 One bar icon and one panel for every AI coding subscription on the machine.
 The panel is strictly a display: it watches the usage records that
-`omarchy-agent-usage-update` writes to `~/.local/state/omarchy/agents/usage/`
+`omarchy-agent-usage-update` writes to `~/.local/state/lunor/agents/usage/`
 and draws whatever appears there. `Panel.qml` owns the bar button and the
 popup; `Main.qml` discovers and watches the records (and handles the optional
 cross-device aggregation); `Agent.qml` is the per-record file watcher.
@@ -56,7 +56,7 @@ mid-session shows up at the next refresh. Drop the widget with
 
 ## Data
 
-Each agent is one JSON record in `~/.local/state/omarchy/agents/usage/`,
+Each agent is one JSON record in `~/.local/state/lunor/agents/usage/`,
 written by `omarchy-agent-usage-update`. That command runs one
 `omarchy-agent-usage-<agent>` collector per agent; the widget invokes it
 on its refresh timer and whenever you ask for a refresh, and picks up any
@@ -75,7 +75,7 @@ light surfaces — and the bar glyph stands in when there is none.
 | `grok` | The credits endpoint behind Grok's `/usage` view (the billing period's included usage) | Each session's `usage.json` (the ledger `grok usage` prints: tokens by model per finished turn), plus `summary.json` for sessions |
 | `fireworks` | Estimated prepaid balance: configured funding minus rated account costs | Fireworks billing API, grouped by day and model for the last 30 days |
 
-When `~/.local/state/omarchy/agents/accounts/<claude|codex|grok>.json`
+When `~/.local/state/lunor/agents/accounts/<claude|codex|grok>.json`
 registers more than one account, the `claude`, `codex`, and `grok` records
 also carry
 `accounts: [{ id, label, email, plan, active, limits, stale, usageStatusText,
@@ -112,7 +112,7 @@ August 2026 no console-issued API key passes it — Fireworks appears to
 reserve it for the dashboard session. The probe stays because it is cheap
 and the live figure lights up automatically if Fireworks ever opens it to
 keys. Until then the collector falls back to estimating the balance from
-configuration in `~/.config/omarchy/agents/fireworks.json`:
+configuration in `~/.config/lunor/agents/fireworks.json`:
 
 ```json
 {
@@ -143,7 +143,7 @@ only adds the meter and the spent-of-funded line under the real figure.
   starter tiles, or the agents to add. Ctrl+Up/Down (or Ctrl+`k`/`j`) moves the
   agent the cursor is in up or down the page; dragging an agent by its mark
   does the same, lighting the header it will land on. The order is kept in
-  `~/.local/state/omarchy/agents/order.json`. Hovering moves the same cursor. Enter acts on it, or
+  `~/.local/state/lunor/agents/order.json`. Hovering moves the same cursor. Enter acts on it, or
   refreshes when nothing is lit; `r` refreshes, Tab moves to the neighboring
   bar panel, Esc closes.
 - Accounts: `1`–`9` jump to an account across every agent, and Enter makes it
@@ -155,7 +155,7 @@ only adds the meter and the spent-of-funded line under the real figure.
 
 ## Settings
 
-Settings live in the widget's entry in `~/.config/omarchy/shell.json`. The
+Settings live in the widget's entry in `~/.config/lunor/shell.json`. The
 top-level keys can be set with
 `omarchy bar set omarchy.agents <key> <value>`:
 

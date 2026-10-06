@@ -295,14 +295,14 @@ source <(awk '
 ' "$ROOT/bin/omarchy-theme-set")
 
 transition_home="$test_tmp/transition-home"
-CURRENT_THEME_PATH="$transition_home/.local/state/omarchy/current/theme"
-NEXT_THEME_PATH="$transition_home/.local/state/omarchy/current/next-theme"
-CURRENT_BACKGROUND_LINK="$transition_home/.local/state/omarchy/current/background"
+CURRENT_THEME_PATH="$transition_home/.local/state/lunor/current/theme"
+NEXT_THEME_PATH="$transition_home/.local/state/lunor/current/next-theme"
+CURRENT_BACKGROUND_LINK="$transition_home/.local/state/lunor/current/background"
 BACKGROUND_TRANSITION_CACHE="$transition_home/.cache/omarchy/background-transitions"
 THEME_NAME="video-test"
 PREVIOUS_THEME_NAME="$THEME_NAME"
 HOME="$transition_home"
-mkdir -p "$CURRENT_THEME_PATH/backgrounds" "$NEXT_THEME_PATH/backgrounds" "$HOME/.config/omarchy/backgrounds/$THEME_NAME"
+mkdir -p "$CURRENT_THEME_PATH/backgrounds" "$NEXT_THEME_PATH/backgrounds" "$HOME/.config/lunor/backgrounds/$THEME_NAME"
 printf 'old image\n' >"$CURRENT_THEME_PATH/backgrounds/old.png"
 printf 'old image staged\n' >"$NEXT_THEME_PATH/backgrounds/old.png"
 printf 'new video\n' >"$NEXT_THEME_PATH/backgrounds/new.mp4"

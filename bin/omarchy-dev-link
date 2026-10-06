@@ -27,7 +27,7 @@ if (( $# < 1 || $# > 2 )) || [[ $1 == "-h" || $1 == "--help" ]]; then
   cat <<USAGE
 Usage: omarchy dev link <path-to-checkout> [--no-reboot]
 
-Writes /etc/omarchy.conf so OMARCHY_PATH resolves to <path-to-checkout>
+Writes /etc/lunor.conf so OMARCHY_PATH resolves to <path-to-checkout>
 after reboot. This intentionally does not rewrite the running Hyprland,
 systemd, shell, or app-launcher environment; reboot to make every layer agree.
 
@@ -39,7 +39,7 @@ and install the package from the checkout.
 
 The Plymouth and SDDM themes under /usr/share are the exception: omarchy
 plymouth set and omarchy refresh plymouth republish them from the checkout,
-reading this link's authorization out of the root-owned /etc/omarchy.conf.
+reading this link's authorization out of the root-owned /etc/lunor.conf.
 
 Also writes $sudoers_file so sudo resolves omarchy-*
 from the checkout instead of the packaged copies. That part takes effect
@@ -110,7 +110,7 @@ fi
   printf 'export OMARCHY_PATH='
   omarchy_conf_quote "$target"
   printf '\n'
-} | sudo tee /etc/omarchy.conf >/dev/null
+} | sudo tee /etc/lunor.conf >/dev/null
 
 sudo install -Dm440 -o root -g root "$staged_sudoers" "$sudoers_file"
 

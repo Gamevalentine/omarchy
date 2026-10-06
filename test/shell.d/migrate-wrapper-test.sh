@@ -39,7 +39,7 @@ pass "omarchy-migrate runs migrations without force"
 grep -Fx 'LUNOR OS Migrations' "$test_tmp/dismissals" >/dev/null || fail "omarchy-migrate dismisses migration notifications"
 pass "omarchy-migrate clears completed migration notifications"
 
-rm -rf "$test_home/.local/state/omarchy/migrations"
+rm -rf "$test_home/.local/state/lunor/migrations"
 run_migrate --pending >"$test_tmp/pending.out"
 grep -q '^100-migration\.sh$' "$test_tmp/pending.out" || fail "omarchy-migrate --pending lists pending migrations"
 pass "omarchy-migrate --pending lists pending migrations"

@@ -15,8 +15,8 @@ printf 'prompt:%s\n' "$*" >>"$SUDO_TEST_LOG"
 exit 1
 STUB
 chmod +x "$SUDO_TEST_ROOT/bin/gum"
-mkdir -p "$SUDO_TEST_HOME/.local/state/omarchy"
-touch "$SUDO_TEST_HOME/.local/state/omarchy/reboot-required" "$SUDO_TEST_HOME/.local/state/omarchy/restart-sshd-required"
+mkdir -p "$SUDO_TEST_HOME/.local/state/lunor"
+touch "$SUDO_TEST_HOME/.local/state/lunor/reboot-required" "$SUDO_TEST_HOME/.local/state/lunor/restart-sshd-required"
 
 for mode in --services-only --reboot-only; do
   reset_boundary

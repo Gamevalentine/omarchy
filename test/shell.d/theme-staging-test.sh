@@ -13,8 +13,8 @@ test_tmp=$(mktemp -d)
 trap 'rm -rf "$test_tmp"' EXIT
 
 home="$test_tmp/home"
-state="$home/.local/state/omarchy/current"
-themes="$home/.config/omarchy/themes"
+state="$home/.local/state/lunor/current"
+themes="$home/.config/lunor/themes"
 mkdir -p "$state" "$themes"
 
 marker="omarchy-theme-staging-marker"

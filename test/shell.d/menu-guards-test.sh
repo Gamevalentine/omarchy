@@ -241,13 +241,13 @@ trap 'rm -rf "$stub_dir" "$themes_home"' EXIT
 # A theme copied by hand has nothing to pull, a symlinked one is someone's
 # working copy, and a `.git` file is a worktree living elsewhere.
 mkdir -p "$themes_home/missing"
-mkdir -p "$themes_home/empty/.config/omarchy/themes"
-mkdir -p "$themes_home/copied/.config/omarchy/themes/handmade"
-mkdir -p "$themes_home/cloned/.config/omarchy/themes/tokyo-night/.git"
-mkdir -p "$themes_home/linked/.config/omarchy/themes" "$themes_home/checkout/.git"
-ln -s "$themes_home/checkout" "$themes_home/linked/.config/omarchy/themes/in-progress"
-mkdir -p "$themes_home/worktree/.config/omarchy/themes/branch"
-printf 'gitdir: /elsewhere\n' >"$themes_home/worktree/.config/omarchy/themes/branch/.git"
+mkdir -p "$themes_home/empty/.config/lunor/themes"
+mkdir -p "$themes_home/copied/.config/lunor/themes/handmade"
+mkdir -p "$themes_home/cloned/.config/lunor/themes/tokyo-night/.git"
+mkdir -p "$themes_home/linked/.config/lunor/themes" "$themes_home/checkout/.git"
+ln -s "$themes_home/checkout" "$themes_home/linked/.config/lunor/themes/in-progress"
+mkdir -p "$themes_home/worktree/.config/lunor/themes/branch"
+printf 'gitdir: /elsewhere\n' >"$themes_home/worktree/.config/lunor/themes/branch/.git"
 
 for shape in missing:1 empty:1 copied:1 cloned:0 linked:1 worktree:1; do
   assert_themes_guard_agrees \
@@ -260,7 +260,7 @@ pass "Extra Themes shows exactly when omarchy-theme-update has something to pull
 # it is the one that goes missing the moment a path is split rather than passed
 # whole, and it would still print an Updating: line on its way to the wrong
 # directory.
-many="$themes_home/many/.config/omarchy/themes"
+many="$themes_home/many/.config/lunor/themes"
 mkdir -p "$many/tokyo night/.git" "$many/zen/.git" "$many/handmade"
 ln -s "$themes_home/checkout" "$many/in-progress"
 

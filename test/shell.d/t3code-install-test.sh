@@ -46,7 +46,7 @@ run_installer() {
     "$ROOT/bin/omarchy-install-ai-t3-code" >"$test_tmp/output" 2>&1
 }
 
-state="$test_home/.local/state/omarchy/current"
+state="$test_home/.local/state/lunor/current"
 palette="$test_tmp/custom t3 home/userdata/themes/omarchy.json"
 settings="$test_tmp/custom t3 home/userdata/settings.json"
 mkdir -p "$state/theme"

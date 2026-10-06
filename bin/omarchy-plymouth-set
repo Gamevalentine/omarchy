@@ -2,7 +2,7 @@
 
 # omarchy:summary=Set the Plymouth boot theme colors and logo
 # omarchy:args=<background-hex> <text-hex> <path-to-logo.png>
-# omarchy:examples=omarchy plymouth set '#1d2021' '#ebdbb2' ~/.local/state/omarchy/current/theme/plymouth/logo.png
+# omarchy:examples=omarchy plymouth set '#1d2021' '#ebdbb2' ~/.local/state/lunor/current/theme/plymouth/logo.png
 # omarchy:requires-sudo=true
 
 set -euo pipefail
@@ -154,13 +154,13 @@ run_root_transaction() {
 
     # A packaged tree must be root-owned. A development checkout is the one
     # deliberate exception: omarchy dev link records its canonical path in a
-    # root-owned /etc/omarchy.conf. That is already an explicit decision to run
+    # root-owned /etc/lunor.conf. That is already an explicit decision to run
     # privileged LUNOR OS commands from user-editable code in the checkout, so
     # reading its packaged assets does not widen the development trust boundary.
     development_source=false
     source_root_uid=$(stat -c %u -- "$source_root")
     if (( source_root_uid != 0 )); then
-      omarchy_conf=/etc/omarchy.conf
+      omarchy_conf=/etc/lunor.conf
       failure_context="$source_root is user-owned and $omarchy_conf must contain its trusted dev-link authorization; run omarchy dev link to authorize it"
       failure_hint="$source_root is user-owned; run omarchy dev link to authorize this development checkout, or omarchy dev unlink to use the packaged tree"
       validate_trusted_configuration_file "$omarchy_conf"

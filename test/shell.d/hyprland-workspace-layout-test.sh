@@ -34,7 +34,7 @@ chmod +x "$stub_dir/omarchy-notification-send"
 HOME="$home_dir" HYPRCTL_LOG="$log_file" PATH="$stub_dir:$PATH" \
   "$ROOT/bin/omarchy-hyprland-workspace-layout-toggle"
 
-layout_file="$home_dir/.local/state/omarchy/workspace-layouts/3.lua"
+layout_file="$home_dir/.local/state/lunor/workspace-layouts/3.lua"
 [[ -f $layout_file ]] || fail "workspace layout toggle saves a workspace rule"
 grep -Fx 'hl.workspace_rule({ workspace = "3", layout = "scrolling" })' "$layout_file" >/dev/null ||
   fail "workspace layout toggle saves the selected layout"
@@ -46,7 +46,7 @@ if HOME="$home_dir" HYPRCTL_LOG="$log_file" HYPRCTL_BROKEN=1 PATH="$stub_dir:$PA
   "$ROOT/bin/omarchy-hyprland-workspace-layout-toggle" 2>/dev/null; then
   fail "workspace layout toggle exits nonzero without a workspace id"
 fi
-[[ -f "$home_dir/.local/state/omarchy/workspace-layouts/null.lua" ]] &&
+[[ -f "$home_dir/.local/state/lunor/workspace-layouts/null.lua" ]] &&
   fail "workspace layout toggle does not persist a rule without a workspace id"
 pass "workspace layout toggle ignores broken hyprctl output"
 

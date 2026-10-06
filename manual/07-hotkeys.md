@@ -176,7 +176,7 @@ All capture options are also accessible under _Trigger > Capture_ in the LUNOR O
 | `Super + Backspace` | Toggle transparency on a window |
 | `Super + Ctrl + Backspace` | Toggle single-window square aspect |
 
-Extra background images live in `~/.config/omarchy/backgrounds/<theme name>`. Also available via _Install > Style > Background_ in the LUNOR OS menu.
+Extra background images live in `~/.config/lunor/backgrounds/<theme name>`. Also available via _Install > Style > Background_ in the LUNOR OS menu.
 
 All style options are also accessible under _Style_ in the LUNOR OS menu (`Super + Space`).
 

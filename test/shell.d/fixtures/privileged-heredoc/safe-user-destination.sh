@@ -1,6 +1,6 @@
-mkdir -p ~/.config/omarchy
+mkdir -p ~/.config/lunor
 
-cat >~/.config/omarchy/agent.conf <<EOF
+cat >~/.config/lunor/agent.conf <<EOF
 helper=$HOME/.local/share/omarchy/bin/omarchy-agent
 EOF
 

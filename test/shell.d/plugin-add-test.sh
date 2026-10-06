@@ -40,7 +40,7 @@ STUB
 chmod +x "$stub_dir/omarchy-shell"
 
 test_home="$TMPDIR/home"
-write_plugin "$test_home/.config/omarchy/plugins/different-folder" "acme.same" "Installed"
+write_plugin "$test_home/.config/lunor/plugins/different-folder" "acme.same" "Installed"
 
 incoming="$TMPDIR/incoming"
 write_plugin "$incoming" "acme.same" "Incoming"
@@ -53,7 +53,7 @@ output=$(HOME="$test_home" OMARCHY_PATH="$ROOT" PATH="$stub_dir:$ROOT/bin:$PATH"
   fail "plugin add accepts an id already installed under another directory" "$output"
 grep -qF "plugin id 'acme.same' is already used by" <<<"$output" ||
   fail "plugin add explains the installed id collision" "$output"
-[[ ! -e $test_home/.config/omarchy/plugins/acme.same ]] ||
+[[ ! -e $test_home/.config/lunor/plugins/acme.same ]] ||
   fail "plugin add leaves a target behind after refusing a duplicate id"
 pass "plugin add refuses an installed manifest id regardless of directory name"
 

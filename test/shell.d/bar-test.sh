@@ -373,8 +373,8 @@ assert(!bar.customModuleSafeName('../escape'), 'bar rejects path traversal custo
 assertEqual(bar.customModuleType({ id: 'custom', exec: 'date' }), 'command', 'bar infers command custom modules')
 assertEqual(bar.customModuleType({ id: 'custom', source: '~/Custom.qml' }), 'qml', 'bar infers qml custom modules')
 assertEqual(
-  bar.customModulePath({ id: 'local.weather' }, '/home/dhh', '/home/dhh/.config/omarchy'),
-  '/home/dhh/.config/omarchy/bar/modules/local.weather.qml',
+  bar.customModulePath({ id: 'local.weather' }, '/home/dhh', '/home/dhh/.config/lunor'),
+  '/home/dhh/.config/lunor/bar/modules/local.weather.qml',
   'bar builds default custom module paths'
 )
 JS

@@ -45,7 +45,7 @@ install_theme() {
     bash "$ROOT/bin/omarchy-theme-install" "$1" >"$test_tmp/out" 2>&1 || return $?
 }
 
-mkdir -p "$test_tmp/home/.config/omarchy/themes"
+mkdir -p "$test_tmp/home/.config/lunor/themes"
 
 # A URL git would read as an option or as a remote helper to run.
 for url in "-x" "--upload-pack=touch /tmp/pwned" "ext::sh -c id" "fd::0,1"; do
@@ -198,7 +198,7 @@ remove_theme() {
     bash "$ROOT/bin/omarchy-theme-remove" "$1" >"$test_tmp/out" 2>&1 || return $?
 }
 
-canary="$test_tmp/home/.config/omarchy/canary"
+canary="$test_tmp/home/.config/lunor/canary"
 printf 'still here\n' >"$canary"
 
 for name in ".." "." "../../evil" ".git"; do

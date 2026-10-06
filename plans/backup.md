@@ -47,7 +47,7 @@ Stated up front so the feature never overpromises:
 - **Built-in excludes, not user-editable**: the backup's own secrets directory (`~/.local/share/omarchy/backup/` — the repository must never contain the credentials that unlock it), restic's cache (`~/.cache/restic`), `~/.cache`, `~/.local/share/Trash`.
 - **Shipped default excludes** (`$OMARCHY_PATH/default/backup/excludes` as `$HOME`-relative patterns, expanded to absolute paths when the setup wizard writes the effective exclude file — restic does not expand `~` in patterns): browser caches, package-manager caches, `node_modules`, thumbnail caches. Regenerable bytes only — when in doubt, include.
 - The dots repo (`~/.local/share/omarchy/dots.git`) is deliberately *included*: backup is what finally puts the config history off-site.
-- Users extend via `~/.config/omarchy/backup/excludes` (one pattern per line, restic syntax, expanded the same way). No include-list to curate — that's the hassle we're avoiding.
+- Users extend via `~/.config/lunor/backup/excludes` (one pattern per line, restic syntax, expanded the same way). No include-list to curate — that's the hassle we're avoiding.
 - The first-run summary shows the measured *source* size before uploading — labeled as such, cancellable, and explicitly not an upload estimate (dedup and compression usually shrink it dramatically).
 
 ## Setup: `omarchy-setup-backup`
@@ -61,7 +61,7 @@ A gum wizard in the terminal, in the mold of `omarchy-setup-security-sshd` (flag
 
 Teardown is `omarchy-setup-backup --remove`: stop and wait for any running backup, unmount any browse session, disable the timer, remove the widget, delete local credentials and state — then state clearly that the repository and its snapshots remain untouched in the bucket, and that restic stays installed.
 
-**Secrets layout**: `~/.local/share/omarchy/backup/` (0700) holds `env` (`RESTIC_REPOSITORY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, extras) and `passphrase` (0600, via `RESTIC_PASSWORD_FILE`); secrets pass to restic only via environment and files, never argv. Non-secret settings (destination label, retention, cadence) live separately in `~/.config/omarchy/backup/` — `~/.config/omarchy` is documented user-intent config that people version and that dots will sync, so live delete-capable credentials must not live there. Mode-restricted plain files are still the deliberate choice over the keyring: LUNOR OS's default keyring is configured passwordless by `install/user/default-keyring.sh` (so `secret-tool` adds a precedent while buying nothing), and a locked keyring at 3am would mean no backups. Full-disk encryption — the default, though not universal — covers the at-rest story; the threat model section covers the rest honestly.
+**Secrets layout**: `~/.local/share/omarchy/backup/` (0700) holds `env` (`RESTIC_REPOSITORY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, extras) and `passphrase` (0600, via `RESTIC_PASSWORD_FILE`); secrets pass to restic only via environment and files, never argv. Non-secret settings (destination label, retention, cadence) live separately in `~/.config/lunor/backup/` — `~/.config/lunor` is documented user-intent config that people version and that dots will sync, so live delete-capable credentials must not live there. Mode-restricted plain files are still the deliberate choice over the keyring: LUNOR OS's default keyring is configured passwordless by `install/user/default-keyring.sh` (so `secret-tool` adds a precedent while buying nothing), and a locked keyring at 3am would mean no backups. Full-disk encryption — the default, though not universal — covers the at-rest story; the threat model section covers the rest honestly.
 
 ## Automatic runs: systemd user timer
 
@@ -77,7 +77,7 @@ The repo's first `.timer`. `default/systemd/user/omarchy-backup.timer` + `omarch
 
 ## Status plumbing: one state file
 
-`omarchy-backup-run` maintains `~/.local/state/omarchy/backup/status.json`, written atomically (rename) on every phase change and throttled during upload:
+`omarchy-backup-run` maintains `~/.local/state/lunor/backup/status.json`, written atomically (rename) on every phase change and throttled during upload:
 
 - `phase` (`idle` / `running` / `paused` / `error` / `unconfigured`), `run_id`, `pid`, `started_at`, `updated_at`, progress percent and bytes during a run
 - `last_backup` { time, snapshot id, result `complete` / `partial` / `failed`, error text, unreadable paths }
