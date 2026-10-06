@@ -30,8 +30,9 @@ case "${1:-}" in
     cat <<USAGE
 Usage: omarchy dev unlink [--no-reboot]
 
-Writes /etc/lunor.conf so LUNOR_PATH resolves to /usr/share/omarchy
-after reboot. This intentionally does not rewrite the running Hyprland,
+Writes /etc/lunor.conf so LUNOR_PATH resolves to the packaged LUNOR source root
+after reboot. It prefers /usr/share/lunor and temporarily falls back to the
+legacy package location until the package-layout migration is completed. This intentionally does not rewrite the running Hyprland,
 systemd, shell, or app-launcher environment; reboot to make every layer agree.
 
 Removes $sudoers_file, the drop-in that pointed sudo
