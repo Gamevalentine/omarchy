@@ -1,0 +1,50 @@
+name: LUNOR audio batch check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-audio-batch-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate audio migration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          scripts=(
+            bin/lunor-audio-input-mute
+            bin/lunor-audio-input-set-default
+            bin/lunor-audio-output-set-default
+            bin/lunor-audio-output-sink
+            bin/lunor-audio-output-switch
+            bin/lunor-audio-output-volume
+            bin/lunor-audio-sink-availability
+            bin/lunor-audio-source-switch
+            bin/lunor-audio-tuning
+          )
+
+          for script in "${scripts[@]}"; do
+            test -x "$script"
+            bash -n "$script"
+          done
+
+          if grep -Eq 'omarchy-(audio|brightness|osd|shell|hw-match|restart-audio)' bin/lunor-audio-*; then
+            echo "canonical audio commands still call legacy Omarchy binaries directly" >&2
+            exit 1
+          fi
+
+          if grep -Fq '$OMARCHY_PATH' bin/lunor-audio-tuning; then
+            echo "canonical audio tuning still depends on OMARCHY_PATH" >&2
+            exit 1
+          fi
+
+          bash -n test/cli
+          ./bin/lunor commands --check
+          ./test/cli
