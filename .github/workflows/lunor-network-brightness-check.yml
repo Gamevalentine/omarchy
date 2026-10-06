@@ -1,0 +1,45 @@
+name: LUNOR network brightness check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-network-brightness-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate network and brightness migration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          scripts=(
+            bin/lunor-network-band
+            bin/lunor-network-password
+            bin/lunor-network-qr
+            bin/lunor-network-speedtest
+            bin/lunor-network-status
+            bin/lunor-brightness-display
+            bin/lunor-brightness-display-apple
+            bin/lunor-brightness-display-ddc
+            bin/lunor-brightness-keyboard
+            bin/lunor-brightness-keyboard-mute
+          )
+
+          for script in "${scripts[@]}"; do
+            test -x "$script"
+            bash -n "$script"
+            if grep -Eq 'omarchy-[a-z0-9-]+' "$script"; then
+              echo "$script still calls or exposes a legacy Omarchy binary directly" >&2
+              exit 1
+            fi
+          done
+
+          bash -n test/cli
+          ./bin/lunor commands --check
+          ./test/cli
