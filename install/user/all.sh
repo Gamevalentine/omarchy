@@ -1,3 +1,4 @@
+run_logged "$OMARCHY_INSTALL/user/lunor-paths.sh"
 run_logged "$OMARCHY_INSTALL/user/theme.sh"
 run_logged "$OMARCHY_INSTALL/user/chromium.sh"
 run_logged "$OMARCHY_INSTALL/user/git.sh"
