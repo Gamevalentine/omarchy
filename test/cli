@@ -1015,6 +1015,135 @@ grep -Fq 'default_config="$LUNOR_PATH/config/tmux/tmux.conf"' "$ROOT/bin/lunor-m
   fail "lunor tmux keybindings menu uses LUNOR_PATH"
 pass "lunor menu helpers expose canonical direct usage and root"
 
+audio_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-audio-input-mute"
+       or .binary == "lunor-audio-input-set-default"
+       or .binary == "lunor-audio-output-set-default"
+       or .binary == "lunor-audio-output-sink"
+       or .binary == "lunor-audio-output-switch"
+       or .binary == "lunor-audio-output-volume"
+       or .binary == "lunor-audio-sink-availability"
+       or .binary == "lunor-audio-source-switch"
+       or .binary == "lunor-audio-tuning"
+     )]
+  | length
+')
+[[ $audio_count == "9" ]] || fail "lunor exposes the complete audio batch"
+pass "lunor prefers the complete audio batch"
+
+output=$("$LUNOR" audio input set default --help)
+assert_output_contains "lunor audio input default help is canonical" "$output" "lunor audio input set default <node-id> <source-name>"
+
+output=$("$LUNOR" audio output set default --help)
+assert_output_contains "lunor audio output default help is canonical" "$output" "lunor audio output set default <node-id> <sink-name>"
+
+output=$("$LUNOR" audio output volume --help)
+assert_output_contains "lunor audio output volume help is canonical" "$output" "lunor audio output volume <raise|lower|mute-toggle|+N|-N>"
+
+output=$("$LUNOR" audio source switch --help)
+assert_output_contains "lunor audio source switch help is canonical" "$output" "lunor audio source switch [next|previous]"
+
+output=$("$LUNOR" audio tuning --help)
+assert_output_contains "lunor audio tuning help is canonical" "$output" "lunor audio tuning <on|off|status|match|fronted-sink> [--force]"
+
+grep -Fq 'tunings_dir="$LUNOR_PATH/default/audio/tunings"' "$ROOT/bin/lunor-audio-tuning" ||
+  fail "lunor audio tuning uses LUNOR_PATH for tuning data"
+grep -Fq 'host_source="$LUNOR_PATH/default/audio/filter-chain-host.conf"' "$ROOT/bin/lunor-audio-tuning" ||
+  fail "lunor audio tuning uses LUNOR_PATH for filter host"
+grep -Fq 'unit_source="$LUNOR_PATH/default/systemd/user/$unit_name"' "$ROOT/bin/lunor-audio-tuning" ||
+  fail "lunor audio tuning uses LUNOR_PATH for systemd source"
+if grep -Fq '$OMARCHY_PATH' "$ROOT/bin/lunor-audio-tuning"; then
+  fail "lunor audio tuning no longer depends on OMARCHY_PATH"
+fi
+pass "lunor audio tuning uses canonical LUNOR root"
+
+make_tmpdir AUDIO_BIN
+cat >"$AUDIO_BIN/lunor" <<'EOF'
+#!/bin/bash
+case "$*" in
+  "audio output sink")
+    printf 'alsa_output.test\n'
+    ;;
+  "audio tuning fronted-sink")
+    exit 1
+    ;;
+  *)
+    printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+    ;;
+esac
+exit 0
+EOF
+
+cat >"$AUDIO_BIN/wpctl" <<'EOF'
+#!/bin/bash
+case "$*" in
+  "get-volume @DEFAULT_AUDIO_SOURCE@")
+    printf 'Volume: 0.50 [MUTED]\n'
+    ;;
+  *)
+    printf '%s\n' "$*" >>"$WPCTL_TEST_LOG"
+    ;;
+esac
+exit 0
+EOF
+
+cat >"$AUDIO_BIN/pactl" <<'EOF'
+#!/bin/bash
+case "$*" in
+  "get-sink-volume alsa_output.test")
+    printf 'Volume: front-left: 32768 / 50%% / -18.06 dB\n'
+    ;;
+  "get-sink-mute alsa_output.test")
+    printf 'Mute: no\n'
+    ;;
+  *)
+    printf '%s\n' "$*" >>"$PACTL_TEST_LOG"
+    ;;
+esac
+exit 0
+EOF
+chmod +x "$AUDIO_BIN/lunor" "$AUDIO_BIN/wpctl" "$AUDIO_BIN/pactl"
+
+audio_log="$AUDIO_BIN/lunor.log"
+wpctl_log="$AUDIO_BIN/wpctl.log"
+pactl_log="$AUDIO_BIN/pactl.log"
+
+LUNOR_TEST_LOG="$audio_log" WPCTL_TEST_LOG="$wpctl_log" PATH="$AUDIO_BIN:$PATH" "$ROOT/bin/lunor-audio-input-mute"
+grep -Fxq 'brightness keyboard mute on' "$audio_log" || fail "lunor microphone mute uses canonical keyboard LED route"
+grep -Fxq 'osd -i microphone-muted -m Microphone muted' "$audio_log" || fail "lunor microphone mute uses canonical OSD route"
+pass "lunor microphone mute uses canonical dependencies"
+
+: >"$audio_log"
+LUNOR_TEST_LOG="$audio_log" PATH="$AUDIO_BIN:$PATH" "$ROOT/bin/lunor-audio-source-switch" previous
+grep -Fxq 'shell media sourceSwitchPrevious' "$audio_log" || fail "lunor media source switch uses canonical shell route"
+pass "lunor audio source switch uses canonical dependency"
+
+: >"$audio_log"
+: >"$pactl_log"
+LUNOR_TEST_LOG="$audio_log" PACTL_TEST_LOG="$pactl_log" PATH="$AUDIO_BIN:$PATH" "$ROOT/bin/lunor-audio-output-volume" +5
+grep -Fxq 'set-sink-mute alsa_output.test 0' "$pactl_log" || fail "lunor output volume unmutes the resolved sink"
+grep -Fxq 'set-sink-volume alsa_output.test 55%' "$pactl_log" || fail "lunor output volume changes the resolved physical sink"
+grep -Fxq 'osd -i volume-high -p 50' "$audio_log" || fail "lunor output volume uses canonical OSD route"
+pass "lunor output volume uses canonical sink and OSD routes"
+
+sink_result=$("$ROOT/bin/lunor-audio-output-sink" alsa_output.test)
+[[ $sink_result == "alsa_output.test" ]] || fail "lunor output sink preserves physical sink behavior"
+
+input_usage=$("$ROOT/bin/lunor-audio-input-set-default" 2>&1 || true)
+[[ $input_usage == *"Usage: lunor audio input set default <node-id> <source-name>"* ]] ||
+  fail "lunor input default direct usage is canonical"
+
+output_usage=$("$ROOT/bin/lunor-audio-output-set-default" 2>&1 || true)
+[[ $output_usage == *"Usage: lunor audio output set default <node-id> <sink-name>"* ]] ||
+  fail "lunor output default direct usage is canonical"
+
+tuning_usage=$(LUNOR_PATH="$ROOT" "$ROOT/bin/lunor-audio-tuning" invalid 2>&1 || true)
+[[ $tuning_usage == *"Usage: lunor audio tuning <on|off|status|match|fronted-sink> [--force]"* ]] ||
+  fail "lunor audio tuning direct usage is canonical"
+pass "lunor audio leaf commands preserve canonical direct usage"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
