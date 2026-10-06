@@ -61,10 +61,18 @@ if omarchy-done check finalize-user && (( force == 0 )); then
   exit 0
 fi
 
-export OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
-export OMARCHY_INSTALL="${OMARCHY_INSTALL:-$OMARCHY_PATH/install}"
+export LUNOR_PATH="${LUNOR_PATH:-${OMARCHY_PATH:-/usr/share/lunor}}"
+if [[ ! -d $LUNOR_PATH && $LUNOR_PATH == /usr/share/lunor && -d /usr/share/omarchy ]]; then
+  LUNOR_PATH=/usr/share/omarchy
+fi
+export LUNOR_INSTALL="${LUNOR_INSTALL:-${OMARCHY_INSTALL:-$LUNOR_PATH/install}}"
+
+# Temporary compatibility aliases for scripts not migrated yet.
+export OMARCHY_PATH="$LUNOR_PATH"
+export OMARCHY_INSTALL="$LUNOR_INSTALL"
+
 export OMARCHY_SETUP_CONTEXT="${OMARCHY_SETUP_CONTEXT:-runtime}"
-export PATH="$OMARCHY_PATH/bin:$PATH"
+export PATH="$LUNOR_PATH/bin:$PATH"
 
 if (( first_install )) && [[ $OMARCHY_SETUP_CONTEXT == "runtime" ]]; then
   # The ISO chroot doesn't set a context; omarchy-provision-owner runs first-install
@@ -72,8 +80,8 @@ if (( first_install )) && [[ $OMARCHY_SETUP_CONTEXT == "runtime" ]]; then
   export OMARCHY_SETUP_CONTEXT=iso-chroot
 fi
 
-if [[ -n ${OMARCHY_INSTALL_LOG_FILE:-} && -f $OMARCHY_INSTALL/helpers/logging.sh ]]; then
-  source "$OMARCHY_INSTALL/helpers/logging.sh"
+if [[ -n ${OMARCHY_INSTALL_LOG_FILE:-} && -f $LUNOR_INSTALL/helpers/logging.sh ]]; then
+  source "$LUNOR_INSTALL/helpers/logging.sh"
 else
   run_logged() {
     local script="$1"
@@ -85,7 +93,7 @@ fi
 # point at a dev checkout (omarchy dev link) where the target differs.
 # Loops every skill directory, so shipping a new one needs no edit here.
 mkdir -p ~/.agents/skills ~/.claude/skills ~/.codex/skills ~/.pi/agent/skills ~/.gemini/config/skills ~/.hermes/skills
-for skill in "$OMARCHY_PATH"/default/agents/skills/*/; do
+for skill in "$LUNOR_PATH"/default/agents/skills/*/; do
   skill=${skill%/}
   name=${skill##*/}
   ln -sfn "$skill" ~/.agents/skills/"$name"
@@ -114,7 +122,7 @@ for dir in Downloads Projects Pictures Videos; do
   grep -qxF "$bookmark" ~/.config/gtk-3.0/bookmarks || echo "$bookmark" >>~/.config/gtk-3.0/bookmarks
 done
 
-source "$OMARCHY_INSTALL/user/all.sh"
+source "$LUNOR_INSTALL/user/all.sh"
 
 omarchy-refresh-applications
 env -u BROWSER xdg-settings set default-web-browser chromium.desktop
@@ -122,7 +130,7 @@ xdg-mime default HEY.desktop x-scheme-handler/mailto
 
 if (( first_install )); then
   mkdir -p "$state_dir/migrations"
-  for migration in "$OMARCHY_PATH"/migrations/*.sh; do
+  for migration in "$LUNOR_PATH"/migrations/*.sh; do
     [[ -f $migration ]] && touch "$state_dir/migrations/$(basename "$migration")"
   done
 fi
