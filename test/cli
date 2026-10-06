@@ -530,6 +530,94 @@ shell_error=$(LUNOR_PATH= OMARCHY_PATH="$ROOT" "$ROOT/bin/lunor-shell" shell pin
 LUNOR_PATH= OMARCHY_PATH="$ROOT" "$ROOT/bin/lunor-shell" -q shell ping
 pass "lunor shell quiet mode remains best-effort"
 
+safe_hyprland_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-hyprland-focus-app"
+       or .binary == "lunor-hyprland-monitor-external-active"
+       or .binary == "lunor-hyprland-monitor-focused-apple"
+       or .binary == "lunor-hyprland-monitor-laptop"
+       or .binary == "lunor-hyprland-monitor-modeless"
+       or .binary == "lunor-hyprland-session-locked"
+       or .binary == "lunor-hyprland-toggle-disabled"
+       or .binary == "lunor-hyprland-window-close-all"
+       or .binary == "lunor-hyprland-window-gaps-toggle"
+       or .binary == "lunor-hyprland-window-pop"
+       or .binary == "lunor-hyprland-window-single-square-aspect-toggle"
+       or .binary == "lunor-hyprland-window-tiled-fullscreen-toggle"
+       or .binary == "lunor-hyprland-window-transparency-toggle"
+       or .binary == "lunor-hyprland-workspace-layout-toggle"
+       or .binary == "lunor-hyprland-window-width"
+     )]
+  | length
+')
+[[ $safe_hyprland_count == "15" ]] || fail "lunor exposes the complete safe Hyprland migration batch"
+pass "lunor prefers the safe Hyprland migration batch"
+
+output=$("$LUNOR" hyprland focus app --help)
+assert_output_contains "lunor focus app help is canonical" "$output" "lunor hyprland focus app <app-name>"
+
+output=$("$LUNOR" hyprland window width --help)
+assert_output_contains "lunor window width help is canonical" "$output" "lunor hyprland window width save|restore"
+
+make_tmpdir SAFE_HYPRLAND_BIN
+cat >"$SAFE_HYPRLAND_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+case "$*" in
+  "hyprland toggle single-window-aspect-ratio")
+    printf '%s\n' "${LUNOR_TEST_TOGGLE_RESULT:-on}"
+    ;;
+esac
+exit 0
+EOF
+chmod +x "$SAFE_HYPRLAND_BIN/lunor"
+
+safe_hypr_log="$SAFE_HYPRLAND_BIN/lunor.log"
+LUNOR_TEST_LOG="$safe_hypr_log" PATH="$SAFE_HYPRLAND_BIN:$PATH" "$ROOT/bin/lunor-hyprland-window-gaps-toggle"
+grep -Fxq 'hyprland toggle window-no-gaps' "$safe_hypr_log" || fail "lunor window gaps toggle uses canonical Hyprland toggle route"
+
+: >"$safe_hypr_log"
+LUNOR_TEST_LOG="$safe_hypr_log" LUNOR_TEST_TOGGLE_RESULT=on PATH="$SAFE_HYPRLAND_BIN:$PATH" "$ROOT/bin/lunor-hyprland-window-single-square-aspect-toggle"
+grep -Fxq 'hyprland toggle single-window-aspect-ratio' "$safe_hypr_log" || fail "lunor square-aspect toggle uses canonical Hyprland toggle route"
+grep -Fq 'notification send' "$safe_hypr_log" || fail "lunor square-aspect toggle uses canonical notification route"
+pass "lunor safe Hyprland wrappers use canonical dependencies"
+
+make_tmpdir SAFE_HYPRLAND_STATE
+HOME="$SAFE_HYPRLAND_STATE" "$ROOT/bin/lunor-hyprland-toggle-disabled" demo ||
+  fail "lunor Hyprland toggle-disabled reports a missing flag"
+mkdir -p "$SAFE_HYPRLAND_STATE/.local/state/lunor/toggles/hypr"
+touch "$SAFE_HYPRLAND_STATE/.local/state/lunor/toggles/hypr/demo.lua"
+if HOME="$SAFE_HYPRLAND_STATE" "$ROOT/bin/lunor-hyprland-toggle-disabled" demo; then
+  fail "lunor Hyprland toggle-disabled reports a present flag as disabled"
+fi
+pass "lunor Hyprland toggle-disabled preserves state semantics"
+
+make_tmpdir SAFE_HYPRLAND_QUERY_BIN
+cat >"$SAFE_HYPRLAND_QUERY_BIN/hyprctl" <<'EOF'
+#!/bin/bash
+case "$*" in
+  "monitors all -j")
+    printf '%s\n' '[{"name":"eDP-1","disabled":false,"width":1920,"height":1080},{"name":"DP-1","disabled":false,"width":2560,"height":1440}]'
+    ;;
+  "-j monitors")
+    printf '%s\n' '[{"solitaryBlockedBy":["LOCK"]}]'
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+EOF
+chmod +x "$SAFE_HYPRLAND_QUERY_BIN/hyprctl"
+
+[[ $(PATH="$SAFE_HYPRLAND_QUERY_BIN:$PATH" "$ROOT/bin/lunor-hyprland-monitor-laptop") == "eDP-1" ]] ||
+  fail "lunor laptop monitor detector preserves behavior"
+PATH="$SAFE_HYPRLAND_QUERY_BIN:$PATH" "$ROOT/bin/lunor-hyprland-monitor-external-active" ||
+  fail "lunor external monitor detector sees active external output"
+PATH="$SAFE_HYPRLAND_QUERY_BIN:$PATH" "$ROOT/bin/lunor-hyprland-session-locked" ||
+  fail "lunor session lock detector preserves lock semantics"
+pass "lunor safe Hyprland query helpers preserve behavior"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
