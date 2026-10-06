@@ -1040,6 +1040,79 @@ grep -Fxq 'toggle bar on' "$fullscreen_log" || fail "lunor fullscreen on forward
 grep -Fxq 'hyprland toggle window-no-gaps on' "$fullscreen_log" || fail "lunor fullscreen on forwards to Hyprland"
 pass "lunor fullscreen desktop toggle preserves coordinated behavior"
 
+"$LUNOR" commands --all --json | jq -e '
+  [.commands[]
+   | select(.binary == "lunor-toggle-bar"
+         or .binary == "lunor-toggle-nightlight"
+         or .binary == "lunor-toggle-notification-silencing"
+         or .binary == "lunor-toggle-touchpad"
+         or .binary == "lunor-toggle-touchscreen")]
+  | length == 5
+' >/dev/null
+pass "lunor prefers the migrated easy toggle batch"
+
+output=$("$LUNOR" toggle bar --help)
+assert_output_contains "lunor bar toggle help is canonical" "$output" "lunor toggle bar [toggle|on|off]"
+
+output=$("$LUNOR" toggle nightlight --help)
+assert_output_contains "lunor nightlight help is canonical" "$output" "lunor toggle nightlight [--status]"
+
+output=$("$LUNOR" toggle notification silencing --help)
+assert_output_contains "lunor notification silencing help is canonical" "$output" "lunor toggle notification silencing"
+
+output=$("$LUNOR" toggle touchpad --help)
+assert_output_contains "lunor touchpad help is canonical" "$output" "lunor toggle touchpad [on|off|toggle]"
+
+output=$("$LUNOR" toggle touchscreen --help)
+assert_output_contains "lunor touchscreen help is canonical" "$output" "lunor toggle touchscreen [on|off|toggle]"
+
+make_tmpdir EASY_TOGGLE_BIN
+cat >"$EASY_TOGGLE_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+exit 0
+EOF
+chmod +x "$EASY_TOGGLE_BIN/lunor"
+
+bar_log="$EASY_TOGGLE_BIN/bar.log"
+LUNOR_TEST_LOG="$bar_log" PATH="$EASY_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-bar" off
+grep -Fxq 'toggle bar-off off' "$bar_log" || fail "lunor bar toggle uses canonical toggle primitive"
+grep -Fxq 'shell -q omarchy.bar syncHidden' "$bar_log" || fail "lunor bar toggle preserves shell target while using canonical shell route"
+pass "lunor bar toggle uses canonical routes"
+
+notify_log="$EASY_TOGGLE_BIN/notification.log"
+LUNOR_TEST_LOG="$notify_log" PATH="$EASY_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-notification-silencing"
+grep -Fxq 'shell notifications toggleDnd' "$notify_log" || fail "lunor notification silencing toggles DND through canonical shell route"
+grep -Fxq 'shell -q omarchy.indicators refresh' "$notify_log" || fail "lunor notification silencing preserves indicator target while using canonical shell route"
+pass "lunor notification silencing uses canonical routes"
+
+touch_log="$EASY_TOGGLE_BIN/touch.log"
+LUNOR_TEST_LOG="$touch_log" PATH="$EASY_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-touchpad" off
+grep -Fxq 'toggle input device touchpad off' "$touch_log" || fail "lunor touchpad wrapper forwards through canonical route"
+: >"$touch_log"
+LUNOR_TEST_LOG="$touch_log" PATH="$EASY_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-touchscreen" on
+grep -Fxq 'toggle input device touchscreen on' "$touch_log" || fail "lunor touchscreen wrapper forwards through canonical route"
+pass "lunor touch device wrappers use canonical routes"
+
+make_tmpdir NIGHTLIGHT_BIN
+cat >"$NIGHTLIGHT_BIN/pgrep" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+cat >"$NIGHTLIGHT_BIN/hyprctl" <<'EOF'
+#!/bin/bash
+if [[ $* == "hyprsunset temperature" ]]; then
+  printf 'Temperature: 6500K\n'
+  exit 0
+fi
+exit 0
+EOF
+chmod +x "$NIGHTLIGHT_BIN/pgrep" "$NIGHTLIGHT_BIN/hyprctl"
+
+night_status=$(PATH="$NIGHTLIGHT_BIN:$PATH" "$ROOT/bin/lunor-toggle-nightlight" --status)
+[[ $night_status == '{"enabled":false,"temperature":6500}' ]] || fail "lunor nightlight status preserves behavior"
+pass "lunor nightlight status works"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
