@@ -49,7 +49,7 @@ jobs:
           test "$migrated_count" -eq 6
 
           ./test/shell.d/launch-about-test.sh
-          ./test/shell.d/screensaver-workspace-test.sh
+          bash ./test/shell.d/screensaver-workspace-test.sh
 
           ./bin/lunor launch about --help | grep -Fq 'lunor launch about'
           ./bin/omarchy launch about --help | grep -Fq 'omarchy launch about'
