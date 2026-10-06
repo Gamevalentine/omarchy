@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omarchy:summary=Open the LUNOR OS Discord community in the Discord app or a browser.
+
+invite="https://discord.gg/tXFUdasqhY"
+
+if lunor cmd present discord; then
+  exec setsid uwsm-app -- discord --url -- "discord://-/invite/${invite##*/}"
+else
+  exec lunor launch webapp "$invite"
+fi
