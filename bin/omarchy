@@ -534,18 +534,18 @@ show_main_help() {
 LUNOR OS command center
 
 Usage:
-  omarchy <command> [args...]
-  omarchy commands [--all] [--json] [--check]
-  omarchy <group> --help
-  omarchy <group> <command> --help
+  lunor <command> [args...]
+  lunor commands [--all] [--json] [--check]
+  lunor <group> --help
+  lunor <group> <command> --help
 
 Common commands:
-  omarchy update              Update LUNOR OS and system packages
-  omarchy theme list          List available themes
-  omarchy theme set <name>    Apply a theme
-  omarchy font list           List available fonts
-  omarchy screenshot          Take a screenshot
-  omarchy debug               Print debugging information
+  lunor update                Update LUNOR OS and system packages
+  lunor theme list            List available themes
+  lunor theme set <name>      Apply a theme
+  lunor font list             List available fonts
+  lunor screenshot            Take a screenshot
+  lunor debug                 Print debugging information
 
 Groups:
 EOF
@@ -553,17 +553,17 @@ EOF
   cat <<'EOF'
 
 Discovery:
-  omarchy commands            List all commands
-  omarchy commands --all      Include commands explicitly marked hidden
-  omarchy commands --json     Machine-readable command list
-  omarchy commands --check    Validate command metadata and routes
+  lunor commands              List all commands
+  lunor commands --all        Include commands explicitly marked hidden
+  lunor commands --json       Machine-readable command list
+  lunor commands --check      Validate command metadata and routes
 EOF
 }
 
 show_commands_help() {
   cat <<'EOF'
 Usage:
-  omarchy commands [--all] [--json] [--markdown] [--check]
+  lunor commands [--all] [--json] [--markdown] [--check]
 
 List commands known to the LUNOR OS command center.
 
@@ -778,7 +778,7 @@ parse_commands_args() {
       return 0
       ;;
     *)
-      echo "Unknown option for omarchy commands: $1" >&2
+      echo "Unknown option for lunor commands: $1" >&2
       show_commands_help >&2
       return 2
       ;;
@@ -831,7 +831,7 @@ show_group_help() {
   if [[ -n $rows ]]; then
     print_command_table "$rows"
   else
-    echo "  No documented commands found. Try: omarchy commands --all"
+    echo "  No documented commands found. Try: lunor commands --all"
   fi
 }
 
@@ -1091,7 +1091,7 @@ dispatch_or_help() {
   if [[ -n $suggestion ]]; then
     echo "Did you mean: omarchy $suggestion ?" >&2
   fi
-  echo "Run 'omarchy commands --all' to discover available commands." >&2
+  echo "Run 'lunor commands --all' to discover available commands." >&2
   return 127
 }
 
