@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# omarchy:summary=Toggle animations, transparency and other effects that are slow without a GPU
+# omarchy:args=[toggle|on|off]
+# omarchy:examples=lunor toggle animations | lunor toggle animations off | lunor toggle animations on
+
+# The flag records animations being off, so on and off swap on the way through.
+case ${1:-toggle} in
+toggle) lunor hyprland toggle no-animations toggle ;;
+on) lunor hyprland toggle no-animations off ;;
+off) lunor hyprland toggle no-animations on ;;
+*)
+  echo "Usage: lunor toggle animations [toggle|on|off]" >&2
+  exit 1
+  ;;
+esac
+
+if lunor hyprland toggle enabled no-animations; then
+  lunor notification send -g 󰕟 "Animations disabled"
+else
+  lunor notification send -g 󰕟 "Animations enabled"
+fi
