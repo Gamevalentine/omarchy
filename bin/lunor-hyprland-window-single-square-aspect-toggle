@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# omarchy:summary=Toggle single-window square aspect ratio.
+
+case $(lunor hyprland toggle single-window-aspect-ratio) in
+  on) lunor notification send -g  "Enable single-window square aspect ratio" ;;
+  off) lunor notification send -g  "Disable single-window square aspect ratio" ;;
+esac
