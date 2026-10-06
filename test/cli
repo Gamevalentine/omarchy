@@ -990,6 +990,56 @@ grep -Fxq 'hyprland toggle no-animations on' "$animations_log" || fail "lunor an
 grep -Fq 'Animations disabled' "$animations_log" || fail "lunor animations off reports disabled state"
 pass "lunor animations toggle uses migrated dependencies"
 
+"$LUNOR" commands --all --json | jq -e '
+  .commands[]
+  | select(.binary == "lunor-toggle-fullscreen-desktop"
+        and .route == "lunor toggle fullscreen desktop"
+        and .filename_route == "lunor toggle fullscreen desktop")
+' >/dev/null
+pass "lunor prefers the migrated fullscreen desktop toggle"
+
+output=$("$LUNOR" toggle fullscreen desktop --help)
+assert_output_contains "lunor fullscreen desktop help is canonical" "$output" "lunor toggle fullscreen desktop [toggle|on|off]"
+
+make_tmpdir FULLSCREEN_TOGGLE_BIN
+cat >"$FULLSCREEN_TOGGLE_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+case "$*" in
+  "toggle enabled bar-off")
+    [[ ${LUNOR_TEST_BAR_OFF:-0} == "1" ]]
+    ;;
+  "hyprland toggle enabled window-no-gaps")
+    [[ ${LUNOR_TEST_NO_GAPS:-0} == "1" ]]
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+EOF
+chmod +x "$FULLSCREEN_TOGGLE_BIN/lunor"
+
+fullscreen_log="$FULLSCREEN_TOGGLE_BIN/toggle.log"
+LUNOR_TEST_LOG="$fullscreen_log" LUNOR_TEST_BAR_OFF=1 LUNOR_TEST_NO_GAPS=1 PATH="$FULLSCREEN_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-fullscreen-desktop"
+grep -Fxq 'toggle bar off' "$fullscreen_log" || fail "lunor fullscreen toggle exits full screen when both halves are active"
+grep -Fxq 'hyprland toggle window-no-gaps off' "$fullscreen_log" || fail "lunor fullscreen toggle restores gaps when exiting full screen"
+
+: >"$fullscreen_log"
+LUNOR_TEST_LOG="$fullscreen_log" LUNOR_TEST_BAR_OFF=1 LUNOR_TEST_NO_GAPS=0 PATH="$FULLSCREEN_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-fullscreen-desktop"
+grep -Fxq 'toggle bar on' "$fullscreen_log" || fail "lunor fullscreen toggle aligns a partial state by entering full screen"
+grep -Fxq 'hyprland toggle window-no-gaps on' "$fullscreen_log" || fail "lunor fullscreen toggle removes gaps when entering full screen"
+
+: >"$fullscreen_log"
+LUNOR_TEST_LOG="$fullscreen_log" PATH="$FULLSCREEN_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-fullscreen-desktop" off
+grep -Fxq 'toggle bar off' "$fullscreen_log" || fail "lunor fullscreen off forwards to bar"
+grep -Fxq 'hyprland toggle window-no-gaps off' "$fullscreen_log" || fail "lunor fullscreen off forwards to Hyprland"
+
+: >"$fullscreen_log"
+LUNOR_TEST_LOG="$fullscreen_log" PATH="$FULLSCREEN_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-fullscreen-desktop" on
+grep -Fxq 'toggle bar on' "$fullscreen_log" || fail "lunor fullscreen on forwards to bar"
+grep -Fxq 'hyprland toggle window-no-gaps on' "$fullscreen_log" || fail "lunor fullscreen on forwards to Hyprland"
+pass "lunor fullscreen desktop toggle preserves coordinated behavior"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
