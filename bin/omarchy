@@ -3,6 +3,7 @@
 set -o pipefail
 
 OMARCHY_BIN_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+CLI_NAME="${LUNOR_CLI_NAME:-omarchy}"
 METADATA_SCAN_LIMIT=80
 
 COMMAND_KEYS=()
@@ -254,7 +255,7 @@ register_command() {
   local stem="${file_binary#omarchy-}"
   local fallback_group="$stem"
   local fallback_name=""
-  local fallback_route="omarchy ${stem//-/ }"
+  local fallback_route="$CLI_NAME ${stem//-/ }"
 
   if [[ $stem == *-* ]]; then
     fallback_group="${stem%%-*}"
@@ -266,7 +267,7 @@ register_command() {
   [[ $name_seen != "true" ]] && name="$fallback_name"
   [[ -z $summary && -n $fallback_summary ]] && summary="$fallback_summary"
   [[ -z $summary ]] && summary="Run the ${stem//-/ } command"
-  local route="omarchy $group"
+  local route="$CLI_NAME $group"
   if [[ -n $name ]]; then
     route+=" $name"
   fi
@@ -410,7 +411,7 @@ resolve_direct_route() {
   local candidate=""
 
   for (( prefix_count = argc; prefix_count >= 1; prefix_count-- )); do
-    route="omarchy $(join_words " " "${args[@]:0:prefix_count}")"
+    route="$CLI_NAME $(join_words " " "${args[@]:0:prefix_count}")"
 
     binary="omarchy-$(join_words "-" "${args[@]:0:prefix_count}")"
     candidate="$OMARCHY_BIN_DIR/$binary"
@@ -439,7 +440,7 @@ sorted_keys() {
 
 fallback_group_for_key() {
   local key="$1"
-  local fallback="${COMMAND_FALLBACK_ROUTE[$key]#omarchy }"
+  local fallback="${COMMAND_FALLBACK_ROUTE[$key]#* }"
 
   printf '%s' "${fallback%% *}"
 }
@@ -850,7 +851,7 @@ show_prefix_help() {
 
   [[ -n $rows ]] || return 1
 
-  echo "${prefix#omarchy } commands:"
+  echo "${prefix#* } commands:"
   print_command_table "$rows"
 }
 
@@ -950,7 +951,7 @@ suggest_command() {
   local candidate=""
 
   for candidate in "${!ROUTE_TO_KEY[@]}"; do
-    candidate="${candidate#omarchy }"
+    candidate="${candidate#* }"
     if [[ $candidate == "$first"* ]]; then
       printf '%s' "${candidate%% *}"
       return 0
@@ -1082,14 +1083,14 @@ dispatch_or_help() {
     return 0
   fi
 
-  if show_prefix_help "omarchy ${args[*]}"; then
+  if show_prefix_help "$CLI_NAME ${args[*]}"; then
     return 0
   fi
 
-  echo "Unknown LUNOR OS command: omarchy ${args[*]}" >&2
+  echo "Unknown LUNOR OS command: $CLI_NAME ${args[*]}" >&2
   suggestion=$(suggest_command "${args[0]}")
   if [[ -n $suggestion ]]; then
-    echo "Did you mean: omarchy $suggestion ?" >&2
+    echo "Did you mean: $CLI_NAME $suggestion ?" >&2
   fi
   echo "Run 'lunor commands --all' to discover available commands." >&2
   return 127
