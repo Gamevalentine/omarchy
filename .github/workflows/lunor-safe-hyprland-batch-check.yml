@@ -1,0 +1,76 @@
+name: LUNOR safe Hyprland batch check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-safe-hyprland-batch-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate safe Hyprland batch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          scripts=(
+            bin/lunor-hyprland-focus-app
+            bin/lunor-hyprland-monitor-external-active
+            bin/lunor-hyprland-monitor-focused-apple
+            bin/lunor-hyprland-monitor-laptop
+            bin/lunor-hyprland-monitor-modeless
+            bin/lunor-hyprland-session-locked
+            bin/lunor-hyprland-toggle-disabled
+            bin/lunor-hyprland-window-close-all
+            bin/lunor-hyprland-window-gaps-toggle
+            bin/lunor-hyprland-window-pop
+            bin/lunor-hyprland-window-single-square-aspect-toggle
+            bin/lunor-hyprland-window-tiled-fullscreen-toggle
+            bin/lunor-hyprland-window-transparency-toggle
+            bin/lunor-hyprland-workspace-layout-toggle
+            bin/lunor-hyprland-window-width
+          )
+
+          for script in "${scripts[@]}"; do
+            test -x "$script"
+            bash -n "$script"
+            if grep -Eq 'omarchy-[a-z0-9-]+' "$script"; then
+              echo "$script still calls or exposes a legacy Omarchy binary" >&2
+              exit 1
+            fi
+          done
+
+          bash -n test/cli
+          ./bin/lunor commands --check
+
+          test "$(./bin/lunor commands --all --json | jq '
+            [.commands[]
+             | select(
+                 .binary == "lunor-hyprland-focus-app"
+                 or .binary == "lunor-hyprland-monitor-external-active"
+                 or .binary == "lunor-hyprland-monitor-focused-apple"
+                 or .binary == "lunor-hyprland-monitor-laptop"
+                 or .binary == "lunor-hyprland-monitor-modeless"
+                 or .binary == "lunor-hyprland-session-locked"
+                 or .binary == "lunor-hyprland-toggle-disabled"
+                 or .binary == "lunor-hyprland-window-close-all"
+                 or .binary == "lunor-hyprland-window-gaps-toggle"
+                 or .binary == "lunor-hyprland-window-pop"
+                 or .binary == "lunor-hyprland-window-single-square-aspect-toggle"
+                 or .binary == "lunor-hyprland-window-tiled-fullscreen-toggle"
+                 or .binary == "lunor-hyprland-window-transparency-toggle"
+                 or .binary == "lunor-hyprland-workspace-layout-toggle"
+                 or .binary == "lunor-hyprland-window-width"
+               )]
+            | length
+          ')" = "15"
+
+          ./bin/lunor hyprland focus app --help | grep -Fq 'lunor hyprland focus app <app-name>'
+          ./bin/lunor hyprland window width --help | grep -Fq 'lunor hyprland window width save|restore'
+
+          ./test/cli
