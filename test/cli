@@ -618,6 +618,78 @@ PATH="$SAFE_HYPRLAND_QUERY_BIN:$PATH" "$ROOT/bin/lunor-hyprland-session-locked" 
   fail "lunor session lock detector preserves lock semantics"
 pass "lunor safe Hyprland query helpers preserve behavior"
 
+phase4_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-notification-battery"
+       or .binary == "lunor-notification-dismiss"
+       or .binary == "lunor-notification-time"
+       or .binary == "lunor-notification-wait"
+       or .binary == "lunor-notification-weather"
+       or .binary == "lunor-restart-app"
+       or .binary == "lunor-restart-btop"
+       or .binary == "lunor-restart-gum"
+       or .binary == "lunor-restart-helix"
+       or .binary == "lunor-restart-herdr"
+       or .binary == "lunor-restart-hyprctl"
+       or .binary == "lunor-restart-hyprsunset"
+       or .binary == "lunor-restart-opencode"
+       or .binary == "lunor-restart-terminal"
+       or .binary == "lunor-restart-tmux"
+     )]
+  | length
+')
+[[ $phase4_count == "15" ]] || fail "lunor exposes the phase four notification and restart batch"
+pass "lunor prefers the phase four notification and restart batch"
+
+output=$("$LUNOR" notification dismiss --help)
+assert_output_contains "lunor notification dismiss help is canonical" "$output" "lunor notification dismiss <summary>"
+
+output=$("$LUNOR" notification wait --help)
+assert_output_contains "lunor notification wait help is canonical" "$output" "lunor notification wait [timeout-seconds]"
+
+output=$("$LUNOR" restart app --help)
+assert_output_contains "lunor restart app help is canonical" "$output" "lunor restart app <application-name> [application-args...]"
+
+make_tmpdir PHASE4_BIN
+cat >"$PHASE4_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+if [[ "$*" == "battery status" ]]; then
+  printf 'Battery 88%%\n'
+fi
+exit 0
+EOF
+cat >"$PHASE4_BIN/busctl" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+chmod +x "$PHASE4_BIN/lunor" "$PHASE4_BIN/busctl"
+
+phase4_log="$PHASE4_BIN/lunor.log"
+LUNOR_TEST_LOG="$phase4_log" PATH="$PHASE4_BIN:$PATH" "$ROOT/bin/lunor-notification-battery"
+grep -Fxq 'battery status' "$phase4_log" || fail "lunor battery notification uses canonical battery route"
+grep -Fq 'notification send' "$phase4_log" || fail "lunor battery notification uses canonical notification route"
+grep -Fq 'Battery 88%' "$phase4_log" || fail "lunor battery notification forwards battery status"
+
+: >"$phase4_log"
+LUNOR_TEST_LOG="$phase4_log" PATH="$PHASE4_BIN:$PATH" "$ROOT/bin/lunor-notification-dismiss" "Setup complete"
+grep -Fxq 'shell -q notifications dismiss Setup complete' "$phase4_log" || fail "lunor notification dismiss uses canonical shell route"
+
+: >"$phase4_log"
+LUNOR_TEST_LOG="$phase4_log" PATH="$PHASE4_BIN:$PATH" "$ROOT/bin/lunor-notification-weather"
+grep -Fxq 'shell shell toggle omarchy.weather' "$phase4_log" || fail "lunor weather notification preserves shell IPC target"
+
+: >"$phase4_log"
+LUNOR_TEST_LOG="$phase4_log" PATH="$PHASE4_BIN:$PATH" "$ROOT/bin/lunor-notification-wait" 1
+grep -Fxq 'shell notifications ping' "$phase4_log" || fail "lunor notification wait uses canonical shell route"
+pass "lunor notification batch uses canonical dependencies"
+
+: >"$phase4_log"
+LUNOR_TEST_LOG="$phase4_log" PATH="$PHASE4_BIN:$PATH" "$ROOT/bin/lunor-restart-hyprsunset"
+grep -Fxq 'restart app hyprsunset' "$phase4_log" || fail "lunor hyprsunset restart uses canonical restart primitive"
+pass "lunor restart wrapper uses canonical dependency"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
