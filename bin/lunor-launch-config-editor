@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omarchy:summary=Open a config file in the user's editor and surface a toast
+# omarchy:args=<path>
+# omarchy:examples=lunor launch config-editor ~/.config/hypr/hyprland.lua
+
+path="${1-}"
+
+if [[ -z $path ]]; then
+  echo "Usage: lunor launch config-editor <path>" >&2
+  exit 1
+fi
+
+lunor notification send -u low "Editing config file" "$path"
+exec lunor launch editor "$path"
