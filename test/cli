@@ -835,6 +835,90 @@ keyboard_mute_help=$("$LUNOR" brightness keyboard mute --help)
 [[ $keyboard_mute_help == *"lunor brightness keyboard mute <on|off>"* ]] || fail "lunor keyboard mute route remains canonical"
 pass "lunor brightness leaf commands preserve behavior"
 
+capture_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-capture-qr"
+       or .binary == "lunor-capture-region"
+       or .binary == "lunor-capture-screenrecording"
+       or .binary == "lunor-capture-screenrecording-with-webcam"
+       or .binary == "lunor-capture-screenshot"
+       or .binary == "lunor-capture-text"
+       or .binary == "lunor-capture-webcam-list"
+       or .binary == "lunor-capture-webcam-resize"
+     )]
+  | length
+')
+[[ $capture_count == "8" ]] || fail "lunor exposes the complete capture batch"
+pass "lunor prefers the complete capture batch"
+
+output=$("$LUNOR" capture qr --help)
+assert_output_contains "lunor QR capture help is canonical" "$output" "lunor capture qr"
+
+output=$("$LUNOR" capture screenshot --help)
+assert_output_contains "lunor screenshot capture help is canonical" "$output" "lunor capture screenshot [smart|region|windows|fullscreen|scroll] [copy|save]"
+
+output=$("$LUNOR" capture screenrecording --help)
+assert_output_contains "lunor screen recording help is canonical" "$output" "lunor capture screenrecording [--fullscreen]"
+
+output=$("$LUNOR" capture screenrecording with webcam --help)
+assert_output_contains "lunor webcam screen recording help is canonical" "$output" "lunor capture screenrecording with webcam"
+
+output=$("$LUNOR" capture webcam resize --help)
+assert_output_contains "lunor webcam resize help is canonical" "$output" "lunor capture webcam resize <smaller|larger|reset|small|medium|large>"
+
+make_tmpdir CAPTURE_BIN
+
+cat >"$CAPTURE_BIN/omasnap" <<'EOF'
+#!/bin/bash
+printf 'dir=%s\n' "$OMASNAP_SCREENSHOT_DIR" >"$CAPTURE_TEST_LOG"
+printf 'args=%s\n' "$*" >>"$CAPTURE_TEST_LOG"
+EOF
+chmod +x "$CAPTURE_BIN/omasnap"
+
+mkdir -p "$CAPTURE_BIN/lunor-shots" "$CAPTURE_BIN/legacy-shots"
+capture_log="$CAPTURE_BIN/screenshot.log"
+CAPTURE_TEST_LOG="$capture_log" LUNOR_SCREENSHOT_DIR="$CAPTURE_BIN/lunor-shots" OMARCHY_SCREENSHOT_DIR="$CAPTURE_BIN/legacy-shots" PATH="$CAPTURE_BIN:$PATH" "$ROOT/bin/lunor-capture-screenshot" copy save region
+grep -Fxq "dir=$CAPTURE_BIN/lunor-shots" "$capture_log" || fail "lunor screenshot directory takes precedence over legacy compatibility env"
+grep -Fxq 'args=--copy --save region' "$capture_log" || fail "lunor screenshot preserves omasnap argument translation"
+pass "lunor screenshot wrapper preserves behavior"
+
+cat >"$CAPTURE_BIN/lunor" <<'EOF'
+#!/bin/bash
+case "$*" in
+  "capture webcam list")
+    printf '/dev/video9  Test Camera\n'
+    ;;
+  *)
+    printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+    ;;
+esac
+exit 0
+EOF
+chmod +x "$CAPTURE_BIN/lunor"
+
+webcam_log="$CAPTURE_BIN/webcam.log"
+LUNOR_TEST_LOG="$webcam_log" PATH="$CAPTURE_BIN:$PATH" "$ROOT/bin/lunor-capture-screenrecording-with-webcam"
+grep -Fq 'capture screenrecording --with-desktop-audio --with-microphone-audio --with-webcam --webcam-device=/dev/video9' "$webcam_log" ||
+  fail "lunor webcam recording wrapper uses canonical capture route"
+pass "lunor webcam recording wrapper uses canonical dependencies"
+
+mkdir -p "$CAPTURE_BIN/videos"
+screenrecord_error=$(LUNOR_SCREENRECORD_DIR="$CAPTURE_BIN/videos" "$ROOT/bin/lunor-capture-screenrecording" --webcam-size=giant 2>&1 || true)
+[[ $screenrecord_error == *"Invalid webcam size: giant"* ]] || fail "lunor screen recording validates webcam size before capture"
+
+resize_error=$("$ROOT/bin/lunor-capture-webcam-resize" invalid 2>&1 || true)
+[[ $resize_error == *"Usage: lunor capture webcam resize <smaller|larger|reset|small|medium|large>"* ]] ||
+  fail "lunor webcam resize direct usage is canonical"
+
+grep -Fq 'RUNTIME_DIR="${XDG_RUNTIME_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/lunor}"' "$ROOT/bin/lunor-capture-screenrecording" ||
+  fail "lunor screen recording uses LUNOR runtime fallback"
+grep -Fq 'RECORDING_FILE="$RUNTIME_DIR/lunor-screenrecord-filename"' "$ROOT/bin/lunor-capture-screenrecording" ||
+  fail "lunor screen recording uses canonical recording state name"
+grep -Fq '/lunor}/lunor-screenrecord-region' "$ROOT/bin/lunor-capture-webcam-resize" ||
+  fail "lunor webcam resize reads canonical recording region state"
+pass "lunor screen recording runtime state is canonical"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
