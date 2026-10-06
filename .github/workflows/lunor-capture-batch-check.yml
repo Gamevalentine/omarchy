@@ -1,0 +1,50 @@
+name: LUNOR capture batch check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-capture-batch-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate capture migration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          scripts=(
+            bin/lunor-capture-qr
+            bin/lunor-capture-region
+            bin/lunor-capture-screenrecording
+            bin/lunor-capture-screenrecording-with-webcam
+            bin/lunor-capture-screenshot
+            bin/lunor-capture-text
+            bin/lunor-capture-webcam-list
+            bin/lunor-capture-webcam-resize
+          )
+
+          for script in "${scripts[@]}"; do
+            test -x "$script"
+            bash -n "$script"
+            if grep -Eq 'omarchy-[a-z0-9-]+' "$script"; then
+              echo "$script still calls or exposes a legacy Omarchy binary directly" >&2
+              exit 1
+            fi
+          done
+
+          grep -Fq 'LUNOR_SCREENRECORD_DIR' bin/lunor-capture-screenrecording
+          grep -Fq 'LUNOR_SCREENRECORD_DEBUG' bin/lunor-capture-screenrecording
+          grep -Fq 'LUNOR_SCREENRECORD_USE_PORTAL' bin/lunor-capture-screenrecording
+          grep -Fq 'LUNOR_SCREENSHOT_DIR' bin/lunor-capture-screenshot
+          grep -Fq 'LUNOR_OCR_LANGS' bin/lunor-capture-text
+          grep -Fq 'lunor-screenrecord-region' bin/lunor-capture-screenrecording bin/lunor-capture-webcam-resize
+
+          bash -n test/cli
+          ./bin/lunor commands --check
+          ./test/cli
