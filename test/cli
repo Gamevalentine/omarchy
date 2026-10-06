@@ -558,7 +558,7 @@ output=$("$LUNOR" hyprland focus app --help)
 assert_output_contains "lunor focus app help is canonical" "$output" "lunor hyprland focus app <app-name>"
 
 output=$("$LUNOR" hyprland window width --help)
-assert_output_contains "lunor window width help is canonical" "$output" "lunor hyprland window width save|restore"
+assert_output_contains "lunor window width help is canonical" "$output" "lunor hyprland window width <save|restore>"
 
 make_tmpdir SAFE_HYPRLAND_BIN
 cat >"$SAFE_HYPRLAND_BIN/lunor" <<'EOF'
