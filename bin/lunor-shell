@@ -62,7 +62,8 @@ fi
 # Like qs ipc, the socket belongs to one shell, the one running this config on
 # this display, and the shell derives its name from the same two values.
 socket_id=$(printf '%s\n%s' "$LUNOR_PATH/shell" "${WAYLAND_DISPLAY:-}" | md5sum)
-# Compatibility transport name; migrate with the shell server later.\nsocket="${XDG_RUNTIME_DIR:-/run/user/$UID}/omarchy-shell-${socket_id:0:16}.sock"
+# Compatibility transport name; migrate with the shell server later.
+socket="${XDG_RUNTIME_DIR:-/run/user/$UID}/omarchy-shell-${socket_id:0:16}.sock"
 request="$*"
 if [[ -S $socket && $request != *$'\x1e'* && $request != *$'\x1f'* ]]; then
   saved_ifs=$IFS
