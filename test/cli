@@ -161,6 +161,34 @@ HOME="$toggle_core_home" "$LUNOR" toggle demo
 [[ ! -f "$toggle_core_home/.local/state/lunor/toggles/demo" ]] || fail "lunor toggle flips a present flag off"
 pass "lunor core toggle behavior works"
 
+"$LUNOR" commands --all --json | jq -e '
+  .commands[]
+  | select(.binary == "lunor-toggle-idle"
+        and .route == "lunor toggle idle"
+        and .filename_route == "lunor toggle idle")
+' >/dev/null
+pass "lunor prefers the migrated idle toggle command"
+
+output=$("$LUNOR" toggle idle --help)
+assert_output_contains "lunor idle toggle help is canonical" "$output" "lunor toggle idle [toggle|stay-awake|allow-idle|status]"
+
+idle_home=$(mktemp -d)
+TMPDIRS+=("$idle_home")
+status=$(HOME="$idle_home" "$LUNOR" toggle idle --status)
+[[ $status == '{"enabled":false,"class":"disabled","tooltip":"Stay Awake"}' ]] || fail "lunor idle status starts disabled"
+
+output=$(HOME="$idle_home" "$LUNOR" toggle idle stay-awake)
+[[ $output == "disabled" ]] || fail "lunor idle stay-awake disables idle"
+[[ -f "$idle_home/.local/state/lunor/indicators/stay-awake" ]] || fail "lunor idle stay-awake writes state"
+
+status=$(HOME="$idle_home" "$LUNOR" toggle idle status)
+[[ $status == '{"enabled":true,"class":"enabled","tooltip":"Allow Idle Lock & Screensaver"}' ]] || fail "lunor idle status reports stay-awake"
+
+output=$(HOME="$idle_home" "$LUNOR" toggle idle allow-idle)
+[[ $output == "enabled" ]] || fail "lunor idle allow-idle enables idle"
+[[ ! -f "$idle_home/.local/state/lunor/indicators/stay-awake" ]] || fail "lunor idle allow-idle removes state"
+pass "lunor idle toggle behavior works"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
