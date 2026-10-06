@@ -1,56 +1,62 @@
-# Single source of truth for OMARCHY_PATH + PATH adjustments. Sourced by:
-#   /etc/profile.d/omarchy.sh                 (system login shells)
-#   /etc/skel/.bashrc                         (interactive shells)
-#   /usr/share/uwsm/env.d/10-omarchy          (Hyprland session via uwsm)
-#   /usr/share/omarchy/default/bash/envs      (bash rc chain; SSH/non-login)
+# Single source of truth for LUNOR_PATH + PATH adjustments.
+# OMARCHY_PATH is exported temporarily as a compatibility alias while the
+# remaining internal command namespace is migrated in isolated steps.
+#
+# Sourced by:
+#   /etc/profile.d/omarchy.sh
+#   /etc/skel/.bashrc
+#   /usr/share/uwsm/env.d/10-omarchy
+#   the LUNOR bash rc chain
 
-# /etc/lunor.conf is written by omarchy-dev-link and reset by
-# omarchy-dev-unlink. When absent, force the packaged default instead of
-# preserving a stale inherited value.
+# Prefer the future LUNOR package root. Until package layout migration is
+# complete, fall back to the currently packaged source tree.
+lunor_packaged_root=/usr/share/lunor
+if [ ! -d "$lunor_packaged_root" ] && [ -d /usr/share/omarchy ]; then
+  lunor_packaged_root=/usr/share/omarchy
+fi
+
+# /etc/lunor.conf is the canonical development-link configuration.
 if [ -f /etc/lunor.conf ]; then
   . /etc/lunor.conf
-  : "${OMARCHY_PATH:=/usr/share/omarchy}"
-else
-  OMARCHY_PATH=/usr/share/omarchy
 fi
+
+: "${LUNOR_PATH:=$lunor_packaged_root}"
+export LUNOR_PATH
+
+# Temporary compatibility alias. Remove after all runtime consumers use
+# LUNOR_PATH directly.
+OMARCHY_PATH=$LUNOR_PATH
 export OMARCHY_PATH
 
-# Only prepend in dev-link mode. On a production install, the binaries are
-# already on PATH as /usr/bin/omarchy-* via the omarchy package — prepending
-# /usr/share/omarchy/bin would just be noise.
-if [ "$OMARCHY_PATH" != /usr/share/omarchy ]; then
+# Only prepend in dev-link mode.
+if [ "$LUNOR_PATH" != "$lunor_packaged_root" ]; then
   case ":$PATH:" in
-    *":${OMARCHY_PATH%/}/bin:"*) ;;
-    *) PATH="${OMARCHY_PATH%/}/bin${PATH:+:$PATH}" ;;
+    *":${LUNOR_PATH%/}/bin:"*) ;;
+    *) PATH="${LUNOR_PATH%/}/bin${PATH:+:$PATH}" ;;
   esac
 fi
 
 # mise's command wrappers must precede real tool directories inherited from a
 # parent shell, so scripts follow account switches without Bash functions.
-# mise activate also keeps this directory ahead of its managed tool binaries.
-omarchy_wrapper_dir="${MISE_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mise}/command-wrappers/bin"
-omarchy_wrapper_path=$omarchy_wrapper_dir
+lunor_wrapper_dir="${MISE_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mise}/command-wrappers/bin"
+lunor_wrapper_path=$lunor_wrapper_dir
 if [ -n "${PATH:-}" ]; then
-  omarchy_remaining_path=$PATH
+  lunor_remaining_path=$PATH
   while :; do
-    omarchy_path_entry=${omarchy_remaining_path%%:*}
-    if [ "$omarchy_path_entry" != "$omarchy_wrapper_dir" ]; then
-      omarchy_wrapper_path="$omarchy_wrapper_path:$omarchy_path_entry"
+    lunor_path_entry=${lunor_remaining_path%%:*}
+    if [ "$lunor_path_entry" != "$lunor_wrapper_dir" ]; then
+      lunor_wrapper_path="$lunor_wrapper_path:$lunor_path_entry"
     fi
-    case "$omarchy_remaining_path" in
-      *:*) omarchy_remaining_path=${omarchy_remaining_path#*:} ;;
+    case "$lunor_remaining_path" in
+      *:*) lunor_remaining_path=${lunor_remaining_path#*:} ;;
       *) break ;;
     esac
   done
 fi
-PATH=$omarchy_wrapper_path
-unset omarchy_wrapper_dir omarchy_wrapper_path omarchy_remaining_path omarchy_path_entry
+PATH=$lunor_wrapper_path
+unset lunor_wrapper_dir lunor_wrapper_path lunor_remaining_path lunor_path_entry lunor_packaged_root
 
-# User-level tool paths, appended so system binaries keep precedence. This is
-# what lets login shells (ssh, bash -lc) and the uwsm session find mise-managed
-# tools without an interactive rc. Keep these directories in sync with the PAM
-# PATH line from install/config/ssh-command-path.sh, which covers SSH commands
-# that run no shell setup at all.
+# User-level tool paths, appended so system binaries keep precedence.
 case ":$PATH:" in
   *":$HOME/.local/share/mise/shims:"*) ;;
   *) PATH="${PATH:+$PATH:}$HOME/.local/share/mise/shims" ;;
