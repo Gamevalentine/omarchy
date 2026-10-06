@@ -1,0 +1,52 @@
+name: LUNOR remaining launch check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-remaining-launch-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate remaining launch migration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          scripts=(
+            bin/lunor-launch-1password
+            bin/lunor-launch-battlenet
+            bin/lunor-launch-browser
+            bin/lunor-launch-docker-tui
+            bin/lunor-launch-floating-terminal-with-presentation
+            bin/lunor-launch-openclaw
+            bin/lunor-launch-shell
+            bin/lunor-launch-signal
+            bin/lunor-launch-spotify
+          )
+
+          for script in "${scripts[@]}"; do
+            test -x "$script"
+            bash -n "$script"
+            if grep -Eq 'omarchy-[a-z0-9-]+' "$script"; then
+              echo "$script still calls or exposes a legacy Omarchy binary directly" >&2
+              exit 1
+            fi
+          done
+
+          if grep -Fq 'OMARCHY_PATH' bin/lunor-launch-shell; then
+            echo "canonical shell launcher still depends on OMARCHY_PATH" >&2
+            exit 1
+          fi
+
+          grep -Fq -- '--app-id=org.lunor.terminal' bin/lunor-launch-floating-terminal-with-presentation
+          grep -Fq -- '--unit="lunor-browser-' bin/lunor-launch-browser
+
+          bash -n test/cli
+          ./bin/lunor commands --check
+          ./test/cli
