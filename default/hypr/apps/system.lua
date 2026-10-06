@@ -23,19 +23,19 @@ o.window({
 -- This size only covers the first launch: omarchy-launch-about measures the
 -- rendered content, remembers the size that hugs it, and applies that as its own
 -- rule before every later launch.
-o.window("org.omarchy.about", { float = true })
-o.window("org.omarchy.about", { center = true })
-o.window("org.omarchy.about", { size = { 920, 480 } })
+o.window("org.lunor.about", { float = true })
+o.window("org.lunor.about", { center = true })
+o.window("org.lunor.about", { size = { 920, 480 } })
 
 o.window("omacalc", { float = true })
 
 -- Fullscreen screensaver.
-o.window("org.omarchy.screensaver", { fullscreen = true })
-o.window("org.omarchy.screensaver", { float = true })
-o.window("org.omarchy.screensaver", { animation = "slide" })
+o.window("org.lunor.screensaver", { fullscreen = true })
+o.window("org.lunor.screensaver", { float = true })
+o.window("org.lunor.screensaver", { animation = "slide" })
 -- The launcher picks each screensaver's workspace. A terminal mapped again as it closes lands out of sight instead,
 -- where its fullscreen rule cannot take fullscreen from a window.
-o.window("org.omarchy.screensaver", { workspace = "special:screensaver silent" })
+o.window("org.lunor.screensaver", { workspace = "special:screensaver silent" })
 
 -- Popped window rounding.
 o.window({ tag = "pop" }, { rounding = 8 })
