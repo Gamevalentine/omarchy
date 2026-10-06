@@ -949,6 +949,47 @@ assert_output_contains "help lookalike tokens do not trigger help" "$output" "pa
  "$hypr_log") == "2" ]] || fail "lunor Hyprland toggle reloads Hyprland after each change"
 pass "lunor Hyprland toggle primitives work"
 
+"$LUNOR" commands --all --json | jq -e '
+  .commands[]
+  | select(.binary == "lunor-toggle-animations"
+        and .route == "lunor toggle animations"
+        and .filename_route == "lunor toggle animations")
+' >/dev/null
+pass "lunor prefers the migrated animations toggle command"
+
+output=$("$LUNOR" toggle animations --help)
+assert_output_contains "lunor animations toggle help is canonical" "$output" "lunor toggle animations [toggle|on|off]"
+
+make_tmpdir ANIMATIONS_TOGGLE_BIN
+cat >"$ANIMATIONS_TOGGLE_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+if [[ $1 == "hyprland" && $2 == "toggle" && $3 == "enabled" ]]; then
+  [[ ${LUNOR_TEST_ANIMATIONS_DISABLED:-0} == "1" ]]
+  exit
+fi
+exit 0
+EOF
+chmod +x "$ANIMATIONS_TOGGLE_BIN/lunor"
+
+animations_log="$ANIMATIONS_TOGGLE_BIN/toggle.log"
+LUNOR_TEST_LOG="$animations_log" LUNOR_TEST_ANIMATIONS_DISABLED=1 PATH="$ANIMATIONS_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-animations" toggle
+grep -Fxq 'hyprland toggle no-animations toggle' "$animations_log" || fail "lunor animations toggle maps toggle action to Hyprland"
+grep -Fxq 'hyprland toggle enabled no-animations' "$animations_log" || fail "lunor animations toggle checks migrated Hyprland state"
+grep -Fq 'notification send' "$animations_log" || fail "lunor animations toggle sends a LUNOR notification"
+grep -Fq 'Animations disabled' "$animations_log" || fail "lunor animations toggle reports disabled state"
+
+: >"$animations_log"
+LUNOR_TEST_LOG="$animations_log" LUNOR_TEST_ANIMATIONS_DISABLED=0 PATH="$ANIMATIONS_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-animations" on
+grep -Fxq 'hyprland toggle no-animations off' "$animations_log" || fail "lunor animations on removes no-animations flag"
+grep -Fq 'Animations enabled' "$animations_log" || fail "lunor animations on reports enabled state"
+
+: >"$animations_log"
+LUNOR_TEST_LOG="$animations_log" LUNOR_TEST_ANIMATIONS_DISABLED=1 PATH="$ANIMATIONS_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-animations" off
+grep -Fxq 'hyprland toggle no-animations on' "$animations_log" || fail "lunor animations off adds no-animations flag"
+grep -Fq 'Animations disabled' "$animations_log" || fail "lunor animations off reports disabled state"
+pass "lunor animations toggle uses migrated dependencies"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
