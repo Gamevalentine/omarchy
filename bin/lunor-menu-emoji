@@ -1,0 +1,6 @@
+#!/bin/bash
+# omarchy:summary=Launch emojis
+# omarchy:group=menu
+# omarchy:examples=lunor menu emoji
+
+lunor shell shell toggle omarchy.emojis
