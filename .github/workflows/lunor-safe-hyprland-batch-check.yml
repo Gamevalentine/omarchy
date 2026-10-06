@@ -70,7 +70,9 @@ jobs:
             | length
           ')" = "15"
 
-          ./bin/lunor hyprland focus app --help | grep -Fq 'lunor hyprland focus app <app-name>'
-          ./bin/lunor hyprland window width --help | grep -Fq 'lunor hyprland window width save|restore'
+          output="$(./bin/lunor hyprland focus app --help)"
+          grep -Fq 'lunor hyprland focus app <app-name>' <<<"$output"
+          output="$(./bin/lunor hyprland window width --help)"
+          grep -Fq 'lunor hyprland window width save|restore' <<<"$output"
 
           ./test/cli
