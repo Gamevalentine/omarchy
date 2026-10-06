@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omarchy:summary=Show the current battery status notification
+
+lunor notification send -g 󰁹 -u low "$(lunor battery status)"
