@@ -1,4 +1,5 @@
 name: LUNOR config state migration check
+# validation rerun after cleanup
 
 on:
   push:
