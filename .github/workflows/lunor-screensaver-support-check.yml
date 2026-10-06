@@ -1,0 +1,59 @@
+name: LUNOR screensaver support check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-screensaver-support-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate migrated screensaver support commands
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for script in \
+            bin/lunor-toggle-enabled \
+            bin/lunor-hyprland-monitor-focused \
+            bin/lunor-notification-send; do
+            test -x "$script"
+            bash -n "$script"
+          done
+
+          ./bin/lunor commands --check
+
+          ./bin/lunor commands --all --json |
+            jq -e '
+              [.commands[]
+               | select(.binary == "lunor-toggle-enabled"
+                     or .binary == "lunor-hyprland-monitor-focused"
+                     or .binary == "lunor-notification-send")]
+              | length == 3
+            ' >/dev/null
+
+          ./bin/lunor toggle enabled --help | grep -Fq 'lunor toggle enabled <flag-name>'
+          ./bin/lunor hyprland monitor focused --help | grep -Fq 'lunor hyprland monitor focused'
+          ./bin/lunor notification send --help | grep -Fq 'lunor notification send'
+
+          grep -Fq 'lunor toggle enabled screensaver-off' bin/lunor-launch-screensaver
+          grep -Fq 'lunor hyprland monitor focused' bin/lunor-launch-screensaver
+          grep -Fq 'lunor notification send' bin/lunor-launch-screensaver
+          grep -Fq -- '-e lunor screensaver' bin/lunor-launch-screensaver
+
+          tmp_home="$(mktemp -d)"
+          trap 'rm -rf "$tmp_home"' EXIT
+          mkdir -p "$tmp_home/.local/state/lunor/toggles"
+          touch "$tmp_home/.local/state/lunor/toggles/test-flag"
+          HOME="$tmp_home" ./bin/lunor toggle enabled test-flag
+          if HOME="$tmp_home" ./bin/lunor toggle enabled missing-flag; then
+            echo "missing toggle unexpectedly reported enabled" >&2
+            exit 1
+          fi
+
+          ./bin/omarchy toggle enabled --help | grep -Fq 'omarchy toggle enabled'
