@@ -135,6 +135,32 @@ if HOME="$toggle_home" "$LUNOR" toggle enabled missing-flag; then
 fi
 pass "lunor toggle enabled returns false for a missing flag"
 
+"$LUNOR" commands --all --json | jq -e '
+  [.commands[]
+   | select(.binary == "lunor-toggle"
+         or .binary == "lunor-toggle-screensaver")]
+  | length == 2
+' >/dev/null
+pass "lunor prefers the migrated core and screensaver toggle commands"
+
+output=$("$LUNOR" toggle --help)
+assert_output_contains "lunor core toggle help is canonical" "$output" "lunor toggle <flag-name> [toggle|on|off]"
+
+output=$("$LUNOR" toggle screensaver --help)
+assert_output_contains "lunor screensaver toggle help is canonical" "$output" "lunor toggle screensaver"
+
+toggle_core_home=$(mktemp -d)
+TMPDIRS+=("$toggle_core_home")
+HOME="$toggle_core_home" "$LUNOR" toggle demo on
+[[ -f "$toggle_core_home/.local/state/lunor/toggles/demo" ]] || fail "lunor toggle on creates the flag"
+HOME="$toggle_core_home" "$LUNOR" toggle demo off
+[[ ! -f "$toggle_core_home/.local/state/lunor/toggles/demo" ]] || fail "lunor toggle off removes the flag"
+HOME="$toggle_core_home" "$LUNOR" toggle demo
+[[ -f "$toggle_core_home/.local/state/lunor/toggles/demo" ]] || fail "lunor toggle flips an absent flag on"
+HOME="$toggle_core_home" "$LUNOR" toggle demo
+[[ ! -f "$toggle_core_home/.local/state/lunor/toggles/demo" ]] || fail "lunor toggle flips a present flag off"
+pass "lunor core toggle behavior works"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
