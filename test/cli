@@ -4,6 +4,7 @@ set -euo pipefail
 
 ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 CLI="$ROOT/bin/omarchy"
+LUNOR="$ROOT/bin/lunor"
 TMPDIRS=()
 
 export PATH="$ROOT/bin:$PATH"
@@ -74,6 +75,18 @@ pass "JSON uses binary/routes and omits legacy/usage/extra metadata"
 
 "$CLI" commands --check >/dev/null
 pass "commands --check passes"
+
+"$LUNOR" commands --check >/dev/null
+pass "lunor commands --check passes during mixed-prefix migration"
+
+"$LUNOR" commands --all --json | jq -e '.commands[] | select(.binary == "lunor-branding-about" and .route == "lunor branding about" and .filename_route == "lunor branding about")' >/dev/null
+pass "lunor prefers migrated lunor-* branding binaries"
+
+"$LUNOR" commands --json | jq -e '.commands[] | select(.binary == "omarchy-pkg-add" and .route == "lunor pkg add" and .filename_route == "lunor pkg add")' >/dev/null
+pass "lunor falls back to unmigrated omarchy-* binaries"
+
+output=$("$LUNOR" branding about --help)
+assert_output_contains "lunor branding help renders canonical route" "$output" "lunor branding about <image|text|reset>"
 
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
