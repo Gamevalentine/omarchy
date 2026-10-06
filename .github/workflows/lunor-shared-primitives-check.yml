@@ -58,3 +58,5 @@ jobs:
           fi
 
           ./test/cli
+
+# rerun after toggle test fix
