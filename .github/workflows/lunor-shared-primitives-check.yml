@@ -1,0 +1,60 @@
+name: LUNOR shared primitives check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-shared-primitives-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate shared primitive migration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for script in \
+            bin/lunor-shell \
+            bin/lunor-osd \
+            bin/lunor-hw-touchpad \
+            bin/lunor-hw-touchscreen \
+            bin/lunor-toggle-input-device; do
+            test -x "$script"
+            bash -n "$script"
+          done
+
+          bash -n test/cli
+          ./bin/lunor commands --check
+
+          ./bin/lunor commands --all --json |
+            jq -e '
+              [.commands[]
+               | select(.binary == "lunor-shell"
+                     or .binary == "lunor-osd"
+                     or .binary == "lunor-hw-touchpad"
+                     or .binary == "lunor-hw-touchscreen"
+                     or .binary == "lunor-toggle-input-device")]
+              | length == 5
+            ' >/dev/null
+
+          ./bin/lunor shell --help | grep -Fq 'lunor shell [-q] <target> <method> [args...]'
+          ./bin/lunor osd --help | grep -Fq 'lunor osd [-i|--icon <icon>]'
+          ./bin/lunor toggle input device --help | grep -Fq 'lunor toggle input device <touchpad|touchscreen> [on|off|toggle]'
+          ./bin/lunor hw touchpad --help | grep -Fq 'lunor hw touchpad'
+          ./bin/lunor hw touchscreen --help | grep -Fq 'lunor hw touchscreen'
+
+          if grep -Fq '$OMARCHY_PATH' bin/lunor-shell; then
+            echo "lunor-shell still depends on OMARCHY_PATH" >&2
+            exit 1
+          fi
+          if grep -Eq 'omarchy-(shell|osd|hw-touchpad|hw-touchscreen)' bin/lunor-osd bin/lunor-toggle-input-device; then
+            echo "canonical shared primitives still call legacy Omarchy binaries directly" >&2
+            exit 1
+          fi
+
+          ./test/cli
