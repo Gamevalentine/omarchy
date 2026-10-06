@@ -189,6 +189,48 @@ output=$(HOME="$idle_home" "$LUNOR" toggle idle allow-idle)
 [[ ! -f "$idle_home/.local/state/lunor/indicators/stay-awake" ]] || fail "lunor idle allow-idle removes state"
 pass "lunor idle toggle behavior works"
 
+"$LUNOR" commands --all --json | jq -e '
+  [.commands[]
+   | select(.binary == "lunor-toggle-suspend"
+         or .binary == "lunor-toggle-theme-sync")]
+  | length == 2
+' >/dev/null
+pass "lunor prefers the simple migrated toggle batch"
+
+output=$("$LUNOR" toggle suspend --help)
+assert_output_contains "lunor suspend toggle help is canonical" "$output" "lunor toggle suspend"
+
+output=$("$LUNOR" toggle theme sync --help)
+assert_output_contains "lunor theme sync toggle help is canonical" "$output" "lunor toggle theme sync"
+
+make_tmpdir SIMPLE_TOGGLE_BIN
+cat >"$SIMPLE_TOGGLE_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+if [[ $1 == "toggle" && $2 == "enabled" ]]; then
+  [[ ${LUNOR_TEST_ENABLED:-0} == "1" ]]
+  exit
+fi
+exit 0
+EOF
+chmod +x "$SIMPLE_TOGGLE_BIN/lunor"
+
+suspend_log="$SIMPLE_TOGGLE_BIN/suspend.log"
+LUNOR_TEST_LOG="$suspend_log" LUNOR_TEST_ENABLED=1 PATH="$SIMPLE_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-suspend"
+grep -Fxq 'toggle suspend-off' "$suspend_log" || fail "lunor suspend toggle flips its flag"
+grep -Fxq 'toggle enabled suspend-off' "$suspend_log" || fail "lunor suspend toggle checks its flag"
+grep -Fq 'notification send' "$suspend_log" || fail "lunor suspend toggle sends a LUNOR notification"
+grep -Fq 'Suspend removed from system menu' "$suspend_log" || fail "lunor suspend toggle reports disabled state"
+pass "lunor suspend toggle uses only migrated dependencies"
+
+theme_sync_log="$SIMPLE_TOGGLE_BIN/theme-sync.log"
+LUNOR_TEST_LOG="$theme_sync_log" LUNOR_TEST_ENABLED=0 PATH="$SIMPLE_TOGGLE_BIN:$PATH" "$ROOT/bin/lunor-toggle-theme-sync"
+grep -Fxq 'toggle herdr-theme-sync' "$theme_sync_log" || fail "lunor theme sync toggle flips its flag"
+grep -Fxq 'toggle enabled herdr-theme-sync' "$theme_sync_log" || fail "lunor theme sync toggle checks its flag"
+grep -Fq 'notification send' "$theme_sync_log" || fail "lunor theme sync toggle sends a LUNOR notification"
+grep -Fq 'Herdr theme sync disabled' "$theme_sync_log" || fail "lunor theme sync toggle reports disabled state"
+pass "lunor theme sync toggle uses only migrated dependencies"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
