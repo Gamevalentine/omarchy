@@ -41,8 +41,15 @@ printf '%s\n' "$$" >"$TEST_DIR/socat.pid"
 exec cat "$TEST_DIR/events"
 SH
 printf '#!/bin/bash\nexit 1\n' >"$tmpdir/bin/pgrep"
-printf '#!/bin/bash\nexit 1\n' >"$tmpdir/bin/omarchy-toggle-enabled"
-printf '#!/bin/bash\necho DP-1\n' >"$tmpdir/bin/omarchy-hyprland-monitor-focused"
+cat >"$tmpdir/bin/lunor" <<'SH'
+#!/bin/bash
+case "$1 $2 $3" in
+  'toggle enabled screensaver-off') exit 1 ;;
+  'hyprland monitor focused') echo DP-1 ;;
+  'notification send '*) exit 0 ;;
+esac
+exit 1
+SH
 printf '#!/bin/bash\necho foot.desktop\n' >"$tmpdir/bin/xdg-terminal-exec"
 chmod +x "$tmpdir/bin/"*
 
@@ -50,8 +57,8 @@ chmod +x "$tmpdir/bin/"*
 : >"$tmpdir/spawned"
 printf '[{"class":"org.lunor.screensaver","mapped":true}]\n' >"$tmpdir/clients.json"
 
-PATH="$tmpdir/bin:$PATH" TEST_DIR="$tmpdir" XDG_RUNTIME_DIR="$tmpdir" HYPRLAND_INSTANCE_SIGNATURE=test \
-  timeout 10 "$ROOT/bin/omarchy-launch-screensaver" force
+PATH="$tmpdir/bin:$PATH" TEST_DIR="$tmpdir" XDG_RUNTIME_DIR="$tmpdir" HYPRLAND_INSTANCE_SIGNATURE=test LUNOR_PATH="$ROOT" \
+  timeout 10 "$ROOT/bin/lunor-launch-screensaver" force
 
 mapfile -t spawns < <(grep exec_cmd "$tmpdir/calls")
 (( ${#spawns[@]} == 2 )) || fail "a screensaver opens on each monitor" "$(<"$tmpdir/calls")"
@@ -61,6 +68,9 @@ pass "the screensaver opens on its own special workspace, leaving a fullscreen w
 [[ ${spawns[1]} == *"[workspace special:scratchpad]"* ]] ||
   fail "the screensaver shares a special workspace that is already showing" "${spawns[1]}"
 pass "the screensaver shares a special workspace that is already showing"
+grep -q 'lunor screensaver' "$tmpdir/calls" ||
+  fail "the LUNOR launcher starts the canonical screensaver command" "$(<"$tmpdir/calls")"
+pass "the LUNOR launcher starts the canonical screensaver command"
 
 # Emptying a special workspace focuses its monitor; the last screensaver to close must not keep focus.
 : >"$tmpdir/calls"
@@ -82,8 +92,8 @@ pass "focus returns to the monitor that had it once the screensaver closes"
 kill "$(<"$tmpdir/socat.pid")"
 : >"$tmpdir/calls"
 : >"$tmpdir/spawned"
-PATH="$tmpdir/bin:$PATH" TEST_DIR="$tmpdir" XDG_RUNTIME_DIR="$tmpdir" HYPRLAND_INSTANCE_SIGNATURE=test \
-  timeout 10 "$ROOT/bin/omarchy-launch-screensaver" force
+PATH="$tmpdir/bin:$PATH" TEST_DIR="$tmpdir" XDG_RUNTIME_DIR="$tmpdir" HYPRLAND_INSTANCE_SIGNATURE=test LUNOR_PATH="$ROOT" \
+  timeout 10 "$ROOT/bin/lunor-launch-screensaver" force
 for (( attempt = 0; attempt < 100; attempt++ )); do
   (( $(grep -c 'hl.dsp.focus({ monitor = "DP-1" })' "$tmpdir/calls") == 3 )) && break
   sleep 0.05
