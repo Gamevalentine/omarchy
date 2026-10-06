@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Canonical LUNOR OS command entrypoint.
+# The legacy command router remains behind this wrapper temporarily while its
+# subcommands are migrated in small, tested groups.
+
+set -euo pipefail
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+
+if [[ -n ${LUNOR_PATH:-} && -x $LUNOR_PATH/bin/omarchy ]]; then
+  target="$LUNOR_PATH/bin/omarchy"
+elif [[ -x $script_dir/omarchy ]]; then
+  target="$script_dir/omarchy"
+elif command -v omarchy >/dev/null 2>&1; then
+  target=$(command -v omarchy)
+else
+  echo "LUNOR command router is not available." >&2
+  exit 127
+fi
+
+exec "$target" "$@"
