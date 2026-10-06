@@ -739,6 +739,102 @@ grep -Fq 'launch or focus Demo App' "$phase4_log" || fail "lunor focusable webap
 grep -Fq 'lunor launch webapp' "$phase4_log" || fail "lunor focusable webapp builds canonical webapp command"
 pass "lunor safe launch batch uses canonical dependencies"
 
+network_brightness_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-network-band"
+       or .binary == "lunor-network-password"
+       or .binary == "lunor-network-qr"
+       or .binary == "lunor-network-speedtest"
+       or .binary == "lunor-network-status"
+       or .binary == "lunor-brightness-display"
+       or .binary == "lunor-brightness-display-apple"
+       or .binary == "lunor-brightness-display-ddc"
+       or .binary == "lunor-brightness-keyboard"
+       or .binary == "lunor-brightness-keyboard-mute"
+     )]
+  | length
+')
+[[ $network_brightness_count == "10" ]] || fail "lunor exposes the complete network and brightness batch"
+pass "lunor prefers the network and brightness batch"
+
+output=$("$LUNOR" network band --help)
+assert_output_contains "lunor network band help is canonical" "$output" "lunor network band [auto|2.4|5|6]"
+
+output=$("$LUNOR" network password --help)
+assert_output_contains "lunor network password help is canonical" "$output" "lunor network password <interface>"
+
+output=$("$LUNOR" network qr --help)
+assert_output_contains "lunor network QR help is canonical" "$output" "lunor network qr [--meta] [interface]"
+
+output=$("$LUNOR" network speedtest --help)
+assert_output_contains "lunor network speedtest help is canonical" "$output" "lunor network speedtest [down|up]"
+
+output=$("$LUNOR" network status --help)
+assert_output_contains "lunor network status help is canonical" "$output" "lunor network status [--verbose]"
+
+output=$("$LUNOR" brightness display --help)
+assert_output_contains "lunor display brightness help is canonical" "$output" "lunor brightness display [--no-osd] [--monitor name] [+N%|N%-|N%|off|on]"
+
+output=$("$LUNOR" brightness display apple --help)
+assert_output_contains "lunor Apple display brightness help is canonical" "$output" "lunor brightness display apple [--no-osd] [+N%|N%-|N%]"
+
+output=$("$LUNOR" brightness display ddc --help)
+assert_output_contains "lunor DDC display brightness help is canonical" "$output" "lunor brightness display ddc <monitor> [+N%|N%-|N%]"
+
+output=$("$LUNOR" brightness keyboard --help)
+assert_output_contains "lunor keyboard brightness help is canonical" "$output" "lunor brightness keyboard [--no-osd] <up|down|cycle|off|restore>"
+
+output=$("$LUNOR" brightness keyboard mute --help)
+assert_output_contains "lunor keyboard mute LED help is canonical" "$output" "lunor brightness keyboard mute <on|off>"
+
+network_error=$("$ROOT/bin/lunor-network-band" invalid 2>&1 || true)
+[[ $network_error == *"Usage: lunor network band [auto|2.4|5|6]"* ]] || fail "lunor network band direct usage is canonical"
+
+speedtest_error=$("$ROOT/bin/lunor-network-speedtest" invalid 2>&1 || true)
+[[ $speedtest_error == *"Usage: lunor network speedtest [down|up]"* ]] || fail "lunor network speedtest direct usage is canonical"
+
+status_error=$("$ROOT/bin/lunor-network-status" invalid 2>&1 || true)
+[[ $status_error == *"Usage: lunor network status [--verbose]"* ]] || fail "lunor network status direct usage is canonical"
+pass "lunor network commands expose canonical direct usage"
+
+make_tmpdir NETWORK_BRIGHTNESS_BIN
+cat >"$NETWORK_BRIGHTNESS_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+case "$*" in
+  "hyprland monitor focused apple "*)
+    exit 1
+    ;;
+  "brightness display ddc "*)
+    printf '57\n'
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+EOF
+chmod +x "$NETWORK_BRIGHTNESS_BIN/lunor"
+
+brightness_log="$NETWORK_BRIGHTNESS_BIN/brightness.log"
+brightness_output=$(LUNOR_TEST_LOG="$brightness_log" PATH="$NETWORK_BRIGHTNESS_BIN:$PATH" "$ROOT/bin/lunor-brightness-display" --monitor DP-1)
+[[ $brightness_output == "57" ]] || fail "lunor display brightness delegates external display reads to canonical DDC route"
+grep -Fxq 'hyprland monitor focused apple DP-1' "$brightness_log" || fail "lunor display brightness checks Apple displays through canonical Hyprland route"
+grep -Fxq 'brightness display ddc DP-1' "$brightness_log" || fail "lunor display brightness uses canonical DDC route"
+
+: >"$brightness_log"
+LUNOR_TEST_LOG="$brightness_log" PATH="$NETWORK_BRIGHTNESS_BIN:$PATH" "$ROOT/bin/lunor-brightness-display" --monitor DP-1 50%
+grep -Fxq 'brightness display ddc DP-1 50%' "$brightness_log" || fail "lunor display brightness delegates DDC writes through canonical route"
+grep -Fxq 'osd -i brightness -p 57' "$brightness_log" || fail "lunor display brightness uses canonical OSD route"
+pass "lunor display brightness uses canonical dependencies"
+
+ddc_error=$("$ROOT/bin/lunor-brightness-display-ddc" 2>&1 || true)
+[[ -z $ddc_error ]] || fail "lunor DDC brightness keeps silent missing-monitor behavior"
+
+keyboard_mute_help=$("$LUNOR" brightness keyboard mute --help)
+[[ $keyboard_mute_help == *"lunor brightness keyboard mute <on|off>"* ]] || fail "lunor keyboard mute route remains canonical"
+pass "lunor brightness leaf commands preserve behavior"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
