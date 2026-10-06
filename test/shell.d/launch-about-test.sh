@@ -18,8 +18,8 @@ sed '/^presize_window$/,$d' "$about" >"$tmp_dir/about.bash"
 
 export HOME="$tmp_dir/home"
 export PATH="$ROOT/bin:$PATH"
-mkdir -p "$HOME/.config/omarchy/branding"
-printf '%s\n' '████████' '████████' >"$HOME/.config/omarchy/branding/about.txt"
+mkdir -p "$HOME/.config/lunor/branding"
+printf '%s\n' '████████' '████████' >"$HOME/.config/lunor/branding/about.txt"
 
 source "$tmp_dir/about.bash"
 [[ $(type -t sheen_build) == "function" ]] || fail "the launcher finds the sheen it sources"
@@ -84,7 +84,7 @@ pass "a roomy window animates"
 
 # The sheen is told where the logo is, what colour to hand the cells back in, and
 # how much room it has left of the module column.
-[[ ${handed[0]} == "$HOME/.config/omarchy/branding/about.txt" ]] || fail "the sheen is given the logo About draws" "${handed[0]}"
+[[ ${handed[0]} == "$HOME/.config/lunor/branding/about.txt" ]] || fail "the sheen is given the logo About draws" "${handed[0]}"
 pass "the sheen is given the logo About draws"
 [[ ${handed[1]} == "$logo_row" && ${handed[2]} == "$logo_column" ]] || fail "the sheen is given the cell the logo starts on" "${handed[1]}/${handed[2]}"
 pass "the sheen is given the cell the logo starts on"
@@ -190,7 +190,7 @@ refuses "a layout fastfetch cannot be measured from leaves it still"
 # padding away — and a scrolled layout is one the sheen then refuses. The fit
 # asks fastfetch how tall the layout came out instead.
 rm -rf "${HOME:?}/.local"
-printf '%s\n' $(for i in $(seq 40); do echo '██████████'; done) >"$HOME/.config/omarchy/branding/about.txt"
+printf '%s\n' $(for i in $(seq 40); do echo '██████████'; done) >"$HOME/.config/lunor/branding/about.txt"
 layout_rows=43
 measure_layout() {
   LAYOUT_ROWS=$layout_rows
@@ -204,7 +204,7 @@ fastfetch() {
   esac
 }
 hyprctl() {
-  [[ $1 == "clients" ]] && printf '[{"class":"org.omarchy.about","address":"0x1","size":[800,600]}]\n'
+  [[ $1 == "clients" ]] && printf '[{"class":"org.lunor.about","address":"0x1","size":[800,600]}]\n'
   return 0
 }
 
