@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omarchy:summary=Reload btop configuration (used by the LUNOR OS theme switching).
+
+pkill -SIGUSR2 btop
