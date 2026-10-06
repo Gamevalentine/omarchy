@@ -1,0 +1,66 @@
+name: LUNOR simple toggle batch check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-simple-toggle-batch-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate safe toggle batch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for script in bin/lunor-toggle-suspend bin/lunor-toggle-theme-sync; do
+            test -x "$script"
+            bash -n "$script"
+          done
+
+          ./bin/lunor commands --check
+
+          ./bin/lunor commands --all --json |
+            jq -e '
+              [.commands[]
+               | select(.binary == "lunor-toggle-suspend"
+                     or .binary == "lunor-toggle-theme-sync")]
+              | length == 2
+            ' >/dev/null
+
+          ./bin/lunor toggle suspend --help | grep -Fq 'lunor toggle suspend'
+          ./bin/lunor toggle theme sync --help | grep -Fq 'lunor toggle theme sync'
+          ./bin/omarchy toggle suspend --help | grep -Fq 'omarchy toggle suspend'
+          ./bin/omarchy toggle theme sync --help | grep -Fq 'omarchy toggle theme sync'
+
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          cat >"$tmp/lunor" <<'SH'
+          #!/bin/bash
+          printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+          if [[ $1 == "toggle" && $2 == "enabled" ]]; then
+            [[ ${LUNOR_TEST_ENABLED:-0} == "1" ]]
+            exit
+          fi
+          exit 0
+          SH
+          chmod +x "$tmp/lunor"
+
+          suspend_log="$tmp/suspend.log"
+          LUNOR_TEST_LOG="$suspend_log" LUNOR_TEST_ENABLED=1 PATH="$tmp:$PATH" ./bin/lunor-toggle-suspend
+          grep -Fxq 'toggle suspend-off' "$suspend_log"
+          grep -Fxq 'toggle enabled suspend-off' "$suspend_log"
+          grep -Fq 'notification send' "$suspend_log"
+          grep -Fq 'Suspend removed from system menu' "$suspend_log"
+
+          sync_log="$tmp/sync.log"
+          LUNOR_TEST_LOG="$sync_log" LUNOR_TEST_ENABLED=0 PATH="$tmp:$PATH" ./bin/lunor-toggle-theme-sync
+          grep -Fxq 'toggle herdr-theme-sync' "$sync_log"
+          grep -Fxq 'toggle enabled herdr-theme-sync' "$sync_log"
+          grep -Fq 'notification send' "$sync_log"
+          grep -Fq 'Herdr theme sync disabled' "$sync_log"
