@@ -952,13 +952,13 @@ output=$("$LUNOR" menu --help)
 assert_output_contains "lunor menu help is canonical" "$output" "lunor menu [toggle|summon|close|refresh|ping] [route]"
 
 output=$("$LUNOR" menu file --help)
-assert_output_contains "lunor menu file help is canonical" "$output" "lunor menu file <label> <paths> <formats> [menu args...]"
+assert_output_contains "lunor menu file help is canonical" "$output" "lunor menu file label paths formats [menu args...]"
 
 output=$("$LUNOR" menu select --help)
-assert_output_contains "lunor menu select help is canonical" "$output" "lunor menu select <prompt> [option...] [-- menu args...]"
+assert_output_contains "lunor menu select help is canonical" "$output" "lunor menu select prompt [option...] [-- menu args...]"
 
 output=$("$LUNOR" menu input --help)
-assert_output_contains "lunor menu input help is canonical" "$output" "lunor menu input <prompt> [menu args...]"
+assert_output_contains "lunor menu input help is canonical" "$output" "lunor menu input prompt [menu args...]"
 
 output=$("$LUNOR" menu plugin --help)
 assert_output_contains "lunor menu plugin help is canonical" "$output" "lunor menu plugin <enable|disable|clone|remove>"
