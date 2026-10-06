@@ -106,6 +106,35 @@ assert_output_contains "lunor About launcher help is canonical" "$output" "lunor
 output=$("$CLI" launch about --help)
 assert_output_contains "legacy About launcher remains available" "$output" "omarchy launch about"
 
+"$LUNOR" commands --all --json | jq -e '
+  [.commands[]
+   | select(.binary == "lunor-toggle-enabled"
+         or .binary == "lunor-hyprland-monitor-focused"
+         or .binary == "lunor-notification-send")]
+  | length == 3
+' >/dev/null
+pass "lunor prefers migrated screensaver support commands"
+
+output=$("$LUNOR" toggle enabled --help)
+assert_output_contains "lunor toggle enabled help is canonical" "$output" "lunor toggle enabled <flag-name>"
+
+output=$("$LUNOR" hyprland monitor focused --help)
+assert_output_contains "lunor focused monitor help is canonical" "$output" "lunor hyprland monitor focused"
+
+output=$("$LUNOR" notification send --help)
+assert_output_contains "lunor notification help is canonical" "$output" "lunor notification send"
+
+toggle_home=$(mktemp -d)
+TMPDIRS+=("$toggle_home")
+mkdir -p "$toggle_home/.local/state/lunor/toggles"
+touch "$toggle_home/.local/state/lunor/toggles/test-flag"
+HOME="$toggle_home" "$LUNOR" toggle enabled test-flag
+pass "lunor toggle enabled dispatches canonical binary"
+if HOME="$toggle_home" "$LUNOR" toggle enabled missing-flag; then
+  fail "lunor toggle enabled returns false for a missing flag"
+fi
+pass "lunor toggle enabled returns false for a missing flag"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
