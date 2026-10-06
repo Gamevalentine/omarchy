@@ -1,0 +1,53 @@
+name: LUNOR config state root migration
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-config-state-root-migration.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: lunor/1.0-branding
+          fetch-depth: 0
+
+      - name: Migrate user config/state and system config path literals
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -d '' files < <(
+            git grep -Ilz -e '.config/omarchy' -e '.local/state/omarchy' -e '/etc/omarchy.conf' -- . \
+              ':!.github/workflows/lunor-config-state-root-migration.yml' || true
+          )
+
+          printf 'Migrating exact path roots in %s files\n' "${#files[@]}"
+
+          for file in "${files[@]}"; do
+            perl -0pi -e 's#\.config/omarchy#\.config/lunor#g; s#\.local/state/omarchy#\.local/state/lunor#g; s#/etc/omarchy\.conf#/etc/lunor.conf#g' "$file"
+          done
+
+          git diff --check
+
+      - name: Commit root path migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No root paths required migration."
+            exit 0
+          fi
+
+          git config user.name "LUNOR Migration Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "LUNOR: migrate config and state roots"
+          git push origin HEAD:lunor/1.0-branding
