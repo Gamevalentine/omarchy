@@ -88,6 +88,24 @@ pass "lunor falls back to unmigrated omarchy-* binaries"
 output=$("$LUNOR" branding about --help)
 assert_output_contains "lunor branding help renders canonical route" "$output" "lunor branding about <image|text|reset>"
 
+"$LUNOR" commands --all --json | jq -e '
+  [.commands[]
+   | select(.binary == "lunor-launch-about"
+         or .binary == "lunor-launch-screensaver"
+         or .binary == "lunor-launch-or-focus-tui"
+         or .binary == "lunor-launch-tui"
+         or .binary == "lunor-launch-or-focus"
+         or .binary == "lunor-screensaver")]
+  | length == 6
+' >/dev/null
+pass "lunor prefers migrated About/screensaver launch chain"
+
+output=$("$LUNOR" launch about --help)
+assert_output_contains "lunor About launcher help is canonical" "$output" "lunor launch about"
+
+output=$("$CLI" launch about --help)
+assert_output_contains "legacy About launcher remains available" "$output" "omarchy launch about"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
