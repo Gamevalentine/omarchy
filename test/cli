@@ -438,6 +438,98 @@ night_status=$(PATH="$NIGHTLIGHT_BIN:$PATH" "$ROOT/bin/lunor-toggle-nightlight" 
 [[ $night_status == '{"enabled":false,"temperature":6500}' ]] || fail "lunor nightlight status preserves behavior"
 pass "lunor nightlight status works"
 
+"$LUNOR" commands --all --json | jq -e '
+  [.commands[]
+   | select(.binary == "lunor-shell"
+         or .binary == "lunor-osd"
+         or .binary == "lunor-hw-touchpad"
+         or .binary == "lunor-hw-touchscreen"
+         or .binary == "lunor-toggle-input-device")]
+  | length == 5
+' >/dev/null
+pass "lunor prefers migrated shared primitives"
+
+output=$("$LUNOR" shell --help)
+assert_output_contains "lunor shell help is canonical" "$output" "lunor shell [-q] <target> <method> [args...]"
+
+output=$("$LUNOR" osd --help)
+assert_output_contains "lunor OSD help is canonical" "$output" "lunor osd [-i|--icon <icon>]"
+
+output=$("$LUNOR" toggle input device --help)
+assert_output_contains "lunor input-device help is canonical" "$output" "lunor toggle input device <touchpad|touchscreen> [on|off|toggle]"
+
+output=$("$LUNOR" hw touchpad --help)
+assert_output_contains "lunor touchpad detector help is canonical" "$output" "lunor hw touchpad"
+
+output=$("$LUNOR" hw touchscreen --help)
+assert_output_contains "lunor touchscreen detector help is canonical" "$output" "lunor hw touchscreen"
+
+if grep -Fq '$OMARCHY_PATH' "$ROOT/bin/lunor-shell"; then
+  fail "lunor shell does not depend on OMARCHY_PATH"
+fi
+pass "lunor shell uses LUNOR_PATH as its canonical root"
+
+make_tmpdir SHARED_PRIMITIVE_BIN
+cat >"$SHARED_PRIMITIVE_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+case "$*" in
+  "hw touchpad") printf 'ELAN Touchpad\n' ;;
+  "hw touchscreen") printf 'Goodix Touchscreen\n' ;;
+esac
+exit 0
+EOF
+cat >"$SHARED_PRIMITIVE_BIN/hyprctl" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$HYPRCTL_TEST_LOG"
+exit 0
+EOF
+chmod +x "$SHARED_PRIMITIVE_BIN/lunor" "$SHARED_PRIMITIVE_BIN/hyprctl"
+
+input_home="$SHARED_PRIMITIVE_BIN/home"
+input_calls="$SHARED_PRIMITIVE_BIN/lunor.log"
+hypr_calls="$SHARED_PRIMITIVE_BIN/hyprctl.log"
+
+LUNOR_TEST_LOG="$input_calls" HYPRCTL_TEST_LOG="$hypr_calls" HOME="$input_home" PATH="$SHARED_PRIMITIVE_BIN:$PATH" "$ROOT/bin/lunor-toggle-input-device" touchpad off
+grep -Fxq 'hw touchpad' "$input_calls" || fail "lunor input-device resolves the touchpad through canonical hardware route"
+grep -Fq 'osd -i touchpad -m Touchpad disabled' "$input_calls" || fail "lunor input-device uses canonical OSD route"
+grep -Fq 'enabled = false' "$hypr_calls" || fail "lunor input-device disables the Hyprland device"
+grep -Fxq 'ELAN Touchpad' "$input_home/.local/state/lunor/toggles/hypr/touchpad-disabled-name" || fail "lunor input-device persists the disabled touchpad name"
+
+: >"$input_calls"
+: >"$hypr_calls"
+LUNOR_TEST_LOG="$input_calls" HYPRCTL_TEST_LOG="$hypr_calls" HOME="$input_home" PATH="$SHARED_PRIMITIVE_BIN:$PATH" "$ROOT/bin/lunor-toggle-input-device" touchpad on
+grep -Fq 'osd -i touchpad -m Touchpad enabled' "$input_calls" || fail "lunor input-device reports touchpad enabled through canonical OSD"
+grep -Fq 'enabled = true' "$hypr_calls" || fail "lunor input-device enables the Hyprland device"
+[[ ! -f "$input_home/.local/state/lunor/toggles/hypr/touchpad-disabled-name" ]] || fail "lunor input-device clears persisted touchpad disable state"
+pass "lunor input-device primitive preserves touchpad behavior"
+
+osd_log="$SHARED_PRIMITIVE_BIN/osd.log"
+LUNOR_TEST_LOG="$osd_log" PATH="$SHARED_PRIMITIVE_BIN:$PATH" "$ROOT/bin/lunor-osd" -i brightness -m "Display" -p 50
+grep -Fq 'shell -q osd show' "$osd_log" || fail "lunor OSD uses canonical shell route"
+grep -Fq '"icon":"brightness"' "$osd_log" || fail "lunor OSD payload keeps icon"
+grep -Fq '"message":"Display"' "$osd_log" || fail "lunor OSD payload keeps message"
+grep -Fq '"value":"50"' "$osd_log" || fail "lunor OSD payload keeps progress"
+pass "lunor OSD primitive preserves payload behavior"
+
+make_tmpdir HW_DETECT_BIN
+cat >"$HW_DETECT_BIN/hyprctl" <<'EOF'
+#!/bin/bash
+cat <<'JSON'
+{"mice":[{"name":"USB Mouse"},{"name":"ELAN Trackpad"}],"touch":[{"name":"Goodix Touchscreen"}],"tablets":[]}
+JSON
+EOF
+chmod +x "$HW_DETECT_BIN/hyprctl"
+
+[[ $(PATH="$HW_DETECT_BIN:$PATH" "$ROOT/bin/lunor-hw-touchpad") == "ELAN Trackpad" ]] || fail "lunor touchpad detector preserves detection behavior"
+[[ $(PATH="$HW_DETECT_BIN:$PATH" "$ROOT/bin/lunor-hw-touchscreen") == "Goodix Touchscreen" ]] || fail "lunor touchscreen detector preserves detection behavior"
+pass "lunor hardware input detectors work"
+
+shell_error=$(LUNOR_PATH= OMARCHY_PATH="$ROOT" "$ROOT/bin/lunor-shell" shell ping 2>&1 || true)
+[[ $shell_error == *"LUNOR_PATH is not set"* ]] || fail "lunor shell requires the canonical LUNOR_PATH root"
+LUNOR_PATH= OMARCHY_PATH="$ROOT" "$ROOT/bin/lunor-shell" -q shell ping
+pass "lunor shell quiet mode remains best-effort"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
