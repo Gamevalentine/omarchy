@@ -6,6 +6,8 @@
 
 set -euo pipefail
 
+export LUNOR_CLI_NAME=lunor
+
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 if [[ -n ${LUNOR_PATH:-} && -x $LUNOR_PATH/bin/omarchy ]]; then
