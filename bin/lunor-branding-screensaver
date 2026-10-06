@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# omarchy:summary=Edit, set, or reset screensaver branding
+# omarchy:group=branding
+# omarchy:name=screensaver
+# omarchy:args=<image|text|reset>
+# omarchy:examples=lunor branding screensaver image | lunor branding screensaver text | lunor branding screensaver reset
+
+set -euo pipefail
+
+case "${1:-}" in
+image)
+  image=$(lunor file select --title "Pick PNG or SVG for screensaver" --extensions "png svg")
+  if lunor transcode ascii "$image" ~/.config/lunor/branding/screensaver.txt; then
+    lunor launch screensaver force >/dev/null 2>&1
+  fi
+  ;;
+text)
+  lunor launch editor ~/.config/lunor/branding/screensaver.txt >/dev/null 2>&1 && lunor launch screensaver force >/dev/null 2>&1
+  ;;
+reset)
+  cp "$OMARCHY_PATH/logo.txt" ~/.config/lunor/branding/screensaver.txt && lunor launch screensaver force >/dev/null 2>&1
+  ;;
+*)
+  echo "Usage: lunor branding screensaver <image|text|reset>" >&2
+  exit 1
+  ;;
+esac
