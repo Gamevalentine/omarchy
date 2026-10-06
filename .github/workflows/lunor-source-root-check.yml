@@ -1,0 +1,64 @@
+name: LUNOR source root check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-source-root-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntax-check source-root scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n default/bash/env-bootstrap
+          bash -n default/bash/rc
+          bash -n default/bashrc
+          bash -n default/uwsm/env.d/10-omarchy
+          bash -n bin/omarchy-provision-user
+          bash -n install/user/all.sh
+          bash -n bin/omarchy-dev-link
+          bash -n bin/omarchy-dev-unlink
+
+      - name: Validate canonical LUNOR environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -i HOME="$HOME" PATH="/usr/bin:/bin" bash --noprofile --norc -c '
+            source default/bash/env-bootstrap
+            test -n "$LUNOR_PATH"
+            test "$OMARCHY_PATH" = "$LUNOR_PATH"
+            printf "LUNOR_PATH=%s\n" "$LUNOR_PATH"
+          '
+
+          grep -q 'export LUNOR_PATH' default/bash/env-bootstrap
+          grep -q 'OMARCHY_PATH=$LUNOR_PATH' default/bash/env-bootstrap
+          grep -q 'source "$LUNOR_PATH/default/bash/rc"' default/bashrc
+          grep -q 'source "$LUNOR_INSTALL/user/all.sh"' bin/omarchy-provision-user
+
+      - name: Validate dev-link compatibility boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "export LUNOR_PATH" bin/omarchy-dev-link
+          grep -q "/etc/lunor.conf" bin/omarchy-dev-link
+          grep -q "export OMARCHY_PATH" bin/omarchy-dev-link
+          grep -q "/etc/omarchy.conf" bin/omarchy-dev-link
+
+          grep -q "export LUNOR_PATH" bin/omarchy-dev-unlink
+          grep -q "/usr/share/lunor" bin/omarchy-dev-unlink
+          grep -q "/usr/share/omarchy" bin/omarchy-dev-unlink
+
+      - name: Ensure this step did not rename command namespace
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f bin/omarchy
+          test -f bin/omarchy-dev-link
+          test -f bin/omarchy-dev-unlink
