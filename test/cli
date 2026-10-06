@@ -1144,6 +1144,142 @@ tuning_usage=$(LUNOR_PATH="$ROOT" "$ROOT/bin/lunor-audio-tuning" invalid 2>&1 ||
   fail "lunor audio tuning direct usage is canonical"
 pass "lunor audio leaf commands preserve canonical direct usage"
 
+launch_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(.binary | startswith("lunor-launch-"))]
+  | length
+')
+[[ $launch_count == "24" ]] || fail "lunor exposes all 24 migrated launch commands"
+pass "lunor launch group is fully migrated"
+
+output=$("$LUNOR" launch battlenet --help)
+assert_output_contains "lunor Battle.net launcher help is canonical" "$output" "lunor launch battlenet [--with-mangohud]"
+
+grep -Fq 'quickshell -n -p "$LUNOR_PATH/shell"' "$ROOT/bin/lunor-launch-shell" ||
+  fail "lunor shell launcher uses LUNOR_PATH"
+grep -Fq 'systemd-cat -t lunor-shell' "$ROOT/bin/lunor-launch-shell" ||
+  fail "lunor shell launcher uses canonical journal tag"
+if grep -Fq 'OMARCHY_PATH' "$ROOT/bin/lunor-launch-shell"; then
+  fail "lunor shell launcher no longer depends on OMARCHY_PATH"
+fi
+pass "lunor shell launcher uses canonical LUNOR root and journal tag"
+
+grep -Fq -- '--app-id=org.lunor.terminal' "$ROOT/bin/lunor-launch-floating-terminal-with-presentation" ||
+  fail "lunor presentation terminal uses LUNOR app id"
+grep -Fq 'lunor show logo' "$ROOT/bin/lunor-launch-floating-terminal-with-presentation" ||
+  fail "lunor presentation terminal uses canonical logo route"
+grep -Fq 'lunor show done' "$ROOT/bin/lunor-launch-floating-terminal-with-presentation" ||
+  fail "lunor presentation terminal uses canonical completion route"
+pass "lunor presentation terminal is canonically branded"
+
+make_tmpdir REMAINING_LAUNCH_BIN
+cat >"$REMAINING_LAUNCH_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+case "$*" in
+  "cmd default browser")
+    printf 'test-browser.desktop\n'
+    ;;
+  "cmd browser handoff "*)
+    exit 0
+    ;;
+  "cmd present 1password")
+    exit 1
+    ;;
+  "sudo docker")
+    exit 1
+    ;;
+esac
+exit 0
+EOF
+
+cat >"$REMAINING_LAUNCH_BIN/hyprctl" <<'EOF'
+#!/bin/bash
+if [[ $* == "clients -j" ]]; then
+  printf '[]\n'
+  exit 0
+fi
+exit 0
+EOF
+
+cat >"$REMAINING_LAUNCH_BIN/lazydocker" <<'EOF'
+#!/bin/bash
+printf 'lazydocker\n' >>"$LUNOR_TEST_LOG"
+EOF
+
+cat >"$REMAINING_LAUNCH_BIN/lunor-restart-gum" <<'EOF'
+:
+EOF
+
+cat >"$REMAINING_LAUNCH_BIN/setsid" <<'EOF'
+#!/bin/bash
+printf 'setsid %s\n' "$*" >>"$LUNOR_TEST_LOG"
+EOF
+
+cat >"$REMAINING_LAUNCH_BIN/test-browser" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+
+cat >"$REMAINING_LAUNCH_BIN/openclaw" <<'EOF'
+#!/bin/bash
+case "$1" in
+  dashboard)
+    printf '{"browserUrl":"http://127.0.0.1:18789/","ok":true}\n'
+    ;;
+  tui)
+    printf '%s\n' "$*" >>"$OPENCLAW_TEST_LOG"
+    ;;
+esac
+exit 0
+EOF
+
+chmod +x "$REMAINING_LAUNCH_BIN/lunor" "$REMAINING_LAUNCH_BIN/hyprctl"   "$REMAINING_LAUNCH_BIN/lazydocker" "$REMAINING_LAUNCH_BIN/setsid"   "$REMAINING_LAUNCH_BIN/test-browser" "$REMAINING_LAUNCH_BIN/openclaw"
+
+launch_log="$REMAINING_LAUNCH_BIN/launch.log"
+
+LUNOR_TEST_LOG="$launch_log" PATH="$REMAINING_LAUNCH_BIN:$PATH" "$ROOT/bin/lunor-launch-1password"
+grep -Fxq 'cmd present 1password' "$launch_log" || fail "lunor 1Password launcher uses canonical command presence route"
+grep -Fq 'launch floating terminal with presentation lunor install service 1password' "$launch_log" ||
+  fail "lunor 1Password launcher uses canonical install route"
+
+: >"$launch_log"
+LUNOR_TEST_LOG="$launch_log" PATH="$REMAINING_LAUNCH_BIN:$PATH" "$ROOT/bin/lunor-launch-docker-tui"
+grep -Fxq 'sudo docker' "$launch_log" || fail "lunor Docker TUI uses canonical Docker privilege route"
+grep -Fxq 'lazydocker' "$launch_log" || fail "lunor Docker TUI preserves direct lazydocker launch"
+
+make_tmpdir LAUNCH_BROWSER_HOME
+mkdir -p "$LAUNCH_BROWSER_HOME/.local/share/applications"
+cat >"$LAUNCH_BROWSER_HOME/.local/share/applications/test-browser.desktop" <<EOF
+[Desktop Entry]
+Exec=$REMAINING_LAUNCH_BIN/test-browser
+EOF
+
+: >"$launch_log"
+HOME="$LAUNCH_BROWSER_HOME" LUNOR_TEST_LOG="$launch_log" PATH="$REMAINING_LAUNCH_BIN:$PATH"   "$ROOT/bin/lunor-launch-browser" "https://example.com"
+grep -Fxq 'cmd default browser' "$launch_log" || fail "lunor browser launcher uses canonical browser selection route"
+grep -Fq 'cmd browser handoff' "$launch_log" || fail "lunor browser launcher uses canonical browser handoff route"
+
+: >"$launch_log"
+LUNOR_TEST_LOG="$launch_log" PATH="$REMAINING_LAUNCH_BIN:$PATH"   "$ROOT/bin/lunor-launch-floating-terminal-with-presentation" "echo demo"
+grep -Fq 'setsid uwsm-app -- xdg-terminal-exec --app-id=org.lunor.terminal --title=LUNOR OS' "$launch_log" ||
+  fail "lunor presentation terminal launches with canonical app id"
+grep -Fq 'lunor show logo' "$launch_log" || fail "lunor presentation terminal command contains canonical logo route"
+grep -Fq 'lunor show done' "$launch_log" || fail "lunor presentation terminal command contains canonical completion route"
+
+make_tmpdir OPENCLAW_HOME
+mkdir -p "$OPENCLAW_HOME/.openclaw"
+printf '{}\n' >"$OPENCLAW_HOME/.openclaw/openclaw.json"
+openclaw_log="$REMAINING_LAUNCH_BIN/openclaw.log"
+HOME="$OPENCLAW_HOME" OPENCLAW_TEST_LOG="$openclaw_log" PATH="$REMAINING_LAUNCH_BIN:$PATH"   "$ROOT/bin/lunor-launch-openclaw" --tui --message hello
+grep -Fxq 'tui --message hello' "$openclaw_log" || fail "lunor OpenClaw launcher preserves TUI handoff"
+pass "lunor remaining launch wrappers preserve canonical behavior"
+
+battlenet_error=$("$ROOT/bin/lunor-launch-battlenet" --invalid 2>&1 || true)
+[[ $battlenet_error == *"Try: lunor launch battlenet --help"* ]] ||
+  fail "lunor Battle.net direct usage is canonical"
+pass "lunor remaining launch commands expose canonical direct usage"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
