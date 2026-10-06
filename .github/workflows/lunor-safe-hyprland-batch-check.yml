@@ -16,7 +16,7 @@ jobs:
       - name: Validate safe Hyprland batch
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
 
           scripts=(
             bin/lunor-hyprland-focus-app
