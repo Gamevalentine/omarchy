@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# omarchy:summary=Reinstall all default Omarchy packages from the stable channel
+# omarchy:summary=Reinstall all default LUNOR OS packages from the stable channel
 # omarchy:requires-sudo=true
 
 set -e
 
-# Reinstall all default Omarchy packages from the stable channel and downgrade any packages that are too new.
+# Reinstall all default LUNOR OS packages from the stable channel and downgrade any packages that are too new.
 
 # Set the package repository to the stable mirrors
 omarchy-refresh-pacman

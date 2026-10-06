@@ -1,6 +1,6 @@
-# Tailscale Omarchy Widget
+# Tailscale LUNOR OS Widget
 
-Native Omarchy bar widget for Tailscale.
+Native LUNOR OS bar widget for Tailscale.
 
 ## Features
 

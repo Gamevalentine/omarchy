@@ -37,7 +37,7 @@ local kb_variant = vconsole.XKBVARIANT or ""
 local kb_options = "compose:caps,shift:both_capslock_cancel"
 
 -- Hyprland resolves keybindings against the first entry in kb_layout, not the
--- layout that's currently active, so Omarchy's Latin-keysym bindings (SUPER + W
+-- layout that's currently active, so LUNOR OS's Latin-keysym bindings (SUPER + W
 -- and friends) only fire when a Latin layout leads. Installing with a non-Latin
 -- one would otherwise leave the desktop unusable.
 if non_latin_layouts:find(" " .. kb_layout:match("^[^,]*") .. " ", 1, true) then

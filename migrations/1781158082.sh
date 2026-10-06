@@ -1,4 +1,4 @@
-echo "Relink Neovim theme to Omarchy current state"
+echo "Relink Neovim theme to LUNOR OS current state"
 
 theme_link="$HOME/.config/nvim/lua/plugins/theme.lua"
 legacy_absolute_target="$HOME/.config/omarchy/current/theme/neovim.lua"

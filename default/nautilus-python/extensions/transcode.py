@@ -66,7 +66,7 @@ class TranscodeAction(GObject.GObject, Nautilus.MenuProvider):
     def _make_item(self, paths):
         label = "Transcode" if len(paths) == 1 else f"Transcode {len(paths)} items"
         item = Nautilus.MenuItem(
-            name="OmarchyTranscodeNautilus::transcode",
+            name="LUNOR OSTranscodeNautilus::transcode",
             label=label,
             icon="media-playback-start",
         )

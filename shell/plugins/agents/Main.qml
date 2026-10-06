@@ -742,7 +742,7 @@ Item {
     }
   }
 
-  // Snapshots keep the field names older Omarchy versions wrote, so a fleet
+  // Snapshots keep the field names older LUNOR OS versions wrote, so a fleet
   // of machines on mixed versions still merges cleanly in both directions.
   function providerSnapshot(record) {
     return {

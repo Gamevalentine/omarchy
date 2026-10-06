@@ -1,9 +1,9 @@
-# Omarchy Icon Font
+# LUNOR OS Icon Font
 
 Read this before adding a branded glyph to `default/fonts/omarchy/omarchy.ttf`.
 
-The Omarchy icon font is a small private-use font carrying the marks Nerd
-Fonts does not have: the Omarchy logo and the agent and app brand marks. The
+The LUNOR OS icon font is a small private-use font carrying the marks Nerd
+Fonts does not have: the LUNOR OS logo and the agent and app brand marks. The
 menu draws one by naming the font on an entry:
 
 ```jsonc

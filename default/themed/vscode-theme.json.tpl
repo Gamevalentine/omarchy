@@ -1,5 +1,5 @@
 {
-    "name": "Omarchy",
+    "name": "LUNOR OS",
     "$schema": "vscode://schemas/color-theme",
     "type": "{{ theme_type }}",
     "semanticHighlighting": true,

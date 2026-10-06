@@ -1,6 +1,6 @@
--- Change the default Omarchy look'n'feel.
+-- Change the default LUNOR OS look'n'feel.
 
--- Opt another application in to Omarchy's standard transparency.
+-- Opt another application in to LUNOR OS's standard transparency.
 -- Find its class with: hyprctl clients
 -- o.transparent_window("my-app")
 -- o.transparent_window("my-app", "0.9 0.85") -- Custom active/inactive opacity.

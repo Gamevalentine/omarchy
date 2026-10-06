@@ -17,7 +17,7 @@ Three documentation trees, split by genre and audience:
 
 - `agents/skills/` - task procedure ("do this when doing X"), for anyone working on the codebase
 - `docs/` - reference on how the system is shaped (file layout, update pipeline, theming, shell architecture), for anyone working on the codebase; skills link here for depth
-- `manual/` - end-user documentation for using Omarchy, published; never codebase internals
+- `manual/` - end-user documentation for using LUNOR OS, published; never codebase internals
 
 # Style
 
@@ -60,7 +60,7 @@ guidance does not drift from the router.
 
 # Runtime Environment
 
-- `$OMARCHY_PATH` is set at the top level by the uwsm session environment and is always available to Omarchy runtime code.
+- `$OMARCHY_PATH` is set at the top level by the uwsm session environment and is always available to LUNOR OS runtime code.
 - Commands in `bin/` and Quickshell QML should rely on `$OMARCHY_PATH` / `Quickshell.env("OMARCHY_PATH")`; do not derive fallback paths from `HOME`, `Quickshell.shellDir`, or re-export/default `OMARCHY_PATH` manually.
 
 # Privileged Commands
@@ -85,7 +85,7 @@ Use these instead of raw shell commands:
 - `omarchy-notification-send` - send desktop notifications; do not call `notify-send` directly
 - `omarchy-hw-asus-rog` - detect ASUS ROG hardware (and similar `hw-*` commands)
 
-Commands installed by Omarchy's default package set are runtime invariants. Invoke them directly; do not add defensive `omarchy-cmd-present` / `omarchy-cmd-missing` checks around them. Use command-presence helpers only for genuinely optional dependencies or code that can run before the default package set is installed.
+Commands installed by LUNOR OS's default package set are runtime invariants. Invoke them directly; do not add defensive `omarchy-cmd-present` / `omarchy-cmd-missing` checks around them. Use command-presence helpers only for genuinely optional dependencies or code that can run before the default package set is installed.
 
 Exceptions are allowed for migration and package-helper scripts where the helper may not be available yet, where the helper itself is being implemented, or where direct package-manager behavior is required.
 
@@ -110,9 +110,9 @@ test entry points:
 
 - `./test/all` - aggregate runner for CLI and shell tests; it intentionally does not run graphical acceptance tests
 - `./test/cli` - CLI routing, command metadata, theme helpers, and safe dispatch coverage
-- `./test/shell` - all Omarchy shell tests under `test/shell.d/`
+- `./test/shell` - all LUNOR OS shell tests under `test/shell.d/`
 
-New Omarchy shell tests should live in `test/shell.d/*-test.sh` so `./test/shell` picks them up automatically. Source `test/shell.d/base-test.sh` for shared root-path discovery, assertions, and Node test helpers.
+New LUNOR OS shell tests should live in `test/shell.d/*-test.sh` so `./test/shell` picks them up automatically. Source `test/shell.d/base-test.sh` for shared root-path discovery, assertions, and Node test helpers.
 
 The graphical acceptance suite runs in a disposable VM, not in the active
 development session; see [`agents/skills/acceptance-tests.md`](agents/skills/acceptance-tests.md).

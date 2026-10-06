@@ -14,7 +14,7 @@ usage() {
 Usage: omarchy bar <command> [args...]
 
   use <id>                             Use a bar option as the active bar
-  reset                                Return to the built-in Omarchy bar
+  reset                                Return to the built-in LUNOR OS bar
   defaults                             Restore the default bar and service widgets
   position <top|bottom|left|right>     Bar position
   transparent <true|false|toggle>      Bar transparency
@@ -192,7 +192,7 @@ cmd_defaults() {
   " \
     --slurpfile defaults "$DEFAULTS_FILE" \
     --argjson widgets "$optional_widgets"
-  echo "Restored the default Omarchy bar"
+  echo "Restored the default LUNOR OS bar"
 }
 
 cmd_position() {

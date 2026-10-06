@@ -7,16 +7,16 @@ description: >
   Triggers: Hyprland, window rules, animations, keybindings, monitors, gaps, borders,
   blur, opacity, omarchy-shell, bar, terminal config, themes, background,
   night light, idle, lock screen, screenshots, reminders, layer rules, workspace
-  settings, display config, and user-facing omarchy commands. Excludes Omarchy
+  settings, display config, and user-facing omarchy commands. Excludes LUNOR OS
   source development through `omarchy dev link` workflows.
 ---
 
-# Omarchy Skill
+# LUNOR OS Skill
 
-Manage [Omarchy](https://omarchy.org/) Linux systems - a beautiful, fun, agentic Arch Linux distribution with Hyprland.
+Manage [LUNOR OS](https://omarchy.org/) Linux systems - a beautiful, fun, agentic Arch Linux distribution with Hyprland.
 
 This skill is for end-user customization on installed systems.
-It is not for contributing to Omarchy source code.
+It is not for contributing to LUNOR OS source code.
 
 ## When This Skill MUST Be Used
 
@@ -34,7 +34,7 @@ It is not for contributing to Omarchy source code.
 
 **If you're about to edit a config file in ~/.config/ on this system, STOP and use this skill first.**
 
-**Do NOT use this skill for Omarchy development tasks** (editing the Omarchy source tree, creating migrations, or running `omarchy dev ...` workflows).
+**Do NOT use this skill for LUNOR OS development tasks** (editing the LUNOR OS source tree, creating migrations, or running `omarchy dev ...` workflows).
 
 ## Topic Guides
 
@@ -42,11 +42,11 @@ Deeper instructions for common areas live next to this file. Read the
 matching guide before starting:
 
 - [`hyprland.md`](hyprland.md) - keybindings, monitors, window rules, and other Hyprland config
-- [`plugins.md`](plugins.md) - the Omarchy shell: bar layout, widgets, plugins, idle behavior
+- [`plugins.md`](plugins.md) - the LUNOR OS shell: bar layout, widgets, plugins, idle behavior
 - [`theming.md`](theming.md) - themes, backgrounds, and fonts
 - [`hooks.md`](hooks.md) - automation hooks that run on system events
 - [`capture.md`](capture.md) - screenshots, screen recordings, OCR text capture, and file sharing
-- [`contributing.md`](contributing.md) - reporting Omarchy bugs and submitting fixes upstream
+- [`contributing.md`](contributing.md) - reporting LUNOR OS bugs and submitting fixes upstream
 
 ## Critical Safety Rules
 
@@ -63,7 +63,7 @@ overwritten on the next `omarchy update`.
 ├── config/                 # Default config templates
 ├── themes/                 # Stock themes
 ├── default/                # System defaults
-├── shell/                  # Omarchy shell source and defaults
+├── shell/                  # LUNOR OS shell source and defaults
 ├── migrations/             # Update migrations
 └── install/                # Installation scripts
 ```
@@ -79,12 +79,12 @@ overwritten on the next `omarchy update`.
 - `~/.config/omarchy/themes/<custom-name>/` - Custom themes
 - `~/.config/omarchy/hooks/` - Custom automation hooks
 
-If the request is to develop Omarchy itself, this skill is out of scope. Follow repository development instructions instead of this skill.
+If the request is to develop LUNOR OS itself, this skill is out of scope. Follow repository development instructions instead of this skill.
 
 ## Privilege Escalation
 
 For an interactive script or command run in a visible terminal, use `sudo` for
-privileged work. Omarchy may grant passwordless `sudo` access to particular
+privileged work. LUNOR OS may grant passwordless `sudo` access to particular
 commands, and the terminal is the appropriate place to request a password
 when one is needed.
 
@@ -95,20 +95,20 @@ command changes system state.
 
 ## System Architecture
 
-Omarchy is built on:
+LUNOR OS is built on:
 
 | Component | Purpose | Config Location |
 |-----------|---------|-----------------|
 | **Arch Linux** | Base OS | `/etc/`, `~/.config/` |
 | **Hyprland** | Wayland compositor/WM | `~/.config/hypr/` |
-| **Omarchy shell** | Status bar + notifications (Quickshell) | `~/.config/omarchy/shell.json` |
+| **LUNOR OS shell** | Status bar + notifications (Quickshell) | `~/.config/omarchy/shell.json` |
 | **Launcher/menus** | Quickshell menu | `~/.config/omarchy/extensions/omarchy-menu.jsonc` |
 | **Alacritty/Foot/Kitty/Ghostty** | Terminals | `~/.config/<terminal>/` |
-| **Omarchy OSD** | On-screen display | Quickshell plugin |
+| **LUNOR OS OSD** | On-screen display | Quickshell plugin |
 
 ## Command Discovery
 
-Omarchy ships a single `omarchy` CLI that dispatches to all `omarchy-*` binaries via `omarchy <group> <action>`. Always prefer this form — it is self-documenting and stable. The underlying `omarchy-*` binaries still exist on `PATH` and remain safe to read for source.
+LUNOR OS ships a single `omarchy` CLI that dispatches to all `omarchy-*` binaries via `omarchy <group> <action>`. Always prefer this form — it is self-documenting and stable. The underlying `omarchy-*` binaries still exist on `PATH` and remain safe to read for source.
 
 ```bash
 # List every documented command and its summary (--all includes hidden commands)
@@ -153,7 +153,7 @@ Run `omarchy --help` for the full list. The most common groups:
 ## Configuration Locations
 
 Hyprland config lives in `~/.config/hypr/` — see [`hyprland.md`](hyprland.md).
-The Omarchy shell (bar, notifications, plugins, idle) is configured in
+The LUNOR OS shell (bar, notifications, plugins, idle) is configured in
 `~/.config/omarchy/shell.json` — see [`plugins.md`](plugins.md).
 
 ### Terminals
@@ -194,7 +194,7 @@ cp ~/.config/hypr/bindings.lua ~/.config/hypr/bindings.lua.bak.$(date +%s)
 
 # 4. Apply changes
 # - Hyprland: auto-reloads on save, but MUST validate with `hyprctl reload` and `hyprctl configerrors`
-# - Omarchy shell: shell.json and user plugin code under ~/.config/omarchy/plugins/ hot-reload on save
+# - LUNOR OS shell: shell.json and user plugin code under ~/.config/omarchy/plugins/ hot-reload on save
 # - Menus/launcher: ~/.config/omarchy/extensions/omarchy-menu.jsonc hot-reloads on save
 # - Terminals: apply with `omarchy restart terminal` (reloads running terminals; foot picks changes up in new windows)
 ```
@@ -218,7 +218,7 @@ omarchy refresh hyprland
 
 ```bash
 omarchy update                  # Full system update
-omarchy version                 # Show Omarchy version
+omarchy version                 # Show LUNOR OS version
 omarchy debug --no-sudo --print # Debug info (ALWAYS use these flags)
 omarchy system lock             # Lock screen
 omarchy system shutdown         # Shutdown
@@ -270,7 +270,7 @@ omarchy reminder clear
 
 ## Out of Scope
 
-This skill intentionally does not cover Omarchy source development. Do not use this skill for:
+This skill intentionally does not cover LUNOR OS source development. Do not use this skill for:
 - Editing files in `/usr/share/omarchy/` (`bin/`, `config/`, `default/`, `shell/`, `themes/`, `migrations/`, etc.)
 - Creating or editing migrations
 - Running `omarchy dev ...` commands
@@ -291,4 +291,4 @@ This skill intentionally does not cover Omarchy source development. Do not use t
 - "Lock after ten minutes" -> Set `idle.lock` to `600` in `~/.config/omarchy/shell.json`
 - "Reset shell/bar to defaults" -> `omarchy refresh shell`
 - "Record my screen" -> `omarchy screenrecord --fullscreen`, then `omarchy screenrecord --stop-recording` (see `capture.md`)
-- "Report this bug to Omarchy" -> Gather diagnostics and a capture of the problem, then file it (see `contributing.md`)
+- "Report this bug to LUNOR OS" -> Gather diagnostics and a capture of the problem, then file it (see `contributing.md`)

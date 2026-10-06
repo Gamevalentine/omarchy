@@ -1,4 +1,4 @@
-# Omarchy Shell: Bar, Plugins, and Idle
+# LUNOR OS Shell: Bar, Plugins, and Idle
 
 Read this before changing the status bar, notifications, shell plugins,
 widgets, or idle/lock behavior.

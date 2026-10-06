@@ -1,4 +1,4 @@
-# Omarchy Shell Development
+# LUNOR OS Shell Development
 
 Read this before editing the Quickshell desktop under `shell/`.
 

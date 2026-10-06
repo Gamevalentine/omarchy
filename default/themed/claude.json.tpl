@@ -1,5 +1,5 @@
 {
-  "name": "Omarchy",
+  "name": "LUNOR OS",
   "base": "{{ theme_type }}",
   "overrides": {
     "claude": "{{ accent }}",

@@ -3,7 +3,7 @@
   "id": "omarchy.bluetooth",
   "name": "Bluetooth",
   "version": "1.0.0",
-  "author": "Omarchy",
+  "author": "LUNOR OS",
   "description": "Bluetooth device list with connect/disconnect",
   "kinds": [
     "bar-widget"

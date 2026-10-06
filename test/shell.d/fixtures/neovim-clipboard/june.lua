@@ -208,7 +208,7 @@ function M.setup()
     end
 
     vim.g.clipboard = {
-      name = "OmarchyWaylandClipboard",
+      name = "LUNOR OSWaylandClipboard",
       copy = {
         ["+"] = copy("+"),
         ["*"] = copy("*"),

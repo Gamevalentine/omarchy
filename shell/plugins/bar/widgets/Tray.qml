@@ -159,9 +159,9 @@ BarWidget {
     return "drawer"
   }
 
-  function ownedByOmarchy(item) {
+  function ownedByLUNOR OS(item) {
     var layout = root.bar && root.bar.layoutConfig ? root.bar.layoutConfig : null
-    return TrayModel.ownedByOmarchy(item, layout)
+    return TrayModel.ownedByLUNOR OS(item, layout)
   }
 
   function bucket(category) {
@@ -170,7 +170,7 @@ BarWidget {
     for (var i = 0; i < values.length; i++) {
       var item = values[i]
       if (item.status === Status.Passive) continue
-      if (ownedByOmarchy(item)) continue
+      if (ownedByLUNOR OS(item)) continue
       if (category === "all") {
         result.push(item)
         continue

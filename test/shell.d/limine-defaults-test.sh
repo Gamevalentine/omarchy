@@ -11,5 +11,5 @@ grep -Fq 'KERNEL_CMDLINE[default]+=" initramfs_async=0"' "$packaged_defaults" ||
 pass "packaged Limine defaults keep Plymouth alive at the LUKS prompt"
 
 grep -Fxq 'BOOT_ORDER="linux-t2, linux-omarchy, linux-omarchy-*, *, *fallback, Snapshots"' "$packaged_defaults" ||
-  fail "packaged Limine defaults protect T2 Macs and prefer the exact Omarchy kernel elsewhere"
-pass "packaged Limine defaults protect T2 Macs and prefer the exact Omarchy kernel elsewhere"
+  fail "packaged Limine defaults protect T2 Macs and prefer the exact LUNOR OS kernel elsewhere"
+pass "packaged Limine defaults protect T2 Macs and prefer the exact LUNOR OS kernel elsewhere"

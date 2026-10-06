@@ -276,7 +276,7 @@ Item {
 
   FloatingWindow {
     id: window
-    title: "Omarchy shell – dev gallery"
+    title: "LUNOR OS shell – dev gallery"
     color: root.background
     implicitWidth: 720
     implicitHeight: 760
@@ -354,7 +354,7 @@ Item {
             spacing: Style.space(4)
 
             Text {
-              text: "Omarchy shell · dev gallery"
+              text: "LUNOR OS shell · dev gallery"
               color: root.foreground
               font.family: root.fontFamily
               font.pixelSize: Style.font.iconLarge
@@ -1668,7 +1668,7 @@ Item {
                     { value: "Media", label: "Media", description: "Now-playing + transport" },
                     { value: "Workspaces", label: "Workspaces", description: "Hyprland workspace pills" },
                     { value: "system-tray", label: "System tray", description: "StatusNotifierItem icons" },
-                    { value: "omarchy-menu", label: "Omarchy menu", description: "Launcher / system menu" },
+                    { value: "omarchy-menu", label: "LUNOR OS menu", description: "Launcher / system menu" },
                     { value: "power-profiles", label: "Power profiles", description: "Performance / balanced / saver" },
                     { value: "hardware", label: "Hardware", description: "CPU, GPU, mem utilization" },
                     { value: "notifications", label: "Notifications", description: "Recent notification history" }

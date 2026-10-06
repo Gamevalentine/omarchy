@@ -1,7 +1,7 @@
 # omarchy-shell
 
 A single long-running [Quickshell](https://quickshell.org/) instance
-that hosts the Omarchy desktop. The bar, panels, overlays, menus, and
+that hosts the LUNOR OS desktop. The bar, panels, overlays, menus, and
 services all run inside as plugins. Hyprland autostart launches the
 shell via `omarchy-launch-shell`; restart it with `omarchy-restart-shell`.
 IPC is the canonical way for CLIs to talk to a running shell —
