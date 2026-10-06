@@ -919,6 +919,102 @@ grep -Fq '/lunor}/lunor-screenrecord-region' "$ROOT/bin/lunor-capture-webcam-res
   fail "lunor webcam resize reads canonical recording region state"
 pass "lunor screen recording runtime state is canonical"
 
+menu_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-menu"
+       or .binary == "lunor-menu-clipboard"
+       or .binary == "lunor-menu-emoji"
+       or .binary == "lunor-menu-emoji-insert"
+       or .binary == "lunor-menu-file"
+       or .binary == "lunor-menu-herdr-keybindings"
+       or .binary == "lunor-menu-images"
+       or .binary == "lunor-menu-input"
+       or .binary == "lunor-menu-keybindings"
+       or .binary == "lunor-menu-plugin"
+       or .binary == "lunor-menu-select"
+       or .binary == "lunor-menu-share"
+       or .binary == "lunor-menu-timezone"
+       or .binary == "lunor-menu-tmux-keybindings"
+     )]
+  | length
+')
+[[ $menu_count == "14" ]] || fail "lunor exposes the complete menu batch"
+pass "lunor prefers the complete menu batch"
+
+"$LUNOR" commands --all --json | jq -e '
+  .commands[]
+  | select(.binary == "lunor-menu-share" and .route == "lunor share")
+' >/dev/null || fail "lunor share keeps its public route"
+pass "lunor share route is preserved"
+
+output=$("$LUNOR" menu --help)
+assert_output_contains "lunor menu help is canonical" "$output" "lunor menu [toggle|summon|close|refresh|ping] [route]"
+
+output=$("$LUNOR" menu file --help)
+assert_output_contains "lunor menu file help is canonical" "$output" "lunor menu file <label> <paths> <formats> [menu args...]"
+
+output=$("$LUNOR" menu select --help)
+assert_output_contains "lunor menu select help is canonical" "$output" "lunor menu select <prompt> [option...] [-- menu args...]"
+
+output=$("$LUNOR" menu input --help)
+assert_output_contains "lunor menu input help is canonical" "$output" "lunor menu input <prompt> [menu args...]"
+
+output=$("$LUNOR" menu plugin --help)
+assert_output_contains "lunor menu plugin help is canonical" "$output" "lunor menu plugin <enable|disable|clone|remove>"
+
+output=$("$LUNOR" share --help)
+assert_output_contains "lunor share help is canonical" "$output" "lunor share <clipboard|file|folder> [path...]"
+
+make_tmpdir MENU_BIN
+cat >"$MENU_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
+case "$*" in
+  "menu select "*)
+    if [[ ! -t 0 ]]; then
+      IFS= read -r first || true
+      printf '%s\n' "$first"
+    fi
+    ;;
+esac
+exit 0
+EOF
+chmod +x "$MENU_BIN/lunor"
+
+menu_log="$MENU_BIN/menu.log"
+LUNOR_TEST_LOG="$menu_log" PATH="$MENU_BIN:$PATH" "$ROOT/bin/lunor-menu" summon style.theme
+grep -Fq 'shell shell summon omarchy.menu' "$menu_log" || fail "lunor menu controller uses canonical shell route"
+grep -Fq '"menu":"style.theme"' "$menu_log" || fail "lunor menu controller preserves route payload"
+
+: >"$menu_log"
+LUNOR_TEST_LOG="$menu_log" PATH="$MENU_BIN:$PATH" "$ROOT/bin/lunor-menu-clipboard"
+grep -Fxq 'shell shell toggle omarchy.clipboard' "$menu_log" || fail "lunor clipboard menu uses canonical shell route"
+
+: >"$menu_log"
+LUNOR_TEST_LOG="$menu_log" PATH="$MENU_BIN:$PATH" "$ROOT/bin/lunor-menu-emoji"
+grep -Fxq 'shell shell toggle omarchy.emojis' "$menu_log" || fail "lunor emoji menu uses canonical shell route"
+pass "lunor first-party menu wrappers use canonical shell routing"
+
+make_tmpdir MENU_FILES
+touch "$MENU_FILES/a.jpg" "$MENU_FILES/b.png"
+file_pick=$(LUNOR_TEST_LOG="$menu_log" PATH="$MENU_BIN:$PATH" "$ROOT/bin/lunor-menu-file" "Pick image" "$MENU_FILES" "jpg png")
+[[ -n $file_pick ]] || fail "lunor file menu forwards discovered files to canonical select route"
+grep -Fq 'menu select Pick image' "$menu_log" || fail "lunor file menu uses canonical select route"
+pass "lunor file menu uses canonical dependency"
+
+plugin_error=$("$ROOT/bin/lunor-menu-plugin" invalid 2>&1 || true)
+[[ $plugin_error == *"Usage: lunor menu plugin <enable|disable|clone|remove>"* ]] ||
+  fail "lunor plugin menu direct usage is canonical"
+
+images_error=$("$ROOT/bin/lunor-menu-images" 2>&1 || true)
+[[ $images_error == *"Usage: lunor menu images"* ]] ||
+  fail "lunor image menu direct usage is canonical"
+
+grep -Fq 'default_config="$LUNOR_PATH/config/tmux/tmux.conf"' "$ROOT/bin/lunor-menu-tmux-keybindings" ||
+  fail "lunor tmux keybindings menu uses LUNOR_PATH"
+pass "lunor menu helpers expose canonical direct usage and root"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
