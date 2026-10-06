@@ -701,7 +701,7 @@ grep -Fxq 'restart app hyprsunset' "$phase4_log" || fail "lunor hyprsunset resta
 pass "lunor restart wrapper uses canonical dependency"
 
 output=$("$LUNOR" launch config-editor --help)
-assert_output_contains "lunor config editor help is canonical" "$output" "lunor launch config-editor <path>"
+assert_output_contains "lunor config editor help is canonical" "$output" "lunor launch config editor <path>"
 
 output=$("$LUNOR" launch editor --help)
 assert_output_contains "lunor editor launcher help is canonical" "$output" "lunor launch editor [--inline] <path>"
