@@ -12,7 +12,7 @@ trap 'rm -rf "$tmp_dir"' EXIT
 
 # The launcher ends by taking over the process, so source it short of that line
 # and its half of the question can be asked here, without a terminal to draw on.
-about="$ROOT/bin/omarchy-launch-about"
+about="$ROOT/bin/lunor-launch-about"
 grep -q '^presize_window$' "$about" || fail "About launcher can be sourced short of its launch"
 sed '/^presize_window$/,$d' "$about" >"$tmp_dir/about.bash"
 
