@@ -3,7 +3,7 @@
 # omarchy:summary=Run the LUNOR OS screensaver using random effects from TTE.
 
 screensaver_in_focus() {
-  hyprctl activewindow -j | jq -e '.class == "org.omarchy.screensaver"' >/dev/null 2>&1
+  hyprctl activewindow -j | jq -e '.class == "org.lunor.screensaver"' >/dev/null 2>&1
 }
 
 exit_screensaver() {
@@ -36,7 +36,7 @@ wait_for_terminal_resize() {
 wait_for_terminal_resize
 
 while true; do
-  ttfx -i ~/.config/omarchy/branding/screensaver.txt \
+  ttfx -i ~/.config/lunor/branding/screensaver.txt \
     --frame-rate 120 --canvas-width 0 --canvas-height 0 --reuse-canvas --anchor-canvas c --anchor-text c\
     --random-effect --no-eol --no-restore-cursor &
 
