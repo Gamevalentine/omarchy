@@ -1,14 +1,10 @@
-# LUNOR OS environment (OMARCHY_PATH + PATH), needed even for non-interactive shells
-[[ -r /usr/share/omarchy/default/bash/env-bootstrap ]] && source /usr/share/omarchy/default/bash/env-bootstrap
+# LUNOR OS environment, needed even for non-interactive shells
+if [[ -r /usr/share/lunor/default/bash/env-bootstrap ]]; then
+  source /usr/share/lunor/default/bash/env-bootstrap
+elif [[ -r /usr/share/omarchy/default/bash/env-bootstrap ]]; then
+  # Temporary package-layout compatibility until /usr/share/lunor ships.
+  source /usr/share/omarchy/default/bash/env-bootstrap
+fi
 
-# If not running interactively, don't do anything else (leave this above the rc source)
-[[ $- != *i* ]] && return
-
-# All the default LUNOR OS aliases and functions
-# (don't mess with these directly, just overwrite them here!)
-source "$OMARCHY_PATH/default/bash/rc"
-
-# Add your own exports, aliases, and functions here.
-#
-# Make an alias for invoking commands you use constantly
-# alias p='python'
+# Use the canonical LUNOR source root after bootstrap.
+source "$LUNOR_PATH/default/bash/rc"
