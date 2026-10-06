@@ -16,7 +16,7 @@ jobs:
       - name: Validate safe Hyprland batch
         shell: bash
         run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           scripts=(
             bin/lunor-hyprland-focus-app
@@ -73,6 +73,6 @@ jobs:
           output="$(./bin/lunor hyprland focus app --help)"
           grep -Fq 'lunor hyprland focus app <app-name>' <<<"$output"
           output="$(./bin/lunor hyprland window width --help)"
-          grep -Fq 'lunor hyprland window width save|restore' <<<"$output"
+          grep -Fq 'lunor hyprland window width <save|restore>' <<<"$output"
 
           ./test/cli
