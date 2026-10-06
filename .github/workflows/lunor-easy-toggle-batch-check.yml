@@ -121,3 +121,5 @@ jobs:
 
           ./bin/omarchy toggle bar --help | grep -Fq 'omarchy toggle bar [toggle|on|off]'
           ./bin/omarchy toggle nightlight --help | grep -Fq 'omarchy toggle nightlight [--status]'
+
+# validation rerun after test repair
