@@ -290,7 +290,7 @@ cat >"$ANIMATIONS_TOGGLE_BIN/lunor" <<'EOF'
 #!/bin/bash
 printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
 if [[ $1 == "hyprland" && $2 == "toggle" && $3 == "enabled" ]]; then
-  [[ \${LUNOR_TEST_ANIMATIONS_DISABLED:-0} == "1" ]]
+  [[ ${LUNOR_TEST_ANIMATIONS_DISABLED:-0} == "1" ]]
   exit
 fi
 exit 0
@@ -332,10 +332,10 @@ cat >"$FULLSCREEN_TOGGLE_BIN/lunor" <<'EOF'
 printf '%s\n' "$*" >>"$LUNOR_TEST_LOG"
 case "$*" in
   "toggle enabled bar-off")
-    [[ \${LUNOR_TEST_BAR_OFF:-0} == "1" ]]
+    [[ ${LUNOR_TEST_BAR_OFF:-0} == "1" ]]
     ;;
   "hyprland toggle enabled window-no-gaps")
-    [[ \${LUNOR_TEST_NO_GAPS:-0} == "1" ]]
+    [[ ${LUNOR_TEST_NO_GAPS:-0} == "1" ]]
     ;;
   *)
     exit 0
