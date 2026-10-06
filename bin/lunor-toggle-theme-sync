@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omarchy:summary=Toggle mirroring theme changes to and from your herdr machines
+
+lunor toggle herdr-theme-sync
+
+if lunor toggle enabled herdr-theme-sync; then
+  lunor notification send -g 󰸌 "Herdr theme sync enabled"
+else
+  lunor notification send -g 󰸌 "Herdr theme sync disabled"
+fi
