@@ -51,6 +51,12 @@ default_target="/usr/share/omarchy"
 
 printf 'export OMARCHY_PATH="%s"\n' "$default_target" | sudo tee /etc/lunor.conf >/dev/null
 
+# Temporary compatibility copy for pre-LUNOR namespace scripts.
+# Keep this as a regular root-owned file because older security checks reject symlinks.
+sudo cp -f /etc/lunor.conf /etc/omarchy.conf
+sudo chown root:root /etc/omarchy.conf
+sudo chmod 0644 /etc/omarchy.conf
+
 # omarchy-dev-link prepended the checkout to sudo's secure_path. Drop it in the
 # same step that drops the checkout, or sudo keeps running a tree nothing else
 # points at — and keeps trusting a user-writable directory for root's commands.
