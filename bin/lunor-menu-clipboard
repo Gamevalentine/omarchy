@@ -1,0 +1,6 @@
+#!/bin/bash
+# omarchy:summary=Launch the clipboard manager
+# omarchy:group=menu
+# omarchy:examples=lunor menu clipboard
+
+lunor shell shell toggle omarchy.clipboard
