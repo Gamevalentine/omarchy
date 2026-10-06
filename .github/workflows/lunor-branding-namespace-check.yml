@@ -1,4 +1,5 @@
 name: LUNOR branding namespace check
+# rerun after completing namespace migration
 
 on:
   push:
