@@ -112,6 +112,12 @@ fi
   printf '\n'
 } | sudo tee /etc/lunor.conf >/dev/null
 
+# Temporary compatibility copy for pre-LUNOR namespace scripts.
+# Keep this as a regular root-owned file because older security checks reject symlinks.
+sudo cp -f /etc/lunor.conf /etc/omarchy.conf
+sudo chown root:root /etc/omarchy.conf
+sudo chmod 0644 /etc/omarchy.conf
+
 sudo install -Dm440 -o root -g root "$staged_sudoers" "$sudoers_file"
 
 echo "Pointed LUNOR OS at $target"
