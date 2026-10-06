@@ -30,7 +30,7 @@ case "${1:-}" in
     cat <<USAGE
 Usage: omarchy dev unlink [--no-reboot]
 
-Writes /etc/lunor.conf so OMARCHY_PATH resolves to /usr/share/omarchy
+Writes /etc/lunor.conf so LUNOR_PATH resolves to /usr/share/omarchy
 after reboot. This intentionally does not rewrite the running Hyprland,
 systemd, shell, or app-launcher environment; reboot to make every layer agree.
 
@@ -47,13 +47,16 @@ USAGE
     ;;
 esac
 
-default_target="/usr/share/omarchy"
+default_target="/usr/share/lunor"
+if [[ ! -d $default_target && -d /usr/share/omarchy ]]; then
+  default_target="/usr/share/omarchy"
+fi
 
-printf 'export OMARCHY_PATH="%s"\n' "$default_target" | sudo tee /etc/lunor.conf >/dev/null
+printf 'export LUNOR_PATH="%s"\n' "$default_target" | sudo tee /etc/lunor.conf >/dev/null
 
 # Temporary compatibility copy for pre-LUNOR namespace scripts.
 # Keep this as a regular root-owned file because older security checks reject symlinks.
-sudo cp -f /etc/lunor.conf /etc/omarchy.conf
+printf 'export OMARCHY_PATH="%s"\n' "$default_target" | sudo tee /etc/omarchy.conf >/dev/null
 sudo chown root:root /etc/omarchy.conf
 sudo chmod 0644 /etc/omarchy.conf
 
