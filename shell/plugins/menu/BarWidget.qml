@@ -12,10 +12,11 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: "\ue900"
-    fontFamily: "omarchy"
-    centerFigures: false
+    text: "L"
+    fontFamily: root.bar ? root.bar.fontFamily : "sans-serif"
+    centerFigures: true
     horizontalMargin: 7.5
+    tooltipText: "LUNOR OS Menu"
     onPressed: function(button) {
       if (!root.bar) return
       if (button === Qt.RightButton) root.bar.run("xdg-terminal-exec")
