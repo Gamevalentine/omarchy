@@ -29,6 +29,31 @@ jobs:
             "themes/tokyo-night/backgrounds/6-oma.webp",
           ]
           chars = " .:-=+*#%@"
+          tiny = [
+            "themes/catppuccin-latte/backgrounds/omarchy.webp",
+            "themes/catppuccin/backgrounds/omarchy.webp",
+            "themes/ethereal/backgrounds/omarchy.webp",
+            "themes/everforest/backgrounds/omarchy.webp",
+            "themes/gruvbox/backgrounds/omarchy.webp",
+            "themes/hackerman/backgrounds/omarchy.webp",
+            "themes/kanagawa/backgrounds/omarchy.webp",
+            "themes/lumon/backgrounds/omarchy.webp",
+            "themes/lupine/backgrounds/06-omarchy.webp",
+            "themes/matte-black/backgrounds/omarchy.webp",
+            "themes/miasma/backgrounds/omarchy.webp",
+            "themes/nord/backgrounds/omarchy.webp",
+            "themes/osaka-jade/backgrounds/omarchy.webp",
+            "themes/retro-82/backgrounds/omarchy.webp",
+            "themes/ristretto/backgrounds/omarchy.webp",
+            "themes/rose-pine/backgrounds/omarchy.webp",
+            "themes/tokyo-night/backgrounds/omarchy.webp",
+            "themes/vantablack/backgrounds/omarchy.webp",
+            "themes/white/backgrounds/omarchy.webp",
+          ]
+          for path in tiny:
+              src = Image.open(path).convert("RGB")
+              colors = src.getcolors(maxcolors=1000000)
+              print("TINY", path, "SIZE", src.size, "COLORS", len(colors) if colors is not None else ">1000000")
           for path in files:
               im = Image.open(path).convert("L")
               print("\n===", path, "===")
