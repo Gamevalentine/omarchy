@@ -1,47 +1,19 @@
-# Security at Omarchy
+# Security reporting for LUNOR OS
 
-## Report a vulnerability
+LUNOR OS is currently a development build based on upstream Omarchy.
 
-If you believe you’ve found a security vulnerability in Omarchy, please tell the [Omarchy Security Team](https://omarchy.org/teams/#security) privately so we have an opportunity to investigate and fix it before it is made public.
+## LUNOR-specific changes
 
-[security@omarchy.org](mailto:security@omarchy.org?subject=Security%20report)
+For a vulnerability introduced by LUNOR-specific changes, prefer GitHub private vulnerability reporting from this repository's **Security** area when that feature is available. If private reporting is not available, contact the repository owner through an established private channel rather than publishing exploit details first.
 
-Please don’t report potential vulnerabilities publicly in GitHub Issues, Discord, or social media before they’ve been resolved.
+Please include the affected component, reproduction steps, impact, and the LUNOR OS revision or commit.
 
-## What is a vulnerability?
+## Upstream Omarchy vulnerabilities
 
-We consider a bug a security vulnerability when it can be exploited to cross a meaningful security boundary: an untrusted or lower-privileged party gains access, permissions, or control they didn’t already have.
+If the issue also exists in unmodified upstream Omarchy, use the official upstream Omarchy security-reporting process.
 
-Code that could be more robust but does not cross a security boundary is an improvement rather than a security vulnerability. We may still merge a proposed fix and credit the reporter in our release notes.
-
-Eligibility for our [security credits](https://omarchy.org/security/credits/) page depends on whether a report identifies a confirmed security vulnerability, not on its severity.
-
-## What to include
-
-Give us enough information to understand and reproduce the issue:
-
-- The affected component and Omarchy version.
-- An explanation of what an attacker can do before and after exploitation.
-- Steps to reproduce the issue and any proof of concept.
-- Your preferred contact details for follow-up.
+The upstream address `security@omarchy.org` and resources on `omarchy.org` belong to **Omarchy**. They are not LUNOR OS contacts and are referenced only for upstream issues.
 
 ## Responsible disclosure
 
-Please act in good faith while investigating and reporting vulnerabilities:
-
-- Only test systems and accounts you own or have explicit permission to test.
-- Avoid privacy violations, disruption, data destruction, and service degradation.
-- Don’t exploit a vulnerability beyond what is needed to demonstrate it.
-- Give us a reasonable opportunity to investigate and address the issue before publishing details.
-
-We’ll review your report and keep you informed as we’re able while we work toward a resolution.
-
-## Credits
-
-Researchers who privately report a confirmed security vulnerability and give us the chance to ship a fix are thanked on the [security credits](https://omarchy.org/security/credits/) page. Accepted improvements that don’t cross a security boundary may still be credited in our release notes.
-
-Credits link to each reporter’s X profile and show their avatar. For duplicate reports, only the first reporter is eligible for credit.
-
-## Regular bugs and support
-
-For anything that isn’t a security vulnerability, please use the [Omarchy issue tracker](https://github.com/omacom/omarchy/issues).
+Only test systems and accounts you own or have explicit permission to test. Avoid unnecessary privacy impact, disruption, destructive testing, or exploitation beyond what is required to demonstrate the issue.
