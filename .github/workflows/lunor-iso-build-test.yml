@@ -120,7 +120,25 @@ jobs:
                         'BUG_REPORT_URL="https://github.com/Gamevalentine/omarchy/issues"')
           p.write_text(s)
 
-          # The interactive test harness must wait for the LUNOR-branded greeter.
+          # Archinstall 4.5 removed the old offline= parameter from
+          # Installer.sanity_check(). The upstream ISO builder still passes it,
+          # so adapt the builder at build time without changing LUNOR runtime code.
+          p = iso / "configs/airootfs/usr/share/omarchy-iso/orchestrator/phases_impl.py"
+          s = p.read_text()
+          old = """        installer.sanity_check(
+            offline=True,
+            skip_ntp=True,
+            skip_wkd=True,
+        )"""
+          new = """        installer.sanity_check(
+            skip_ntp=True,
+            skip_wkd=True,
+        )"""
+          if old not in s:
+              raise SystemExit("Upstream archinstall sanity_check call changed; review compatibility patch")
+          p.write_text(s.replace(old, new))
+
+          # The interactive test harness must tolerate OCR reading OS as 0S.
           p = iso / "bin/omarchy-iso-test"
           s = p.read_text().replace("Linux by DHH", "LUNOR .S")
           p.write_text(s)
