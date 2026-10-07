@@ -82,7 +82,7 @@ pass "lunor commands --check passes during mixed-prefix migration"
 "$LUNOR" commands --all --json | jq -e '.commands[] | select(.binary == "lunor-branding-about" and .route == "lunor branding about" and .filename_route == "lunor branding about")' >/dev/null
 pass "lunor prefers migrated lunor-* branding binaries"
 
-"$LUNOR" commands --json | jq -e '.commands[] | select(.binary == "omarchy-pkg-add" and .route == "lunor pkg add" and .filename_route == "lunor pkg add")' >/dev/null
+"$LUNOR" commands --json | jq -e '.commands[] | select(.binary == "omarchy-install-ai-chatgpt" and .route == "lunor install ai chatgpt" and .filename_route == "lunor install ai chatgpt")' >/dev/null
 pass "lunor falls back to unmigrated omarchy-* binaries"
 
 output=$("$LUNOR" branding about --help)
