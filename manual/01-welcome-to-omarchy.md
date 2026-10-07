@@ -1,11 +1,13 @@
-# Welcome to Omarchy!
+# Welcome to LUNOR OS!
 
-Omarchy is an [omakase](https://manuals.omamix.org/3/omacom/76/omakase-computing) Linux distribution based on [Arch](https://archlinux.org/), the tiling window manager [Hyprland](https://hypr.land/), and the desktop construction-kit [Quickshell](https://quickshell.org/). It ships with everything a modern, savvy computer user needs to be productive immediately. From [Neovim](https://neovim.io/) (btw) to Chromium, [Obsidian](https://obsidian.md/) to LibreOffice, and Kdenlive to OBS Studio. Hell, even a retro Winamp-style music player is there!
+LUNOR OS is a branded development build based on [Omarchy](https://omarchy.org/), which in turn is built around [Arch Linux](https://archlinux.org/), [Hyprland](https://hypr.land/), and [Quickshell](https://quickshell.org/).
 
-This isn't just a grab bag of preinstalled packages, though. It's a complete system designed with both aesthetics and productivity in mind. Because a _beautiful_ system is a _motivating_ system, and productivity has always been [downstream from motivation](https://world.hey.com/dhh/beautiful-motivations-6fef7c73). There's zero bloat here: Just everything I use.
+This branch focuses on the **user-facing LUNOR OS identity**: boot, login, desktop branding, wallpapers, menus, About, setup, and related presentation. Internal names such as `omarchy-*`, package identifiers, service names, and compatibility paths may still appear in technical files because they are part of the inherited system architecture.
 
-It's true that developing an eye for the beauty of a TUI-heavy, theme-delighted, tiling-window-managed system like Omarchy can be an acquired taste. But that's why you're here, isn't it? To experience something a little outside of your comfort zone? To embark on a little bit of an adventure into a new way of working with computers? I hope so.
+The desktop keeps the same productivity-oriented foundation: tiling workflows, terminal tools, Chromium, Neovim, Obsidian, LibreOffice, Kdenlive, OBS Studio, and the rest of the upstream environment.
 
-Omarchy isn't like Windows and it's not like macOS either. It's not trying to be as familiar as possible. It's trying to be beautiful and _better_. Embrace the Linux-ness of it all. Manually editing some config files, sure. Heavy on the terminal, definitely.
+LUNOR OS is intentionally Linux-native rather than a Windows or macOS imitation. Keyboard-driven navigation, editable configuration, terminal workflows, and theming remain central to the experience.
+
+When this manual links to **Upstream Omarchy** resources, those links are provided as upstream technical references. They are not LUNOR-owned services.
 
 Let's get started with the basics.
