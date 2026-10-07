@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "omarchy.system-update",
-  "name": "Omarchy update",
+  "name": "LUNOR OS update",
   "version": "1.0.0",
   "author": "Omarchy",
-  "description": "Indicates available Omarchy updates",
+  "description": "Indicates available LUNOR OS updates",
   "kinds": [
     "bar-widget"
   ],
@@ -12,7 +12,7 @@
     "barWidget": "SystemUpdate.qml"
   },
   "barWidget": {
-    "displayName": "Omarchy update",
+    "displayName": "LUNOR OS update",
     "description": "Indicates available Omarchy updates",
     "category": "System",
     "allowMultiple": false
