@@ -179,7 +179,7 @@ DYNAMIC_ROW=$((LOGO_HEIGHT + 3))
 LAST_SETUP_SIZE=""
 
 tips=(
-  "Super + Space opens the Omarchy menu for apps, settings, and more"
+  "Super + Space opens the LUNOR OS menu for apps, settings, and more"
   "Super + K shows all the key bindings"
   "Super is the Windows or command key on your keyboard"
   "Use Xournal++ to sign PDFs"
@@ -190,13 +190,13 @@ tips=(
   "Super + Ctrl + Print grabs text off the screen with OCR"
   "Print takes a screenshot, Alt + Print records the screen"
   "Set a reminder with Super + Ctrl + R"
-  "Switch themes from Style > Theme in the Omarchy menu"
+  "Switch themes from Style > Theme in the LUNOR OS menu"
   "Double-click the menu bar to make it transparent"
   "Run a full Windows VM via Install > Windows in the menu"
   "Super + Ctrl + V opens the clipboard manager"
   "Super + 1 through 0 switches workspaces, add Shift to bring the window"
   "Super + Print picks a color from anywhere on screen"
-  "Keep the system fresh with Update in the Omarchy menu"
+  "Keep the system fresh with Update in the LUNOR OS menu"
 )
 
 term_cols() {
@@ -449,7 +449,7 @@ greeter_screen() {
     rows=$(stty size 2>/dev/null </dev/tty | awk '{print $1}')
     [[ $rows =~ ^[0-9]+$ ]] || rows=${LINES:-24}
 
-    tagline="Beautiful, Fun & Agentic Linux by DHH"
+    tagline="Welcome to LUNOR OS"
     hint="Press Return to Start Setup"
 
     printf '%s%s' "$HIDE_CURSOR" "$CLEAR"
@@ -645,7 +645,7 @@ user_form() {
   omarchy_prompt_identity || return $?
 
   # Hostname and timezone are deferred to first boot with the rest of the user
-  # step: the deferred install seeds neutral placeholders (omarchy/UTC) and the
+  # step: the deferred install seeds neutral placeholders (lunor/UTC) and the
   # owner overwrites them here.
   omarchy_prompt_hostname || return $?
 
@@ -662,7 +662,7 @@ Username,$username
 Password,$(printf "%${#password}s" | tr ' ' '*')
 Full name,${full_name:-[Skipped]}
 Email address,${email_address:-[Skipped]}
-Hostname,${hostname:-omarchy}
+Hostname,${hostname:-lunor}
 Timezone,${timezone:-UTC}" |
     gum table -s "," -p | sed "s/^/${PADDING_LEFT_SPACES}/"
 
@@ -1004,7 +1004,7 @@ run_provisioning() {
   install_authorized_keys
   configure_login
 
-  log_step "setting hostname to ${hostname:-omarchy}"
+  log_step "setting hostname to ${hostname:-lunor}"
   configure_hostname
 
   log_step "setting timezone to ${timezone:-UTC}"
