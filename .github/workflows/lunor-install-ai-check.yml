@@ -44,3 +44,5 @@ jobs:
 
           ./bin/lunor commands --check
           ./test/cli
+
+# rerun after AI CLI expectation update
