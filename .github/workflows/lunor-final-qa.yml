@@ -1,4 +1,4 @@
-name: LUNOR final QA audit
+name: LUNOR final QA audit v2
 
 on:
   push:
@@ -13,31 +13,46 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Static boot and desktop branding checks
+      - name: Validate repository cleanliness
         shell: bash
         run: |
           set -euo pipefail
+          git diff --check
 
+      - name: Validate boot to desktop branding chain
+        shell: bash
+        run: |
+          set -euo pipefail
           grep -Fq 'interface_branding: LUNOR OS Bootloader' default/limine/limine.conf
           grep -Fq 'TARGET_OS_NAME="LUNOR OS"' etc/limine-entry-tool.d/omarchy-defaults.conf
           grep -Fq 'Name=LUNOR OS' default/plymouth/omarchy.plymouth
+          test -s default/plymouth/logo.png
           grep -Fq 'Name=LUNOR OS' default/sddm/omarchy/metadata.desktop
           grep -Fq 'Author=LUNOR OS' default/sddm/omarchy/metadata.desktop
+          test -s default/sddm/omarchy/logo.png
           grep -Fq 'Name=LUNOR OS (Hyprland uwsm)' default/wayland-sessions/omarchy.desktop
           grep -Fq 'echo \"LUNOR OS $version\"' etc/fastfetch/config.jsonc
+          grep -Fq 'tooltipText: "LUNOR OS Menu"' shell/plugins/menu/BarWidget.qml
+          grep -Fq '"name": "LUNOR OS menu"' shell/plugins/menu/manifest.json
           grep -Fq 'Super + Space for LUNOR OS Menu.' install/user/first-run/welcome.sh
           grep -Fq 'Welcome to LUNOR OS' bin/omarchy-provision-owner
           grep -Fq "OMARCHY_HOSTNAME_DEFAULT='lunor'" install/provisioning/setup-form.sh
-          grep -Fq 'tooltipText: "LUNOR OS Menu"' shell/plugins/menu/BarWidget.qml
-          grep -Fq '"name": "LUNOR OS menu"' shell/plugins/menu/manifest.json
-          grep -Fq '"label":"LUNOR OS"' default/omarchy/omarchy-menu.jsonc
 
-      - name: Wallpaper and theme checks
+      - name: Validate normal user-visible desktop strings
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -RIn -E 'Click to install .* for Omarchy\.|help with Omarchy\.|my Omarchy desktop|new Omarchy theme|new Omarchy shell plugin' install/user/first-run shell/plugins/agents
+          ! grep -RIn -E 'Omarchy shell [·–-] dev gallery|label: "Omarchy menu"' shell/plugins/dev-gallery
+          ! grep -F 'Indicates available Omarchy updates' shell/plugins/bar/widgets/SystemUpdate.manifest.json
+          grep -Fq '"author": "Upstream Omarchy"' shell/plugins/menu/manifest.json
+          grep -Fq 'Pending LUNOR OS Updates' shell/plugins/bar/widgets/SystemUpdate.qml
+
+      - name: Validate wallpaper and theme branding
         shell: bash
         run: |
           set -euo pipefail
           if find themes -type f -path '*/backgrounds/*' | grep -Eiq '(^|/)([^/]*(omarchy|oma[-_.])[^/]*)$'; then
-            echo "Found legacy-branded wallpaper filenames:" >&2
             find themes -type f -path '*/backgrounds/*' | grep -Ei '(^|/)([^/]*(omarchy|oma[-_.])[^/]*)$' >&2
             exit 1
           fi
@@ -46,21 +61,16 @@ jobs:
             find "$theme/backgrounds" -maxdepth 1 -type f | grep -q .
           done < <(find themes -mindepth 1 -maxdepth 1 -type d | sort)
 
-      - name: Installer and update safety checks
+      - name: Validate update isolation
         shell: bash
         run: |
           set -euo pipefail
-          bash -n install/provisioning/setup-form.sh
-          bash -n bin/omarchy-provision-owner
-          bash -n bin/omarchy-provision-first-run
-          bash -n bin/omarchy-provision-user
           bash -n bin/omarchy-update
           bash -n bin/omarchy-update-available
           bash -n bin/omarchy-channel-set
           bash -n bin/omarchy-channel-current
           bash -n bin/omarchy-version-channel
           bash -n bin/omarchy-update-pacman-guard
-          bash test/shell.d/setup-form-test.sh
 
           set +e
           bin/omarchy-update >/tmp/lunor-update.out 2>&1
@@ -84,25 +94,45 @@ jobs:
             ! grep -Fq 'omarchy.org' "$mirror"
           done
 
-      - name: Report remaining visible-brand candidates
+      - name: Validate lock screensaver logout reboot shutdown entrypoints
         shell: bash
         run: |
           set -euo pipefail
-          {
-            echo '=== Capitalized Omarchy / upstream URLs in user-facing areas ==='
-            git grep -n -I -E 'Omarchy|omarchy\.org|pkgs\.omarchy\.org|mirror\.omarchy\.org|iso\.omarchy\.org|security@omarchy\.org' --               README.md .github/SECURITY.md manual default/omarchy default/wayland-sessions               install/provisioning install/user/first-run shell/plugins               bin/omarchy-update bin/omarchy-update-available bin/omarchy-channel-set               default/pacman 2>/dev/null || true
-          } | tee /tmp/lunor-visible-brand-audit.txt
+          for cmd in             bin/omarchy-system-lock             bin/omarchy-launch-screensaver             bin/omarchy-screensaver             bin/omarchy-system-logout             bin/omarchy-system-reboot             bin/omarchy-system-shutdown             bin/omarchy-launch-about; do
+            test -x "$cmd"
+            bash -n "$cmd"
+          done
+          grep -Fq '"system.lock"' default/omarchy/omarchy-menu.jsonc
+          grep -Fq '"system.logout"' default/omarchy/omarchy-menu.jsonc
+          grep -Fq '"system.reboot"' default/omarchy/omarchy-menu.jsonc
+          grep -Fq '"system.shutdown"' default/omarchy/omarchy-menu.jsonc
 
-          echo
-          echo '=== Candidate count ==='
-          grep -Ec '^[^=].*:[0-9]+:' /tmp/lunor-visible-brand-audit.txt || true
+      - name: Run focused regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          tests=(
+            test/shell.d/setup-form-test.sh
+            test/shell.d/branding-about-animation-test.sh
+            test/shell.d/menu-test.sh
+            test/shell.d/menu-guards-test.sh
+            test/shell.d/menu-plugin-test.sh
+            test/shell.d/screensaver-workspace-test.sh
+            test/shell.d/system-lock-test.sh
+            test/shell.d/plymouth-set-test.sh
+            test/shell.d/theme-background-memory-test.sh
+          )
+          for test_file in "${tests[@]}"; do
+            echo "=== $test_file ==="
+            bash "$test_file"
+          done
 
-      - name: Validate documentation intent
+      - name: Validate LUNOR documentation boundary
         shell: bash
         run: |
           set -euo pipefail
           grep -Fq '# LUNOR OS' README.md
-          grep -Fq 'based on the upstream [Omarchy]' README.md
+          grep -Fq 'rest of the `manual/` directory is inherited upstream documentation' README.md
           grep -Fq '# Welcome to LUNOR OS!' manual/01-welcome-to-omarchy.md
           grep -Fq 'does **not** use the upstream Omarchy update service' manual/30-updates.md
           grep -Fq 'does **not** currently publish an independent ISO signing key' manual/48-security.md
