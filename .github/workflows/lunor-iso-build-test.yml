@@ -130,6 +130,28 @@ jobs:
               raise SystemExit("Upstream archinstall sanity_check call changed; review compatibility patch")
           p.write_text(s.replace(needle, "", 1))
 
+          # Pin the Node.js offline tarball to the exact version named by the
+          # "latest" checksums. Fetching both files through /dist/latest can
+          # race a CDN/release alias update and intermittently return HTTP 404.
+          p = iso / "builder/build-iso.sh"
+          s = p.read_text()
+          node_old = """NODE_DIST_URL="https://nodejs.org/dist/latest"
+NODE_SHASUMS=$(curl -fsSL "$NODE_DIST_URL/SHASUMS256.txt")
+NODE_FILENAME=$(echo "$NODE_SHASUMS" | grep "linux-x64.tar.gz" | awk '{print $2}')
+NODE_SHA=$(echo "$NODE_SHASUMS" | grep "linux-x64.tar.gz" | awk '{print $1}')
+curl -fsSL "$NODE_DIST_URL/$NODE_FILENAME" -o "/tmp/$NODE_FILENAME" """
+          node_new = """NODE_LATEST_URL="https://nodejs.org/dist/latest"
+NODE_SHASUMS=$(curl --retry 5 --retry-all-errors -fsSL "$NODE_LATEST_URL/SHASUMS256.txt")
+NODE_FILENAME=$(echo "$NODE_SHASUMS" | grep "linux-x64.tar.gz" | awk '{print $2}')
+NODE_SHA=$(echo "$NODE_SHASUMS" | grep "linux-x64.tar.gz" | awk '{print $1}')
+NODE_VERSION=$(echo "$NODE_FILENAME" | sed -n 's/^node-\\(v[^-]*\\)-linux-x64\\.tar\\.gz$/\\1/p')
+[ -n "$NODE_VERSION" ] || { echo "Could not derive Node.js version from $NODE_FILENAME" >&2; exit 1; }
+NODE_DIST_URL="https://nodejs.org/dist/$NODE_VERSION"
+curl --retry 5 --retry-all-errors -fsSL "$NODE_DIST_URL/$NODE_FILENAME" -o "/tmp/$NODE_FILENAME" """
+          if node_old not in s:
+              raise SystemExit("Upstream Node.js offline download block changed; review compatibility patch")
+          p.write_text(s.replace(node_old, node_new, 1))
+
           # Keep the interactive VM harness compatible with the current shell.
           # OverlayWindow surfaces remain mapped when hidden, so shortcut tests
           # must check whether a surface is on the overlay layer, not whether
