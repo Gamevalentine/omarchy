@@ -2120,6 +2120,243 @@ grep -Fq 'setsid lunor launch webapp https://www.xbox.com/en-US/play' "$install_
   fail "lunor Xbox Cloud behavior launches through canonical webapp route"
 pass "lunor Xbox Cloud installer preserves behavior with mocked dependencies"
 
+install_stage_final_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-install-docker-dbs"
+       or .binary == "lunor-install-font"
+       or .binary == "lunor-install-preinstalls"
+       or .binary == "lunor-install-service-dropbox"
+       or .binary == "lunor-install-service-nordvpn"
+       or .binary == "lunor-install-service-once"
+       or .binary == "lunor-install-service-sunshine"
+       or .binary == "lunor-install-service-tailscale"
+     )]
+  | length
+')
+[[ $install_stage_final_count == "8" ]] || fail "lunor exposes all final install-stage commands"
+pass "lunor final install-stage routes prefer canonical binaries"
+
+output=$("$LUNOR" install docker dbs --help)
+assert_output_contains "lunor Docker database installer help is canonical" "$output" "lunor install docker dbs"
+
+output=$("$LUNOR" install font --help)
+assert_output_contains "lunor font installer help is canonical" "$output" "lunor install font <display-name> <package> <family>"
+
+output=$("$LUNOR" install preinstalls --help)
+assert_output_contains "lunor preinstall restore help is canonical" "$output" "lunor install preinstalls"
+
+output=$("$LUNOR" install service sunshine --help)
+assert_output_contains "lunor Sunshine installer help is canonical" "$output" "lunor install service sunshine"
+
+install_stage_final_scripts=(
+  "$ROOT/bin/lunor-install-docker-dbs"
+  "$ROOT/bin/lunor-install-font"
+  "$ROOT/bin/lunor-install-preinstalls"
+  "$ROOT/bin/lunor-install-service-dropbox"
+  "$ROOT/bin/lunor-install-service-nordvpn"
+  "$ROOT/bin/lunor-install-service-once"
+  "$ROOT/bin/lunor-install-service-sunshine"
+  "$ROOT/bin/lunor-install-service-tailscale"
+)
+
+for script in "${install_stage_final_scripts[@]}"; do
+  [[ -x $script ]] || fail "lunor final install-stage binary is executable: $script"
+  bash -n "$script"
+done
+pass "lunor final install-stage scripts are executable and parse cleanly"
+
+if grep -Eq 'OMARCHY_PATH|omarchy-(pkg|install|launch|cmd|refresh|font|system|webapp|plugin)' "${install_stage_final_scripts[@]}"; then
+  fail "lunor final installers still invoke migrated Omarchy dependencies directly"
+fi
+pass "lunor final installers avoid direct migrated Omarchy dependencies"
+
+grep -Fq 'lunor launch floating terminal with presentation' "$ROOT/bin/lunor-install-font" ||
+  fail "lunor font installer uses canonical presentation route"
+grep -Fq 'lunor pkg add' "$ROOT/bin/lunor-install-font" ||
+  fail "lunor font installer uses canonical package route"
+grep -Fq 'lunor font set' "$ROOT/bin/lunor-install-font" ||
+  fail "lunor font installer uses canonical font route"
+grep -Fq 'lunor refresh applications' "$ROOT/bin/lunor-install-preinstalls" ||
+  fail "lunor preinstall restore uses canonical refresh route"
+grep -Fq 'lunor pkg add' "$ROOT/bin/lunor-install-preinstalls" ||
+  fail "lunor preinstall restore uses canonical package route"
+grep -Fq 'lunor plugin enable omarchy.dropbox' "$ROOT/bin/lunor-install-service-dropbox" ||
+  fail "lunor Dropbox installer uses canonical plugin route"
+grep -Fq 'lunor pkg add nordvpn-bin' "$ROOT/bin/lunor-install-service-nordvpn" ||
+  fail "lunor NordVPN installer uses canonical package route"
+grep -Fq 'lunor system reboot' "$ROOT/bin/lunor-install-service-nordvpn" ||
+  fail "lunor NordVPN installer uses canonical reboot route"
+grep -Fq 'lunor pkg add once-bin' "$ROOT/bin/lunor-install-service-once" ||
+  fail "lunor ONCE installer uses canonical package route"
+grep -Fq 'lunor cmd missing ufw' "$ROOT/bin/lunor-install-service-sunshine" ||
+  fail "lunor Sunshine installer uses canonical command probe"
+grep -Fq 'lunor webapp install' "$ROOT/bin/lunor-install-service-sunshine" ||
+  fail "lunor Sunshine installer uses canonical webapp route"
+grep -Fq 'SUNSHINE_ADMIN_EXEC="lunor launch webapp ' "$ROOT/bin/lunor-install-service-sunshine" ||
+  fail "lunor Sunshine admin launcher uses canonical webapp launch route"
+grep -Fq 'lunor plugin enable omarchy.tailscale' "$ROOT/bin/lunor-install-service-tailscale" ||
+  fail "lunor Tailscale installer uses canonical plugin route"
+grep -Fq 'lunor webapp install "Tailscale"' "$ROOT/bin/lunor-install-service-tailscale" ||
+  fail "lunor Tailscale installer uses canonical webapp route"
+pass "lunor final installers are wired through canonical routes"
+
+# These names are persisted compatibility identifiers, not executable Omarchy dependencies.
+grep -Fq 'omarchy.dropbox' "$ROOT/bin/lunor-install-service-dropbox" ||
+  fail "lunor Dropbox installer preserves the existing plugin ID"
+grep -Fq 'omarchy.tailscale' "$ROOT/bin/lunor-install-service-tailscale" ||
+  fail "lunor Tailscale installer preserves the existing plugin ID"
+grep -Fq 'omarchy-tailscale-receive.service' "$ROOT/bin/lunor-install-service-tailscale" ||
+  fail "lunor Tailscale installer preserves the packaged receiver unit name"
+grep -Fq 'UFW_COMMENT="omarchy-sunshine"' "$ROOT/bin/lunor-install-service-sunshine" ||
+  fail "lunor Sunshine installer preserves the firewall rule marker used by removal"
+pass "lunor final service migration preserves compatibility identifiers"
+
+make_tmpdir INSTALL_FINAL_BIN
+make_tmpdir INSTALL_FINAL_HOME
+install_final_log="$INSTALL_FINAL_BIN/install.log"
+: >"$install_final_log"
+
+cat >"$INSTALL_FINAL_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf 'lunor %s\n' "$*" >>"$INSTALL_FINAL_LOG"
+case "$*" in
+  "cmd missing ufw") exit 0 ;;
+esac
+exit 0
+EOF
+
+cat >"$INSTALL_FINAL_BIN/sudo" <<'EOF'
+#!/bin/bash
+printf 'sudo %s\n' "$*" >>"$INSTALL_FINAL_LOG"
+exit 0
+EOF
+
+cat >"$INSTALL_FINAL_BIN/systemctl" <<'EOF'
+#!/bin/bash
+printf 'systemctl %s\n' "$*" >>"$INSTALL_FINAL_LOG"
+exit 0
+EOF
+
+cat >"$INSTALL_FINAL_BIN/uwsm-app" <<'EOF'
+#!/bin/bash
+printf 'uwsm-app %s\n' "$*" >>"$INSTALL_FINAL_LOG"
+exit 0
+EOF
+
+cat >"$INSTALL_FINAL_BIN/hyprctl" <<'EOF'
+#!/bin/bash
+printf 'hyprctl %s\n' "$*" >>"$INSTALL_FINAL_LOG"
+exit 0
+EOF
+
+cat >"$INSTALL_FINAL_BIN/gum" <<'EOF'
+#!/bin/bash
+printf 'gum %s\n' "$*" >>"$INSTALL_FINAL_LOG"
+if [[ $1 == "confirm" && ${MOCK_GUM_CONFIRM:-0} == "1" ]]; then
+  exit 0
+fi
+exit 1
+EOF
+
+chmod +x "$INSTALL_FINAL_BIN/"{lunor,sudo,systemctl,uwsm-app,hyprctl,gum}
+
+INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-docker-dbs" MySQL >/dev/null
+grep -Fq 'sudo docker run -d --restart unless-stopped -p 127.0.0.1:3306:3306 --name=mysql8' "$install_final_log" ||
+  fail "lunor Docker DB installer preserves the MySQL container command without executing Docker"
+pass "lunor Docker DB installer behavior is covered with mocked sudo"
+
+: >"$install_final_log"
+INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-font" "Demo Font" demo-font "Demo Family"
+grep -Fq 'lunor launch floating terminal with presentation' "$install_final_log" ||
+  fail "lunor font behavior reaches canonical presentation launcher"
+grep -Fq 'lunor pkg add demo-font' "$install_final_log" ||
+  fail "lunor font behavior embeds canonical package install"
+grep -Fq 'lunor font set' "$install_final_log" ||
+  fail "lunor font behavior embeds canonical font selection"
+pass "lunor font installer preserves behavior with mocked dependencies"
+
+: >"$install_final_log"
+HOME="$INSTALL_FINAL_HOME" MOCK_GUM_CONFIRM=1 INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-preinstalls" >/dev/null
+grep -Fxq 'lunor refresh applications' "$install_final_log" ||
+  fail "lunor preinstall restore reaches canonical application refresh"
+grep -Fq 'lunor pkg add aether cliamp libreoffice-fresh' "$install_final_log" ||
+  fail "lunor preinstall restore reaches canonical package route"
+grep -Fxq 'hyprctl reload' "$install_final_log" ||
+  fail "lunor preinstall restore preserves Hyprland reload"
+pass "lunor preinstall restore is covered with mocked dependencies"
+
+: >"$install_final_log"
+HOME="$INSTALL_FINAL_HOME" INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-service-dropbox" >/dev/null
+grep -Fq 'lunor pkg add dropbox dropbox-cli' "$install_final_log" ||
+  fail "lunor Dropbox behavior reaches canonical package route"
+grep -Fxq 'lunor plugin enable omarchy.dropbox' "$install_final_log" ||
+  fail "lunor Dropbox behavior preserves plugin ID through canonical plugin route"
+pass "lunor Dropbox installer is covered with mocked dependencies"
+
+: >"$install_final_log"
+HOME="$INSTALL_FINAL_HOME" USER=demo INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-service-nordvpn" >/dev/null
+grep -Fxq 'lunor pkg add nordvpn-bin' "$install_final_log" ||
+  fail "lunor NordVPN behavior reaches canonical package route"
+grep -Fxq 'sudo systemctl enable --now nordvpnd' "$install_final_log" ||
+  fail "lunor NordVPN behavior preserves daemon enable command"
+grep -Fxq 'sudo usermod -aG nordvpn demo' "$install_final_log" ||
+  fail "lunor NordVPN behavior preserves group membership command"
+if grep -Fq 'lunor system reboot' "$install_final_log"; then
+  fail "lunor NordVPN mocked decline path must not request reboot"
+fi
+pass "lunor NordVPN installer is covered without changing services or rebooting"
+
+: >"$install_final_log"
+INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-service-once" >/dev/null
+grep -Fxq 'lunor pkg add once-bin' "$install_final_log" ||
+  fail "lunor ONCE behavior reaches canonical package route"
+grep -Fxq 'sudo systemctl enable --now once-background.service' "$install_final_log" ||
+  fail "lunor ONCE behavior preserves service enable command"
+grep -Fxq 'sudo once' "$install_final_log" ||
+  fail "lunor ONCE behavior preserves TUI launch"
+pass "lunor ONCE installer is covered with mocked sudo"
+
+: >"$install_final_log"
+HOME="$INSTALL_FINAL_HOME" INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-service-sunshine" >/dev/null
+grep -Fxq 'lunor pkg add sunshine' "$install_final_log" ||
+  fail "lunor Sunshine behavior reaches canonical package route"
+grep -Fxq 'systemctl --user enable --now sunshine' "$install_final_log" ||
+  fail "lunor Sunshine behavior preserves user service enable"
+grep -Fxq 'lunor cmd missing ufw' "$install_final_log" ||
+  fail "lunor Sunshine behavior checks firewall dependency canonically"
+grep -Fq 'lunor webapp install Sunshine Admin https://localhost:47990' "$install_final_log" ||
+  fail "lunor Sunshine behavior creates admin webapp canonically"
+grep -Fq 'lunor launch webapp https://localhost:47990 --ignore-certificate-errors' "$install_final_log" ||
+  fail "lunor Sunshine behavior opens admin through canonical launcher"
+grep -Fxq 'o.launch_on_start("sunshine")' "$INSTALL_FINAL_HOME/.config/hypr/autostart.lua" ||
+  fail "lunor Sunshine behavior preserves Hyprland autostart entry"
+pass "lunor Sunshine installer is covered without touching firewall or real services"
+
+: >"$install_final_log"
+HOME="$INSTALL_FINAL_HOME" USER=demo INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-service-tailscale" >/dev/null
+grep -Fxq 'lunor pkg add tailscale' "$install_final_log" ||
+  fail "lunor Tailscale behavior reaches canonical package route"
+grep -Fxq 'sudo systemctl enable --now tailscaled.service' "$install_final_log" ||
+  fail "lunor Tailscale behavior preserves daemon enable command"
+grep -Fxq 'sudo tailscale up --accept-routes' "$install_final_log" ||
+  fail "lunor Tailscale behavior preserves connect command"
+grep -Fxq 'systemctl --user enable --now omarchy-tailscale-receive.service' "$install_final_log" ||
+  fail "lunor Tailscale behavior preserves packaged receiver unit"
+grep -Fxq 'lunor plugin enable omarchy.tailscale' "$install_final_log" ||
+  fail "lunor Tailscale behavior preserves plugin ID through canonical plugin route"
+grep -Fq 'lunor webapp install Tailscale https://login.tailscale.com/admin/machines' "$install_final_log" ||
+  fail "lunor Tailscale behavior creates admin webapp canonically"
+pass "lunor Tailscale installer is covered without changing VPN state"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
