@@ -1,0 +1,38 @@
+name: LUNOR wallpaper audit
+
+on:
+  push:
+    branches:
+      - lunor/1.0-clean-branding
+    paths:
+      - .github/workflows/lunor-wallpaper-audit.yml
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Print suspicious wallpaper previews
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from PIL import Image, ImageOps
+          files = [
+            "themes/flexoki-light/backgrounds/2-omarchy.webp",
+            "themes/rose-pine/backgrounds/3-omarchy-plants.webp",
+            "themes/tokyo-night/backgrounds/5-oma-cityscape.jpg",
+            "themes/tokyo-night/backgrounds/6-oma.webp",
+          ]
+          chars = " .:-=+*#%@"
+          for path in files:
+              im = Image.open(path).convert("L")
+              print("\n===", path, "===")
+              print("SIZE", Image.open(path).size)
+              thumb = ImageOps.autocontrast(im)
+              thumb.thumbnail((72, 30))
+              # compensate terminal character aspect
+              thumb = thumb.resize((thumb.width, max(1, thumb.height//2)))
+              pix = thumb.load()
+              for y in range(thumb.height):
+                  print("".join(chars[pix[x,y] * (len(chars)-1) // 255] for x in range(thumb.width)))
+          PY
