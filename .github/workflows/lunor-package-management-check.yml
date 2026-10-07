@@ -47,3 +47,5 @@ jobs:
           bash -n test/cli
           ./bin/lunor commands --check
           ./test/cli
+
+# rerun after fallback assertion update
