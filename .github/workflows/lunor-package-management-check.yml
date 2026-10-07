@@ -1,0 +1,49 @@
+name: LUNOR package management check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-package-management-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate package management migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts=(
+            bin/lunor-sudo-keepalive
+            bin/lunor-show-done
+            bin/lunor-pkg-add
+            bin/lunor-pkg-aur-accessible
+            bin/lunor-pkg-aur-add
+            bin/lunor-pkg-aur-install
+            bin/lunor-pkg-drop
+            bin/lunor-pkg-install
+            bin/lunor-pkg-missing
+            bin/lunor-pkg-present
+            bin/lunor-pkg-remove
+          )
+
+          for script in "${scripts[@]}"; do
+            test -x "$script"
+            bash -n "$script"
+          done
+
+          if grep -Eq 'omarchy-(pkg|sudo-keepalive|show-done)' "${scripts[@]}"; then
+            echo "Canonical package commands still invoke legacy Omarchy binaries" >&2
+            exit 1
+          fi
+
+          grep -Fq -- '-A "lunor-update"' bin/lunor-pkg-aur-accessible
+          grep -Fq 'source lunor-sudo-keepalive' bin/lunor-pkg-install bin/lunor-pkg-aur-install
+
+          bash -n test/cli
+          ./bin/lunor commands --check
+          ./test/cli
