@@ -137,7 +137,7 @@ jobs:
           p = iso / "bin/omarchy-iso-test"
           s = p.read_text().replace("Linux by DHH", "LUNOR .S")
           layer_needle = r"[.. | objects | select(.namespace? == \$namespace)] | length > 0"
-          layer_replacement = r'[.[].levels["3"][]? | select(.namespace? == \$namespace)] | length > 0'
+          layer_replacement = r'[.[].levels | to_entries[]? | select((.key | tonumber) == 3) | .value[]? | select(.namespace? == \$namespace)] | length > 0'
           if layer_needle not in s:
               raise SystemExit("Upstream shortcut layer check changed; review VM harness compatibility patch")
           s = s.replace(layer_needle, layer_replacement, 1)
