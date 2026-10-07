@@ -1963,6 +1963,163 @@ grep -Fq 't3 theme set omarchy --base-dir' "$install_ai_log" ||
   fail "lunor T3 Code behavior preserves the stable published theme id"
 pass "lunor T3 Code install behavior preserves theme compatibility with mocked dependencies"
 
+install_stage_gaming_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-install-gaming-battlenet"
+       or .binary == "lunor-install-gaming-geforce-now"
+       or .binary == "lunor-install-gaming-gpu-lib32"
+       or .binary == "lunor-install-gaming-heroic"
+       or .binary == "lunor-install-gaming-lutris"
+       or .binary == "lunor-install-gaming-retroarch"
+       or .binary == "lunor-install-gaming-steam"
+       or .binary == "lunor-install-gaming-xbox-cloud"
+       or .binary == "lunor-install-gaming-xbox-controllers"
+     )]
+  | length
+')
+[[ $install_stage_gaming_count == "9" ]] || fail "lunor exposes all install gaming-stage commands"
+pass "lunor install gaming-stage routes prefer canonical binaries"
+
+output=$("$LUNOR" install gaming battlenet --help)
+assert_output_contains "lunor Battle.net installer help is canonical" "$output" "lunor install gaming battlenet"
+
+output=$("$LUNOR" install gaming geforce-now --help)
+assert_output_contains "lunor GeForce NOW installer help keeps canonical hyphenated route" "$output" "lunor install gaming geforce-now"
+
+output=$("$LUNOR" install gaming gpu-lib32 --help)
+assert_output_contains "lunor GPU lib32 installer help keeps canonical hyphenated route" "$output" "lunor install gaming gpu-lib32"
+
+output=$("$LUNOR" install gaming xbox-cloud --help)
+assert_output_contains "lunor Xbox Cloud installer help keeps canonical hyphenated route" "$output" "lunor install gaming xbox-cloud"
+
+output=$("$LUNOR" install gaming xbox-controllers --help)
+assert_output_contains "lunor Xbox controller installer help keeps canonical hyphenated route" "$output" "lunor install gaming xbox-controllers"
+
+install_stage_gaming_scripts=(
+  "$ROOT/bin/lunor-install-gaming-battlenet"
+  "$ROOT/bin/lunor-install-gaming-geforce-now"
+  "$ROOT/bin/lunor-install-gaming-gpu-lib32"
+  "$ROOT/bin/lunor-install-gaming-heroic"
+  "$ROOT/bin/lunor-install-gaming-lutris"
+  "$ROOT/bin/lunor-install-gaming-retroarch"
+  "$ROOT/bin/lunor-install-gaming-steam"
+  "$ROOT/bin/lunor-install-gaming-xbox-cloud"
+  "$ROOT/bin/lunor-install-gaming-xbox-controllers"
+)
+
+for script in "${install_stage_gaming_scripts[@]}"; do
+  [[ -x $script ]] || fail "lunor install gaming-stage binary is executable: $script"
+  bash -n "$script"
+done
+pass "lunor install gaming-stage scripts are executable and parse cleanly"
+
+if grep -Eq 'OMARCHY_PATH|omarchy-(pkg|install|launch|hw|webapp)' "${install_stage_gaming_scripts[@]}"; then
+  fail "lunor gaming installers still invoke migrated Omarchy dependencies directly"
+fi
+pass "lunor gaming installers avoid direct migrated Omarchy dependencies"
+
+grep -Fq 'lunor pkg add umu-launcher' "$ROOT/bin/lunor-install-gaming-battlenet" ||
+  fail "lunor Battle.net installer uses canonical package route"
+grep -Fq 'lunor install gaming gpu-lib32' "$ROOT/bin/lunor-install-gaming-battlenet" ||
+  fail "lunor Battle.net installer uses canonical GPU helper route"
+grep -Fq '$LUNOR_PATH/default/applications/battlenet.desktop' "$ROOT/bin/lunor-install-gaming-battlenet" ||
+  fail "lunor Battle.net installer uses LUNOR_PATH for packaged desktop entry"
+grep -Fq 'lunor launch browser' "$ROOT/bin/lunor-install-gaming-geforce-now" ||
+  fail "lunor GeForce NOW installer uses canonical browser launcher"
+grep -Fq 'lunor hw nvidia gsp' "$ROOT/bin/lunor-install-gaming-gpu-lib32" ||
+  fail "lunor GPU helper uses canonical NVIDIA GSP probe"
+grep -Fq 'lunor hw nvidia without gsp' "$ROOT/bin/lunor-install-gaming-gpu-lib32" ||
+  fail "lunor GPU helper uses canonical legacy NVIDIA probe"
+grep -Fq 'lunor pkg add heroic-games-launcher-bin' "$ROOT/bin/lunor-install-gaming-heroic" ||
+  fail "lunor Heroic installer uses canonical package route"
+grep -Fq 'lunor pkg add lutris umu-launcher' "$ROOT/bin/lunor-install-gaming-lutris" ||
+  fail "lunor Lutris installer uses canonical package route"
+grep -Fq 'lunor pkg add \\' "$ROOT/bin/lunor-install-gaming-retroarch" ||
+  fail "lunor RetroArch installer uses canonical package route"
+grep -Fq 'lunor pkg add steam' "$ROOT/bin/lunor-install-gaming-steam" ||
+  fail "lunor Steam installer uses canonical package route"
+grep -Fq 'lunor webapp install "Xbox Cloud Gaming"' "$ROOT/bin/lunor-install-gaming-xbox-cloud" ||
+  fail "lunor Xbox Cloud installer uses canonical webapp route"
+grep -Fq 'setsid lunor launch webapp' "$ROOT/bin/lunor-install-gaming-xbox-cloud" ||
+  fail "lunor Xbox Cloud installer launches through canonical webapp route"
+grep -Fq 'lunor pkg add xpadneo-dkms' "$ROOT/bin/lunor-install-gaming-xbox-controllers" ||
+  fail "lunor Xbox controller installer uses canonical package route"
+pass "lunor gaming installers are wired through canonical routes"
+
+make_tmpdir INSTALL_GAMING_BIN
+make_tmpdir INSTALL_GAMING_HOME
+make_tmpdir INSTALL_GAMING_ROOT
+install_gaming_log="$INSTALL_GAMING_BIN/install.log"
+: >"$install_gaming_log"
+
+cat >"$INSTALL_GAMING_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf 'lunor %s\n' "$*" >>"$INSTALL_GAMING_LOG"
+case "$*" in
+  "hw nvidia gsp"|"hw nvidia without gsp") exit 1 ;;
+esac
+exit 0
+EOF
+cat >"$INSTALL_GAMING_BIN/lspci" <<'EOF'
+#!/bin/bash
+printf '%s\n' '00:02.0 VGA compatible controller: Intel Corporation Mock Graphics'
+EOF
+cat >"$INSTALL_GAMING_BIN/setsid" <<'EOF'
+#!/bin/bash
+printf 'setsid %s\n' "$*" >>"$INSTALL_GAMING_LOG"
+exit 0
+EOF
+cat >"$INSTALL_GAMING_BIN/update-desktop-database" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+chmod +x "$INSTALL_GAMING_BIN/"{lunor,lspci,setsid,update-desktop-database}
+
+INSTALL_GAMING_LOG="$install_gaming_log" PATH="$INSTALL_GAMING_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-gaming-gpu-lib32" >/dev/null
+grep -Fxq 'lunor pkg add lib32-vulkan-intel' "$install_gaming_log" ||
+  fail "lunor GPU helper selects Intel lib32 driver through canonical package route"
+grep -Fxq 'lunor hw nvidia gsp' "$install_gaming_log" ||
+  fail "lunor GPU helper checks canonical NVIDIA GSP route"
+grep -Fxq 'lunor hw nvidia without gsp' "$install_gaming_log" ||
+  fail "lunor GPU helper checks canonical NVIDIA non-GSP route"
+pass "lunor GPU helper preserves vendor selection with mocked dependencies"
+
+: >"$install_gaming_log"
+INSTALL_GAMING_LOG="$install_gaming_log" PATH="$INSTALL_GAMING_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-gaming-steam" >/dev/null
+grep -Fxq 'lunor install gaming gpu-lib32' "$install_gaming_log" ||
+  fail "lunor Steam behavior installs GPU support first"
+grep -Fxq 'lunor pkg add steam' "$install_gaming_log" ||
+  fail "lunor Steam behavior reaches canonical package route"
+pass "lunor Steam installer preserves dependency order with mocked dependencies"
+
+mkdir -p "$INSTALL_GAMING_HOME/Games/battlenet/drive_c/Program Files (x86)/Battle.net"
+touch "$INSTALL_GAMING_HOME/Games/battlenet/drive_c/Program Files (x86)/Battle.net/Battle.net Launcher.exe"
+mkdir -p "$INSTALL_GAMING_ROOT/default/applications"
+printf '[Desktop Entry]\nName=Battle.net\n' >"$INSTALL_GAMING_ROOT/default/applications/battlenet.desktop"
+
+: >"$install_gaming_log"
+HOME="$INSTALL_GAMING_HOME" LUNOR_PATH="$INSTALL_GAMING_ROOT" INSTALL_GAMING_LOG="$install_gaming_log" PATH="$INSTALL_GAMING_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-gaming-battlenet" >/dev/null
+grep -Fxq 'lunor pkg add umu-launcher' "$install_gaming_log" ||
+  fail "lunor Battle.net behavior reaches canonical package route"
+grep -Fxq 'lunor install gaming gpu-lib32' "$install_gaming_log" ||
+  fail "lunor Battle.net behavior reaches canonical GPU helper"
+[[ -f "$INSTALL_GAMING_HOME/.local/share/applications/battlenet.desktop" ]] ||
+  fail "lunor Battle.net behavior installs its desktop entry from LUNOR_PATH"
+pass "lunor Battle.net installed-prefix path is preserved with mocked dependencies"
+
+: >"$install_gaming_log"
+HOME="$INSTALL_GAMING_HOME" INSTALL_GAMING_LOG="$install_gaming_log" PATH="$INSTALL_GAMING_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-gaming-xbox-cloud" >/dev/null
+grep -Fq 'lunor webapp install Xbox Cloud Gaming https://www.xbox.com/en-US/play' "$install_gaming_log" ||
+  fail "lunor Xbox Cloud behavior reaches canonical webapp installer"
+grep -Fq 'setsid lunor launch webapp https://www.xbox.com/en-US/play' "$install_gaming_log" ||
+  fail "lunor Xbox Cloud behavior launches through canonical webapp route"
+pass "lunor Xbox Cloud installer preserves behavior with mocked dependencies"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
