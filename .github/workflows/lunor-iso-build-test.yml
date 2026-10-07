@@ -121,22 +121,13 @@ jobs:
           p.write_text(s)
 
           # Archinstall 4.5 removed the old offline= parameter from
-          # Installer.sanity_check(). The upstream ISO builder still passes it,
-          # so adapt the builder at build time without changing LUNOR runtime code.
+          # Installer.sanity_check(). Adapt the upstream ISO builder at build time.
           p = iso / "configs/airootfs/usr/share/omarchy-iso/orchestrator/phases_impl.py"
           s = p.read_text()
-          old = """        installer.sanity_check(
-            offline=True,
-            skip_ntp=True,
-            skip_wkd=True,
-        )"""
-          new = """        installer.sanity_check(
-            skip_ntp=True,
-            skip_wkd=True,
-        )"""
-          if old not in s:
+          needle = "            offline=True,\\n"
+          if needle not in s:
               raise SystemExit("Upstream archinstall sanity_check call changed; review compatibility patch")
-          p.write_text(s.replace(old, new))
+          p.write_text(s.replace(needle, "", 1))
 
           # The interactive test harness must tolerate OCR reading OS as 0S.
           p = iso / "bin/omarchy-iso-test"
