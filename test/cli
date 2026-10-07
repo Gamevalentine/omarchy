@@ -1653,6 +1653,171 @@ grep -Fq 'lunor pkg add zed omazed' "$ROOT/bin/lunor-install-editor-zed" ||
   fail "lunor Zed installer uses canonical package route"
 pass "lunor terminal and Zed installers use canonical roots and package routing"
 
+install_stage_b_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-install-browser"
+       or .binary == "lunor-install-chromium-claude"
+       or .binary == "lunor-install-chromium-copy-url"
+       or .binary == "lunor-install-chromium-google-account"
+       or .binary == "lunor-install-chromium-ytdlp"
+       or .binary == "lunor-install-dev-env"
+       or .binary == "lunor-install-editor-emacs"
+       or .binary == "lunor-install-editor-helix"
+       or .binary == "lunor-install-editor-vscode"
+     )]
+  | length
+')
+[[ $install_stage_b_count == "9" ]] || fail "lunor exposes all install stage B commands"
+pass "lunor install stage B routes prefer canonical binaries"
+
+output=$("$LUNOR" install browser --help)
+assert_output_contains "lunor browser installer help is canonical" "$output" "lunor install browser <chromium|chrome|brave|brave-origin|edge|firefox|zen>"
+
+output=$("$LUNOR" install dev-env --help)
+assert_output_contains "lunor dev environment help is canonical" "$output" "lunor install dev-env <ruby|node|bun|deno|go|laravel|symfony|php|python|elixir|phoenix|rust|java|zig|ocaml|dotnet|clojure|scala>"
+
+install_stage_b_scripts=(
+  "$ROOT/bin/lunor-install-browser"
+  "$ROOT/bin/lunor-install-chromium-claude"
+  "$ROOT/bin/lunor-install-chromium-copy-url"
+  "$ROOT/bin/lunor-install-chromium-google-account"
+  "$ROOT/bin/lunor-install-chromium-ytdlp"
+  "$ROOT/bin/lunor-install-dev-env"
+  "$ROOT/bin/lunor-install-editor-emacs"
+  "$ROOT/bin/lunor-install-editor-helix"
+  "$ROOT/bin/lunor-install-editor-vscode"
+)
+
+for script in "${install_stage_b_scripts[@]}"; do
+  [[ -x $script ]] || fail "lunor install stage B binary is executable: $script"
+  bash -n "$script"
+done
+pass "lunor install stage B scripts are executable and parse cleanly"
+
+if grep -Fq 'OMARCHY_PATH' "${install_stage_b_scripts[@]}"; then
+  fail "lunor install stage B scripts do not depend on OMARCHY_PATH"
+fi
+pass "lunor install stage B scripts use canonical LUNOR roots"
+
+grep -Fq 'lunor pkg add chromium' "$ROOT/bin/lunor-install-browser" ||
+  fail "lunor browser installer uses canonical package route"
+grep -Fq 'lunor pkg aur add google-chrome' "$ROOT/bin/lunor-install-browser" ||
+  fail "lunor browser installer uses canonical AUR route"
+grep -Fq 'lunor install chromium copy url' "$ROOT/bin/lunor-install-browser" ||
+  fail "lunor browser installer uses canonical copy URL helper route"
+grep -Fq 'lunor install chromium ytdlp' "$ROOT/bin/lunor-install-browser" ||
+  fail "lunor browser installer uses canonical yt-dlp helper route"
+grep -Fq 'lunor theme set browser' "$ROOT/bin/lunor-install-browser" ||
+  fail "lunor browser installer uses canonical theme route"
+grep -Fq '$LUNOR_PATH/install/helpers/browser-policy.sh' "$ROOT/bin/lunor-install-browser" ||
+  fail "lunor browser installer sources policy helper from LUNOR_PATH"
+pass "lunor browser installer is wired through canonical routes"
+
+grep -Fq 'PACKAGED_PATH=/usr/bin/lunor-install-chromium-claude' "$ROOT/bin/lunor-install-chromium-claude" ||
+  fail "lunor Chromium Claude helper elevates through canonical binary"
+grep -Fq 'HOST_PATH="$LUNOR_PATH/bin/omarchy-chromium-copy-url-host"' "$ROOT/bin/lunor-install-chromium-copy-url" ||
+  fail "lunor copy URL installer keeps compatible native host path under LUNOR root"
+grep -Fq 'HOST_PATH="$LUNOR_PATH/bin/omarchy-chromium-ytdlp-host"' "$ROOT/bin/lunor-install-chromium-ytdlp" ||
+  fail "lunor yt-dlp installer keeps compatible native host path under LUNOR root"
+pass "lunor Chromium installers use canonical roots without changing extension host IDs"
+
+grep -Fq 'lunor pkg add libyaml' "$ROOT/bin/lunor-install-dev-env" ||
+  fail "lunor dev environment Ruby setup uses canonical package route"
+grep -Fq 'lunor pkg add symfony-cli' "$ROOT/bin/lunor-install-dev-env" ||
+  fail "lunor dev environment Symfony setup uses canonical package route"
+grep -Fq 'lunor pkg add rlwrap' "$ROOT/bin/lunor-install-dev-env" ||
+  fail "lunor dev environment Clojure setup uses canonical package route"
+pass "lunor dev environment installer uses canonical package dependencies"
+
+grep -Fq 'lunor pkg aur add omarchy-emacs' "$ROOT/bin/lunor-install-editor-emacs" ||
+  fail "lunor Emacs installer uses canonical AUR route"
+grep -Fq 'lunor pkg add helix' "$ROOT/bin/lunor-install-editor-helix" ||
+  fail "lunor Helix installer uses canonical package route"
+grep -Fq 'lunor theme refresh' "$ROOT/bin/lunor-install-editor-helix" ||
+  fail "lunor Helix installer refreshes theme through canonical route"
+grep -Fq 'lunor pkg add visual-studio-code-bin' "$ROOT/bin/lunor-install-editor-vscode" ||
+  fail "lunor VS Code installer uses canonical package route"
+grep -Fq 'lunor theme set vscode' "$ROOT/bin/lunor-install-editor-vscode" ||
+  fail "lunor VS Code installer applies theme through canonical route"
+pass "lunor remaining editor installers use canonical routes"
+
+make_tmpdir INSTALL_B_BIN
+make_tmpdir INSTALL_B_ROOT
+make_tmpdir INSTALL_B_HOME
+install_b_log="$INSTALL_B_BIN/install.log"
+: >"$install_b_log"
+
+mkdir -p "$INSTALL_B_ROOT/install/helpers" "$INSTALL_B_ROOT/config"
+cat >"$INSTALL_B_ROOT/install/helpers/browser-policy.sh" <<'EOF'
+browser_policy_setup_dir() {
+  printf 'browser-policy dir %s\n' "$1" >>"$INSTALL_B_LOG"
+}
+browser_policy_setup_firefox_distribution() {
+  printf 'browser-policy firefox %s %s\n' "$1" "$2" >>"$INSTALL_B_LOG"
+}
+EOF
+printf '%s\n' '--disable-demo-flag' >"$INSTALL_B_ROOT/config/chromium-flags.conf"
+
+cat >"$INSTALL_B_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf 'lunor %s\n' "$*" >>"$INSTALL_B_LOG"
+exit 0
+EOF
+cat >"$INSTALL_B_BIN/mise" <<'EOF'
+#!/bin/bash
+printf 'mise %s\n' "$*" >>"$INSTALL_B_LOG"
+exit 0
+EOF
+chmod +x "$INSTALL_B_BIN/"{lunor,mise}
+
+HOME="$INSTALL_B_HOME" LUNOR_PATH="$INSTALL_B_ROOT" INSTALL_B_LOG="$install_b_log" PATH="$INSTALL_B_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-browser" chromium >/dev/null
+grep -Fxq 'lunor pkg add chromium' "$install_b_log" ||
+  fail "lunor browser behavior uses canonical package route"
+grep -Fxq 'lunor install chromium copy url' "$install_b_log" ||
+  fail "lunor browser behavior invokes canonical copy URL installer"
+grep -Fxq 'lunor install chromium ytdlp' "$install_b_log" ||
+  fail "lunor browser behavior invokes canonical yt-dlp installer"
+grep -Fxq 'lunor theme set browser' "$install_b_log" ||
+  fail "lunor browser behavior applies theme through canonical route"
+grep -Fxq 'browser-policy dir /etc/chromium/policies/managed' "$install_b_log" ||
+  fail "lunor browser behavior preserves Chromium policy setup"
+pass "lunor Chromium browser install behavior is preserved with mocked dependencies"
+
+: >"$install_b_log"
+HOME="$INSTALL_B_HOME" INSTALL_B_LOG="$install_b_log" PATH="$INSTALL_B_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-dev-env" ruby >/dev/null
+grep -Fxq 'lunor pkg add libyaml' "$install_b_log" ||
+  fail "lunor Ruby dev environment behavior uses canonical package route"
+grep -Fq 'mise use --global ruby@latest' "$install_b_log" ||
+  fail "lunor Ruby dev environment preserves mise setup"
+pass "lunor dev environment behavior is preserved with mocked dependencies"
+
+make_tmpdir INSTALL_B_CHROMIUM_HOME
+HOME="$INSTALL_B_CHROMIUM_HOME" LUNOR_PATH="$ROOT" "$ROOT/bin/lunor-install-chromium-copy-url"
+copy_manifest="$INSTALL_B_CHROMIUM_HOME/.config/chromium/NativeMessagingHosts/com.omarchy.copy_url.json"
+[[ -f $copy_manifest ]] || fail "lunor copy URL installer writes Chromium native host manifest"
+grep -Fq "$ROOT/bin/omarchy-chromium-copy-url-host" "$copy_manifest" ||
+  fail "lunor copy URL manifest points at packaged compatible host"
+
+HOME="$INSTALL_B_CHROMIUM_HOME" LUNOR_PATH="$ROOT" "$ROOT/bin/lunor-install-chromium-ytdlp"
+ytdlp_manifest="$INSTALL_B_CHROMIUM_HOME/.config/chromium/NativeMessagingHosts/com.omarchy.ytdlp.json"
+[[ -f $ytdlp_manifest ]] || fail "lunor yt-dlp installer writes Chromium native host manifest"
+grep -Fq "$ROOT/bin/omarchy-chromium-ytdlp-host" "$ytdlp_manifest" ||
+  fail "lunor yt-dlp manifest points at packaged compatible host"
+pass "lunor Chromium native messaging installers preserve extension compatibility"
+
+mkdir -p "$INSTALL_B_CHROMIUM_HOME/.config"
+: >"$INSTALL_B_CHROMIUM_HOME/.config/chromium-flags.conf"
+HOME="$INSTALL_B_CHROMIUM_HOME" "$ROOT/bin/lunor-install-chromium-google-account" >/dev/null
+HOME="$INSTALL_B_CHROMIUM_HOME" "$ROOT/bin/lunor-install-chromium-google-account" >/dev/null
+[[ $(grep -c '^--oauth2-client-id=' "$INSTALL_B_CHROMIUM_HOME/.config/chromium-flags.conf") == "1" ]] ||
+  fail "lunor Chromium Google account installer keeps client ID idempotent"
+[[ $(grep -c '^--oauth2-client-secret=' "$INSTALL_B_CHROMIUM_HOME/.config/chromium-flags.conf") == "1" ]] ||
+  fail "lunor Chromium Google account installer keeps client secret idempotent"
+pass "lunor Chromium Google account installer remains idempotent"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
