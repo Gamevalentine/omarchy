@@ -1,33 +1,38 @@
 # Security
 
-Omarchy takes security extremely seriously. This is meant to be an operating system that you can use to do _Real Work_ in the _Real World_. Where losing a laptop can't lead to a security emergency. So here's what we do:
+LUNOR OS currently inherits most of its security architecture from upstream Omarchy and Arch Linux. The branding work in this branch does not replace those underlying security mechanisms.
 
-1. *Full-disk encryption is mandatory*: This is the most important step to securing the physical protection of your data. If your computer is lost or stolen, the data is fully encrypted using standard LUKS (Linux Unified Key Setup).
-2. *Firewall is enabled by default*: All incoming traffic is blocked by default except for port 53317 for [LocalSend](https://localsend.org/). Even ssh is off until you turn it on via _Setup > Security > SSHD_, which opens port 22 (rate limited against brute force) as part of the setup. We even lock down Docker access using the [ufw-docker](https://github.com/chaifeng/ufw-docker) setup to prevent that your containers are accidentally exposed to the world.
-3. *Arch always have the latest updates*: Arch, the underlying distro that Omarchy is built on, is a rolling distribution. This means that any security vulnerability that's discovered and patched in any package is quickly available for install using `omarchy-update`. You're always running the latest, most secure versions of everything that way.
-4. *Omarchy maintains its own packages and mirror*: Omarchy only relies on packages from Arch's own core/extra/multilib repositories and its own Omarchy Package Repository by default. You can install software directly from AUR, but the base install doesn't — only a few optional installs, like the third-party browsers, pull from the AUR.
-5. *Cloudflare protects us from DDoS*: All the Omarchy distribution infrastructure — the ISOs, the Omarchy packages, the Arch mirror — is protected behind Cloudflare's formidable DDoS shield and hosted on their CDN. This provides superb availability.
+## Current security model
 
-## Changing your passwords
+1. **Full-disk encryption** can protect data at rest using LUKS on encrypted installations.
+2. **Firewall rules** are inherited from the upstream system configuration. Incoming services such as SSH remain opt-in.
+3. **Arch Linux packages** provide the underlying rolling package base.
+4. **Security-related setup tools** such as fingerprint, FIDO2, SSH, and temporary passwordless sudo keep their inherited technical command names for compatibility.
 
-You have two passwords on an encrypted install: the one that unlocks the drive at boot, and the one you log in and `sudo` with. Both can be changed under _Update > Password_ in the Omarchy menu — _Drive Encryption_ for the first, _User_ for the second. Changing the drive password asks for the current one first, so have it handy.
+## Update caveat for this development build
 
-## Passing on a machine you've already used
+The upstream Omarchy updater and package channels are intentionally disconnected from LUNOR OS.
 
-If you're handing your machine over to someone else, you don't have to reinstall it. Run _Setup > Reset Computer_ in the Omarchy menu, type `reset` to confirm, and reboot. That wipes every user account and everything in `/home`, throws away all the packages and system changes you made since installation, and clears the machine's identity — network connections, host keys, and all. What comes back up is the setup wizard from the first boot, ready for its new owner to enter their own name, password, and encryption password.
+That prevents an upstream distro update from replacing LUNOR-specific branding, but it also means this development branch does not yet have a first-party LUNOR OS security-update channel. Development machines therefore require deliberate package maintenance until a LUNOR-owned updater exists.
 
-It works by restoring the baseline snapshot the installer takes, so it's only available on machines installed from the Omarchy ISO. And on a drive without encryption, a reset is deletion rather than a secure erase, so if the data was sensitive, do a fresh install instead.
+See [Updates](30-updates.md) for the current development policy.
+
+## Changing passwords
+
+On an encrypted install, the drive-unlock password and the user/sudo password are separate. They can still be managed from _Update > Password_ using the inherited system tools.
+
+## Passing on a machine
+
+_Setup > Reset Computer_ retains the inherited factory-reset workflow on supported Btrfs installations. Treat deletion on an unencrypted drive as deletion rather than guaranteed secure erasure.
 
 ## Passwordless sudo
 
-Sometimes you want `sudo` to stop asking, most often when an AI agent is doing a long stretch of system work for you. _Setup > Security > Passwordless Sudo_ turns that off for 15 wall-clock minutes and then puts it back automatically, including immediately after resuming from a suspend that crossed the deadline. A package-owned boot-time cleanup rule removes the grant before logins if the computer restarts first. Run the command again before the timer runs out to end it early, and pass your own number of minutes (from 1 to 1440) with `omarchy-sudo-passwordless 30` if 15 isn't enough.
+The temporary passwordless-sudo feature remains powerful by design. While enabled, processes running as your user may be able to perform privileged actions without an additional password prompt. Use it only when you understand that risk.
 
-Updating or removing Omarchy's settings package ends any temporary grant before its expiry support changes. If the command reports an authorization or cleanup error, resolve it before trying to enable another grant; an error does not mean passwordless access is inactive.
+## Signing keys and infrastructure
 
-Be clear-eyed about this one: while it's on, anything running as your user can do anything as root without being asked. That's the whole point, and it's also the whole risk.
+LUNOR OS does **not** currently publish an independent ISO signing key, package-signing key, package repository, mirror network, or CDN.
 
-## Signing Keys
+Keys, signatures, package repositories, ISO URLs, security contacts, and infrastructure under `omarchy.org` authenticate or support **upstream Omarchy**, not LUNOR OS. They must not be represented as LUNOR-owned infrastructure.
 
-The public key for all ISO signatures and Omarchy repo package is `40DFB630FF42BCFFB047046CF0134EE680CAC571` ([verify at openpgp.org](https://keys.openpgp.org/search?q=pkgs%40omarchy.org)). The `omarchy/omarchy-keyring` package contains this as well and will be used to rollout any potential updates seamlessly.
-
-You can find the signature for any ISO release by adding .sig to the URL. Like https://iso.omarchy.org/omarchy-x.x.x.iso.sig.
+A public LUNOR OS release should define its own signing and distribution process before release artifacts are distributed.
