@@ -34,16 +34,23 @@ screenshot() {
 
 screen_contains() {
   local text="$1"
-  local snapshot="/tmp/omarchy-acceptance-ocr-$$.png"
+  local snapshot="/tmp/omarchy-acceptance-ocr-$.png"
+  local status=1
 
-  # Capture at 2x scale: tesseract routinely drops small caption text at
-  # native resolution (the weather panel's detail labels, for one).
+  # Capture at 2x scale: small shell text can be missed at native resolution.
+  # Sparse-text OCR works best for panels, while block OCR is a useful fallback
+  # for compact notifications and other tightly grouped text.
   if ! timeout 10 grim -s 2 "$snapshot" 2>/dev/null; then
     rm -f "$snapshot"
     return 1
   fi
-  tesseract "$snapshot" stdout --psm 11 2>/dev/null | grep -Fi -- "$text" >/dev/null
-  local status=$?
+
+  if tesseract "$snapshot" stdout --psm 11 2>/dev/null | grep -Fi -- "$text" >/dev/null; then
+    status=0
+  elif tesseract "$snapshot" stdout --psm 6 2>/dev/null | grep -Fi -- "$text" >/dev/null; then
+    status=0
+  fi
+
   rm -f "$snapshot"
   return $status
 }
