@@ -49,3 +49,5 @@ jobs:
           ./test/cli
 
 # rerun after fallback assertion update
+
+# rerun after package test argument fix
