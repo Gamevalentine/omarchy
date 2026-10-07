@@ -1513,6 +1513,146 @@ grep -Fq 'lunor show done' "$ROOT/bin/lunor-pkg-remove" ||
   fail "lunor interactive package remover uses canonical completion helper"
 pass "lunor interactive package commands use canonical dependencies"
 
+install_stage_a_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-install-and-launch"
+       or .binary == "lunor-install-app"
+       or .binary == "lunor-install-editor-zed"
+       or .binary == "lunor-install-terminal"
+       or .binary == "lunor-install-service-1password"
+       or .binary == "lunor-install-service-microsoft"
+       or .binary == "lunor-install-service-signal"
+       or .binary == "lunor-install-service-spotify"
+     )]
+  | length
+')
+[[ $install_stage_a_count == "8" ]] || fail "lunor exposes all install stage A commands"
+pass "lunor install stage A routes prefer canonical binaries"
+
+output=$("$LUNOR" install app --help)
+assert_output_contains "lunor install app help is canonical" "$output" "lunor install app <display-name> <packages>"
+
+output=$("$LUNOR" install and launch --help)
+assert_output_contains "lunor install-and-launch help is canonical" "$output" "lunor install and launch <display-name> <packages> <desktop-id>"
+
+output=$("$LUNOR" install terminal --help)
+assert_output_contains "lunor terminal installer help is canonical" "$output" "lunor install terminal <alacritty|foot|ghostty|kitty>"
+
+output=$("$LUNOR" cmd missing --help)
+assert_output_contains "lunor command-missing helper is routed" "$output" "Check whether any required commands are missing"
+
+output=$("$LUNOR" webapp install --help)
+assert_output_contains "lunor webapp installer helper is routed" "$output" "lunor webapp install [name url icon-url-or-name [custom-exec] [mime-types]]"
+
+"$ROOT/bin/lunor-cmd-missing" bash && fail "lunor cmd missing reports bash as missing"
+"$ROOT/bin/lunor-cmd-missing" lunor-command-that-does-not-exist ||
+  fail "lunor cmd missing detects an absent command"
+pass "lunor command-missing helper preserves behavior"
+
+make_tmpdir INSTALL_A_BIN
+install_a_log="$INSTALL_A_BIN/install.log"
+: >"$install_a_log"
+
+cat >"$INSTALL_A_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf 'lunor %s\n' "$*" >>"$INSTALL_A_LOG"
+case "$*" in
+  "cmd missing chromium") exit 0 ;;
+esac
+exit 0
+EOF
+
+cat >"$INSTALL_A_BIN/setsid" <<'EOF'
+#!/bin/bash
+printf 'setsid %s\n' "$*" >>"$INSTALL_A_LOG"
+exit 0
+EOF
+
+cat >"$INSTALL_A_BIN/omazed" <<'EOF'
+#!/bin/bash
+printf 'omazed %s\n' "$*" >>"$INSTALL_A_LOG"
+exit 0
+EOF
+
+cat >"$INSTALL_A_BIN/gtk-update-icon-cache" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+
+chmod +x "$INSTALL_A_BIN/"{lunor,setsid,omazed,gtk-update-icon-cache}
+
+INSTALL_A_LOG="$install_a_log" PATH="$INSTALL_A_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-app" "Demo App" "demo-one demo-two"
+grep -Fq 'launch floating terminal with presentation' "$install_a_log" ||
+  fail "lunor install app uses canonical presentation launcher"
+grep -Fq 'lunor pkg add demo-one demo-two' "$install_a_log" ||
+  fail "lunor install app builds canonical package command"
+
+: >"$install_a_log"
+INSTALL_A_LOG="$install_a_log" PATH="$INSTALL_A_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-and-launch" "Demo App" "demo-one demo-two" "demo.desktop"
+grep -Fq 'launch floating terminal with presentation' "$install_a_log" ||
+  fail "lunor install-and-launch uses canonical presentation launcher"
+grep -Fq 'lunor pkg add demo-one demo-two' "$install_a_log" ||
+  fail "lunor install-and-launch builds canonical package command"
+grep -Fq 'gtk-launch demo.desktop' "$install_a_log" ||
+  fail "lunor install-and-launch preserves desktop launch handoff"
+pass "lunor generic installers use canonical package and launch dependencies"
+
+: >"$install_a_log"
+INSTALL_A_LOG="$install_a_log" PATH="$INSTALL_A_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-service-1password"
+grep -Fxq 'lunor pkg add 1password 1password-cli' "$install_a_log" ||
+  fail "lunor 1Password installer uses canonical package route"
+grep -Fxq 'lunor cmd missing chromium' "$install_a_log" ||
+  fail "lunor 1Password installer uses canonical command presence helper"
+
+: >"$install_a_log"
+INSTALL_A_LOG="$install_a_log" PATH="$INSTALL_A_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-service-signal"
+grep -Fxq 'lunor pkg add signal-desktop' "$install_a_log" ||
+  fail "lunor Signal installer uses canonical package route"
+
+: >"$install_a_log"
+INSTALL_A_LOG="$install_a_log" PATH="$INSTALL_A_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-service-spotify"
+grep -Fxq 'lunor pkg add spotify' "$install_a_log" ||
+  fail "lunor Spotify installer uses canonical package route"
+pass "lunor simple service installers use canonical package dependencies"
+
+: >"$install_a_log"
+INSTALL_A_LOG="$install_a_log" PATH="$INSTALL_A_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-service-microsoft" >/dev/null
+[[ $(grep -c '^lunor webapp install Microsoft ' "$install_a_log") == "6" ]] ||
+  fail "lunor Microsoft installer creates all six apps through canonical webapp helper"
+pass "lunor Microsoft service installer uses canonical webapp route"
+
+make_tmpdir WEBAPP_HOME
+webapp_icon="$WEBAPP_HOME/icon.png"
+printf 'icon\n' >"$webapp_icon"
+HOME="$WEBAPP_HOME" PATH="$INSTALL_A_BIN:$PATH" \
+  "$ROOT/bin/lunor-webapp-install" "Demo Web" "https://example.com" "$webapp_icon"
+webapp_desktop="$WEBAPP_HOME/.local/share/applications/Demo Web.desktop"
+[[ -f $webapp_desktop ]] || fail "lunor webapp installer creates desktop entry"
+grep -Fq 'Exec=lunor launch webapp' "$webapp_desktop" ||
+  fail "lunor webapp desktop entry launches through canonical LUNOR route"
+grep -Fq 'https://example.com' "$webapp_desktop" ||
+  fail "lunor webapp desktop entry preserves target URL"
+pass "lunor webapp installer writes canonical desktop launchers"
+
+terminal_error=$(LUNOR_PATH="$ROOT" "$ROOT/bin/lunor-install-terminal" invalid 2>&1 || true)
+[[ $terminal_error == *"Unknown terminal: invalid"* ]] ||
+  fail "lunor terminal installer preserves validation"
+grep -Fq 'lunor pkg add $package' "$ROOT/bin/lunor-install-terminal" ||
+  fail "lunor terminal installer uses canonical package route"
+grep -Fq '$LUNOR_PATH/config/$package' "$ROOT/bin/lunor-install-terminal" ||
+  fail "lunor terminal installer uses LUNOR_PATH for packaged config"
+
+grep -Fq 'lunor pkg add zed omazed' "$ROOT/bin/lunor-install-editor-zed" ||
+  fail "lunor Zed installer uses canonical package route"
+pass "lunor terminal and Zed installers use canonical roots and package routing"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
