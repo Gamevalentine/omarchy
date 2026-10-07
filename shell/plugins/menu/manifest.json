@@ -3,7 +3,7 @@
   "id": "omarchy.menu",
   "name": "LUNOR OS menu",
   "version": "1.0.0",
-  "author": "Omarchy",
+  "author": "Upstream Omarchy",
   "description": "Quickshell-powered LUNOR OS command menu",
   "kinds": [
     "menu",

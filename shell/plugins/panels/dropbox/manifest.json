@@ -3,7 +3,7 @@
   "id": "omarchy.dropbox",
   "name": "Dropbox",
   "version": "1.0.0",
-  "author": "Omarchy",
+  "author": "Upstream Omarchy",
   "license": "MIT",
   "description": "Dropbox status, storage usage, login, and recent synced files in the LUNOR OS bar.",
   "kinds": [

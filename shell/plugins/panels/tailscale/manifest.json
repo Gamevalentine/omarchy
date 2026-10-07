@@ -3,7 +3,7 @@
   "id": "omarchy.tailscale",
   "name": "Tailscale",
   "version": "1.0.0",
-  "author": "Omarchy",
+  "author": "Upstream Omarchy",
   "license": "MIT",
   "description": "Tailscale status, connection switching, machine browsing, and quick copy actions in the LUNOR OS bar.",
   "kinds": [
