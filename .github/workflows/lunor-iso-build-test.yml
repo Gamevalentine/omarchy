@@ -122,7 +122,7 @@ jobs:
 
           # The interactive test harness must wait for the LUNOR-branded greeter.
           p = iso / "bin/omarchy-iso-test"
-          s = p.read_text().replace("Linux by DHH", "Welcome to LUNOR OS")
+          s = p.read_text().replace("Linux by DHH", "Start Setup")
           p.write_text(s)
           PY
 
@@ -159,17 +159,32 @@ jobs:
               ./bin/omarchy-iso-test release/*.iso                 --sync-omarchy /w/lunor-source                 --no-preview --memory 8192 --timeout 2400
             '
 
-      - name: Validate installed LUNOR identity
-        if: success()
+      - name: Collect and inspect VM diagnostics
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
-          base=$(find lunor-iso/test-runs -mindepth 1 -maxdepth 1 -type d | head -1)
-          test -n "$base"
-          echo "VM acceptance artifacts: $base"
-          # The acceptance harness already proves successful install, SDDM login,
-          # Hyprland session, menu/shortcuts, lock-related runtime and applications.
-          find "$base" -type f -name 'success-*.png' | sort | sed -n '1,80p'
+          if [ -d lunor-iso/test-runs ]; then
+            sudo chown -R "$(id -u):$(id -g)" lunor-iso/test-runs
+          fi
+
+          echo "=== VM serial tail ==="
+          find lunor-iso/test-runs -type f -name '*serial.log' -print -exec tail -n 120 {} \; 2>/dev/null || true
+
+          echo "=== Failure screenshot OCR ==="
+          shot=$(find lunor-iso/test-runs -type f -name 'failure-*.png' | sort | tail -1 || true)
+          if [ -n "$shot" ]; then
+            docker run --rm -v "$PWD:/w" -w /w archlinux:latest bash -euo pipefail -c '
+              pacman -Sy --noconfirm --needed tesseract tesseract-data-eng >/dev/null
+              tesseract "$1" stdout --psm 6 2>/dev/null || true
+            ' _ "/w/$shot"
+          fi
+
+          echo "=== Successful visual checkpoints ==="
+          find lunor-iso/test-runs -type f -name 'success-*.png' | sort | sed -n '1,120p' || true
+
+          identity=$(find lunor-iso/test-runs -type f -name 'lunor-identity.txt' | head -1 || true)
+          [ -z "$identity" ] || cat "$identity"
 
       - name: Upload LUNOR ISO
         if: success()
