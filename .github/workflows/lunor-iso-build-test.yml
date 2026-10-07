@@ -6,6 +6,7 @@ on:
       - lunor/1.0-clean-branding
     paths:
       - .github/workflows/lunor-iso-build-test.yml
+      - test/**
   workflow_dispatch:
 
 permissions:
@@ -129,9 +130,17 @@ jobs:
               raise SystemExit("Upstream archinstall sanity_check call changed; review compatibility patch")
           p.write_text(s.replace(needle, "", 1))
 
-          # The interactive test harness must tolerate OCR reading OS as 0S.
+          # Keep the interactive VM harness compatible with the current shell.
+          # OverlayWindow surfaces remain mapped when hidden, so shortcut tests
+          # must check whether a surface is on the overlay layer, not whether
+          # the namespace still exists anywhere in Hyprland's layer tree.
           p = iso / "bin/omarchy-iso-test"
           s = p.read_text().replace("Linux by DHH", "LUNOR .S")
+          layer_needle = r"[.. | objects | select(.namespace? == \$namespace)] | length > 0"
+          layer_replacement = r'[.[].levels["3"][]? | select(.namespace? == \$namespace)] | length > 0'
+          if layer_needle not in s:
+              raise SystemExit("Upstream shortcut layer check changed; review VM harness compatibility patch")
+          s = s.replace(layer_needle, layer_replacement, 1)
           p.write_text(s)
           PY
 
