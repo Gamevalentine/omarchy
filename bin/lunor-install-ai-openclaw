@@ -15,7 +15,7 @@ lunor install openclaw cli --now
 echo "Installing the OpenClaw web app..."
 lunor webapp install OpenClaw "http://127.0.0.1:18789" \
   /usr/share/openclaw/openclaw.png \
-  lunor launch openclaw
+  "lunor launch openclaw"
 
 # A first install runs onboarding right here: launching the app instead would
 # open a second floating terminal for the wizard, identical to this one.
