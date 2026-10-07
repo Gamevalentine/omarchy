@@ -1426,7 +1426,7 @@ cat >"$PKG_TEST_BIN/pacman" <<'EOF'
 printf 'pacman %s\n' "$*" >>"$PKG_TEST_LOG"
 case "$1" in
   -Q)
-    pkg="\${3:-\${2:-}}"
+    pkg="${3:-${2:-}}"
     grep -Fxq "$pkg" "$PKG_TEST_STATE"
     ;;
   -Qq)
