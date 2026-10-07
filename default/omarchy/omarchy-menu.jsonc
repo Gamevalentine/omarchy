@@ -1,5 +1,5 @@
 {
-  // Omarchy menu definition.
+  // LUNOR OS menu definition.
   // JSONC is used for Neovim-friendly highlighting, comments, and trailing commas.
   // IDs are object keys. Dotted IDs imply hierarchy: trigger.share.file belongs
   // under trigger.share.
@@ -357,7 +357,7 @@
 
   // Update
   "update.omarchy": {"icon":"L","label":"LUNOR OS","action":"omarchy-launch-floating-terminal-with-presentation omarchy-update"},
-  "update.channel": {"icon":"󰔫","label":"Channel"},
+  "update.channel": {"icon":"󰔫","label":"Channel","when":"false"},
   "update.config": {"icon":"","label":"Config","title":"Reset to default"},
   "update.themes": {"icon":"󰸌","label":"Extra Themes","when":"omarchy-theme-extras","action":"omarchy-launch-floating-terminal-with-presentation omarchy-theme-update"},
   "update.process": {"icon":"","label":"Process","title":"Restart"},
