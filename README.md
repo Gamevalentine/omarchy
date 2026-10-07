@@ -1,14 +1,16 @@
-# Omarchy
+# LUNOR OS
 
-Omarchy is a beautiful, fun & agentic Linux distribution by DHH.
+LUNOR OS is a branded development build based on the upstream [Omarchy](https://omarchy.org/) Linux distribution.
 
-Read more at [omarchy.org](https://omarchy.org).
+The user-facing product identity in this branch is **LUNOR OS**. Internal compatibility names such as `omarchy-*`, `OMARCHY_PATH`, package names, service IDs, and plugin IDs are intentionally retained where changing them would add risk without changing what the user sees.
 
-## The Omarchy Manual
+Upstream Omarchy remains the source of the underlying system and should be credited as such.
+
+## Manual
 
 The manual lives in [`manual/`](manual/), which is its authoritative source.
 
-- [Welcome to Omarchy!](manual/01-welcome-to-omarchy.md)
+- [Welcome to LUNOR OS!](manual/01-welcome-to-omarchy.md)
 
 **The Basics**
 
@@ -24,7 +26,7 @@ The manual lives in [`manual/`](manual/), which is its authoritative source.
 - [Text Extraction & Dictation](manual/11-text-extraction-dictation.md)
 - [Screenshots & Recording](manual/12-screenshots-recording.md)
 - [Toggles, idle & screensaver](manual/13-toggles-idle-screensaver.md)
-- [Omarchy CLI](manual/14-omarchy-cli.md)
+- [Compatibility CLI (`omarchy`)](manual/14-omarchy-cli.md)
 
 **The Applications**
 
@@ -68,10 +70,10 @@ The manual lives in [`manual/`](manual/), which is its authoritative source.
 - [FAQ](manual/46-faq.md)
 - [System snapshots](manual/47-system-snapshots.md)
 - [Security](manual/48-security.md)
-- [Omarchy on...](manual/49-omarchy-on.md)
+- [Upstream compatibility notes](manual/49-omarchy-on.md)
 - [Dual Boot Install](manual/50-dual-boot-install.md)
 - [Unattended Installs](manual/51-unattended-installs.md)
 
 ## License
 
-Omarchy is released under the [MIT License](https://opensource.org/licenses/MIT).
+This project retains the upstream MIT licensing terms. LUNOR OS branding changes do not remove upstream attribution or licensing obligations.
