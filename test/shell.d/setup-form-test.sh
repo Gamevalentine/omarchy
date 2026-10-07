@@ -194,6 +194,9 @@ pass "identity prompt propagates Esc from its second field"
 
 # Hostname
 
+[[ "$OMARCHY_HOSTNAME_DEFAULT" == "lunor" ]] || fail "default hostname is LUNOR-branded"
+pass "default hostname is LUNOR-branded"
+
 run_prompt omarchy_prompt_hostname "0:-nope-" "0:workshop"
 assert_status 0 "hostname prompt accepts a valid hostname"
 [[ $(field hostname) == "workshop" ]] || fail "hostname prompt keeps re-asking until the hostname is valid"
