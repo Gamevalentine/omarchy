@@ -1,0 +1,110 @@
+name: LUNOR final QA audit
+
+on:
+  push:
+    branches:
+      - lunor/1.0-clean-branding
+    paths:
+      - .github/workflows/lunor-final-qa.yml
+
+jobs:
+  qa:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Static boot and desktop branding checks
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          grep -Fq 'interface_branding: LUNOR OS Bootloader' default/limine/limine.conf
+          grep -Fq 'TARGET_OS_NAME="LUNOR OS"' etc/limine-entry-tool.d/omarchy-defaults.conf
+          grep -Fq 'Name=LUNOR OS' default/plymouth/omarchy.plymouth
+          grep -Fq 'Name=LUNOR OS' default/sddm/omarchy/metadata.desktop
+          grep -Fq 'Author=LUNOR OS' default/sddm/omarchy/metadata.desktop
+          grep -Fq 'Name=LUNOR OS (Hyprland uwsm)' default/wayland-sessions/omarchy.desktop
+          grep -Fq 'echo \"LUNOR OS $version\"' etc/fastfetch/config.jsonc
+          grep -Fq 'Super + Space for LUNOR OS Menu.' install/user/first-run/welcome.sh
+          grep -Fq 'Welcome to LUNOR OS' bin/omarchy-provision-owner
+          grep -Fq "OMARCHY_HOSTNAME_DEFAULT='lunor'" install/provisioning/setup-form.sh
+          grep -Fq 'tooltipText: "LUNOR OS Menu"' shell/plugins/menu/BarWidget.qml
+          grep -Fq '"name": "LUNOR OS menu"' shell/plugins/menu/manifest.json
+          grep -Fq '"label":"LUNOR OS"' default/omarchy/omarchy-menu.jsonc
+
+      - name: Wallpaper and theme checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find themes -type f -path '*/backgrounds/*' | grep -Eiq '(^|/)([^/]*(omarchy|oma[-_.])[^/]*)$'; then
+            echo "Found legacy-branded wallpaper filenames:" >&2
+            find themes -type f -path '*/backgrounds/*' | grep -Ei '(^|/)([^/]*(omarchy|oma[-_.])[^/]*)$' >&2
+            exit 1
+          fi
+          test -f themes/tokyo-night/backgrounds/0-lunor-winding-road.webp
+          while IFS= read -r theme; do
+            find "$theme/backgrounds" -maxdepth 1 -type f | grep -q .
+          done < <(find themes -mindepth 1 -maxdepth 1 -type d | sort)
+
+      - name: Installer and update safety checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n install/provisioning/setup-form.sh
+          bash -n bin/omarchy-provision-owner
+          bash -n bin/omarchy-provision-first-run
+          bash -n bin/omarchy-provision-user
+          bash -n bin/omarchy-update
+          bash -n bin/omarchy-update-available
+          bash -n bin/omarchy-channel-set
+          bash -n bin/omarchy-channel-current
+          bash -n bin/omarchy-version-channel
+          bash -n bin/omarchy-update-pacman-guard
+          bash test/shell.d/setup-form-test.sh
+
+          set +e
+          bin/omarchy-update >/tmp/lunor-update.out 2>&1
+          update_status=$?
+          bin/omarchy-update-available >/tmp/lunor-update-available.out 2>&1
+          available_status=$?
+          bin/omarchy-channel-set stable >/tmp/lunor-channel.out 2>&1
+          channel_status=$?
+          set -e
+          [[ $update_status -eq 2 ]]
+          [[ $available_status -eq 1 ]]
+          [[ $channel_status -eq 2 ]]
+          [[ $(bin/omarchy-channel-current) == development ]]
+          [[ $(bin/omarchy-version-channel) == development ]]
+
+          for conf in default/pacman/pacman-{stable,rc,edge}.conf; do
+            ! grep -Eq '^\[omarchy\]$|pkgs\.omarchy\.org' "$conf"
+          done
+          for mirror in default/pacman/mirrorlist-{stable,rc,edge}; do
+            grep -Fq 'https://geo.mirror.pkgbuild.com/$repo/os/$arch' "$mirror"
+            ! grep -Fq 'omarchy.org' "$mirror"
+          done
+
+      - name: Report remaining visible-brand candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo '=== Capitalized Omarchy / upstream URLs in user-facing areas ==='
+            git grep -n -I -E 'Omarchy|omarchy\.org|pkgs\.omarchy\.org|mirror\.omarchy\.org|iso\.omarchy\.org|security@omarchy\.org' --               README.md .github/SECURITY.md manual default/omarchy default/wayland-sessions               install/provisioning install/user/first-run shell/plugins               bin/omarchy-update bin/omarchy-update-available bin/omarchy-channel-set               default/pacman 2>/dev/null || true
+          } | tee /tmp/lunor-visible-brand-audit.txt
+
+          echo
+          echo '=== Candidate count ==='
+          grep -Ec '^[^=].*:[0-9]+:' /tmp/lunor-visible-brand-audit.txt || true
+
+      - name: Validate documentation intent
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq '# LUNOR OS' README.md
+          grep -Fq 'based on the upstream [Omarchy]' README.md
+          grep -Fq '# Welcome to LUNOR OS!' manual/01-welcome-to-omarchy.md
+          grep -Fq 'does **not** use the upstream Omarchy update service' manual/30-updates.md
+          grep -Fq 'does **not** currently publish an independent ISO signing key' manual/48-security.md
+          grep -Fq '"label":"Upstream Manual"' default/omarchy/omarchy-menu.jsonc
+          grep -Fq '"label":"Upstream Community"' default/omarchy/omarchy-menu.jsonc
