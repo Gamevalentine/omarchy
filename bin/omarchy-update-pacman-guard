@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# omarchy:summary=Prevent direct pacman system upgrades from bypassing omarchy update.
+# omarchy:summary=Guard direct pacman system upgrades on LUNOR OS development builds.
 # omarchy:hidden=true
 
 set -euo pipefail
@@ -45,17 +45,13 @@ fi
 
 cat >&2 <<'MESSAGE'
 
-Woah partner...
+LUNOR OS development update guard
 
-This looks like a direct pacman system upgrade. Omarchy updates should normally
-run through:
+The integrated LUNOR OS updater is not available yet, so direct system upgrades
+are blocked by default to avoid replacing this development build unexpectedly.
 
-  omarchy update
-
-That path handles the update transcript, snapshot, keyrings, package upgrade,
-migrations, post-update hooks, shell update state, and restart checks together.
-
-If you really meant to bypass Omarchy for this transaction, rerun pacman with:
+If you are maintaining a development machine and intentionally want an Arch
+system upgrade, rerun pacman explicitly with:
 
   sudo env OMARCHY_ALLOW_DIRECT_PACMAN=1 pacman -Syu
 
