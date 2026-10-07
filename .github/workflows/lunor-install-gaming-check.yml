@@ -47,3 +47,5 @@ jobs:
 
           ./bin/lunor commands --check
           ./test/cli
+
+# rerun after RetroArch assertion fix
