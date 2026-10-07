@@ -1,0 +1,53 @@
+name: LUNOR install stage B check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-install-stage-b-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate install stage B migration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          scripts=(
+            bin/lunor-install-browser
+            bin/lunor-install-chromium-claude
+            bin/lunor-install-chromium-copy-url
+            bin/lunor-install-chromium-google-account
+            bin/lunor-install-chromium-ytdlp
+            bin/lunor-install-dev-env
+            bin/lunor-install-editor-emacs
+            bin/lunor-install-editor-helix
+            bin/lunor-install-editor-vscode
+          )
+
+          for script in "${scripts[@]}"; do
+            test -x "$script"
+            bash -n "$script"
+          done
+
+          if grep -Fq 'OMARCHY_PATH' "${scripts[@]}"; then
+            echo "Install stage B canonical scripts still depend on OMARCHY_PATH" >&2
+            exit 1
+          fi
+
+          grep -Fq 'lunor pkg add chromium' bin/lunor-install-browser
+          grep -Fq 'lunor pkg aur add google-chrome' bin/lunor-install-browser
+          grep -Fq 'lunor install chromium copy url' bin/lunor-install-browser
+          grep -Fq 'lunor install chromium ytdlp' bin/lunor-install-browser
+          grep -Fq 'lunor pkg add libyaml' bin/lunor-install-dev-env
+          grep -Fq 'lunor pkg add helix' bin/lunor-install-editor-helix
+          grep -Fq 'lunor pkg add visual-studio-code-bin' bin/lunor-install-editor-vscode
+
+          bash -n test/cli
+          ./bin/lunor commands --check
+          ./test/cli
