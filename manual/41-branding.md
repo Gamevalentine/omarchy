@@ -2,6 +2,8 @@
 
 LUNOR OS allows you to customize the logo or image used for boot unlock, the screensaver, and the About screen.
 
+> Internal paths such as `~/.config/omarchy/...` and commands such as `omarchy ...` are compatibility interfaces inherited from the upstream system. Their names are intentionally retained even though the user-facing product is LUNOR OS.
+
 ### Boot unlock
 
 You can use `omarchy plymouth preview` to see what your custom logo and colors would look like. It takes a background color, a text color, a logo png, and a path for the preview image:
