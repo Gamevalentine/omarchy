@@ -1818,6 +1818,151 @@ HOME="$INSTALL_B_CHROMIUM_HOME" "$ROOT/bin/lunor-install-chromium-google-account
   fail "lunor Chromium Google account installer keeps client secret idempotent"
 pass "lunor Chromium Google account installer remains idempotent"
 
+install_stage_ai_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[]
+   | select(
+       .binary == "lunor-install-ai-chatgpt"
+       or .binary == "lunor-install-ai-claude"
+       or .binary == "lunor-install-ai-hermes"
+       or .binary == "lunor-install-ai-openclaw"
+       or .binary == "lunor-install-ai-t3-code"
+       or .binary == "lunor-install-hermes-cli"
+       or .binary == "lunor-install-openclaw-cli"
+     )]
+  | length
+')
+[[ $install_stage_ai_count == "7" ]] || fail "lunor exposes all install AI-stage commands"
+pass "lunor install AI-stage routes prefer canonical binaries"
+
+output=$("$LUNOR" install ai chatgpt --help)
+assert_output_contains "lunor ChatGPT installer help is canonical" "$output" "lunor install ai chatgpt"
+
+output=$("$LUNOR" install ai openclaw --help)
+assert_output_contains "lunor OpenClaw installer help is canonical" "$output" "lunor install ai openclaw"
+
+output=$("$LUNOR" install hermes cli --help)
+assert_output_contains "lunor Hermes CLI installer help is canonical" "$output" "lunor install hermes cli <--check|--now|--retire-mise>"
+
+output=$("$LUNOR" install openclaw cli --help)
+assert_output_contains "lunor OpenClaw CLI installer help is canonical" "$output" "lunor install openclaw cli <--check|--now>"
+
+install_stage_ai_scripts=(
+  "$ROOT/bin/lunor-install-ai-chatgpt"
+  "$ROOT/bin/lunor-install-ai-claude"
+  "$ROOT/bin/lunor-install-ai-hermes"
+  "$ROOT/bin/lunor-install-ai-openclaw"
+  "$ROOT/bin/lunor-install-ai-t3-code"
+  "$ROOT/bin/lunor-install-hermes-cli"
+  "$ROOT/bin/lunor-install-openclaw-cli"
+)
+
+for script in "${install_stage_ai_scripts[@]}"; do
+  [[ -x $script ]] || fail "lunor install AI-stage binary is executable: $script"
+  bash -n "$script"
+done
+pass "lunor install AI-stage scripts are executable and parse cleanly"
+
+grep -Fq 'lunor pkg add openai-codex-desktop' "$ROOT/bin/lunor-install-ai-chatgpt" ||
+  fail "lunor ChatGPT installer uses canonical package route"
+grep -Fq 'lunor pkg add claude-desktop' "$ROOT/bin/lunor-install-ai-claude" ||
+  fail "lunor Claude installer uses canonical package route"
+grep -Fq 'lunor install hermes cli --now' "$ROOT/bin/lunor-install-ai-hermes" ||
+  fail "lunor Hermes app installer uses canonical CLI installer route"
+grep -Fq 'lunor install openclaw cli --now' "$ROOT/bin/lunor-install-ai-openclaw" ||
+  fail "lunor OpenClaw app installer uses canonical CLI installer route"
+grep -Fq 'lunor webapp install OpenClaw' "$ROOT/bin/lunor-install-ai-openclaw" ||
+  fail "lunor OpenClaw app installer uses canonical webapp route"
+grep -Fq '"lunor launch openclaw"' "$ROOT/bin/lunor-install-ai-openclaw" ||
+  fail "lunor OpenClaw webapp preserves the canonical launcher as one argument"
+grep -Fq 'lunor openclaw onboard' "$ROOT/bin/lunor-install-ai-openclaw" ||
+  fail "lunor OpenClaw app installer uses canonical onboarding route"
+grep -Fq 'lunor pkg add t3code-bin' "$ROOT/bin/lunor-install-ai-t3-code" ||
+  fail "lunor T3 Code installer uses canonical package route"
+grep -Fq 'lunor theme refresh' "$ROOT/bin/lunor-install-ai-t3-code" ||
+  fail "lunor T3 Code installer uses canonical theme refresh route"
+grep -Fq 'lunor theme set t3code' "$ROOT/bin/lunor-install-ai-t3-code" ||
+  fail "lunor T3 Code installer uses canonical theme route"
+pass "lunor AI app installers use canonical dependencies"
+
+grep -Fq 'lunor cmd missing mise' "$ROOT/bin/lunor-install-hermes-cli" ||
+  fail "lunor Hermes CLI helper uses canonical command probe"
+grep -Fq 'lunor pkg present hermes-desktop' "$ROOT/bin/lunor-install-hermes-cli" ||
+  fail "lunor Hermes CLI helper uses canonical package presence route"
+grep -Fq 'lunor pkg add hermes-desktop' "$ROOT/bin/lunor-install-hermes-cli" ||
+  fail "lunor Hermes CLI helper uses canonical package install route"
+grep -Fq 'lunor theme set hermes --wait' "$ROOT/bin/lunor-install-hermes-cli" ||
+  fail "lunor Hermes CLI helper uses canonical theme route"
+grep -Fq "legacy_marker='# Written by omarchy-install-hermes-cli.'" "$ROOT/bin/lunor-install-hermes-cli" ||
+  fail "lunor Hermes CLI helper preserves the retired installer ownership marker"
+pass "lunor Hermes CLI migration preserves legacy ownership while using canonical dependencies"
+
+grep -Fq 'lunor pkg present openclaw' "$ROOT/bin/lunor-install-openclaw-cli" ||
+  fail "lunor OpenClaw CLI helper uses canonical package presence route"
+grep -Fq 'lunor pkg add openclaw' "$ROOT/bin/lunor-install-openclaw-cli" ||
+  fail "lunor OpenClaw CLI helper uses canonical package install route"
+pass "lunor OpenClaw CLI migration uses canonical package dependencies"
+
+make_tmpdir INSTALL_AI_BIN
+make_tmpdir INSTALL_AI_HOME
+install_ai_log="$INSTALL_AI_BIN/install.log"
+: >"$install_ai_log"
+
+cat >"$INSTALL_AI_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf 'lunor %s\n' "$*" >>"$INSTALL_AI_LOG"
+exit 0
+EOF
+cat >"$INSTALL_AI_BIN/setsid" <<'EOF'
+#!/bin/bash
+printf 'setsid %s\n' "$*" >>"$INSTALL_AI_LOG"
+exit 0
+EOF
+cat >"$INSTALL_AI_BIN/t3" <<'EOF'
+#!/bin/bash
+printf 't3 %s\n' "$*" >>"$INSTALL_AI_LOG"
+exit 0
+EOF
+chmod +x "$INSTALL_AI_BIN/"{lunor,setsid,t3}
+
+INSTALL_AI_LOG="$install_ai_log" PATH="$INSTALL_AI_BIN:$PATH" "$ROOT/bin/lunor-install-ai-chatgpt" >/dev/null
+grep -Fxq 'lunor pkg add openai-codex-desktop' "$install_ai_log" ||
+  fail "lunor ChatGPT install behavior reaches canonical package route"
+
+: >"$install_ai_log"
+INSTALL_AI_LOG="$install_ai_log" PATH="$INSTALL_AI_BIN:$PATH" "$ROOT/bin/lunor-install-ai-claude" >/dev/null
+grep -Fxq 'lunor pkg add claude-desktop' "$install_ai_log" ||
+  fail "lunor Claude install behavior reaches canonical package route"
+
+: >"$install_ai_log"
+INSTALL_AI_LOG="$install_ai_log" PATH="$INSTALL_AI_BIN:$PATH" "$ROOT/bin/lunor-install-ai-hermes" >/dev/null
+grep -Fxq 'lunor install hermes cli --now' "$install_ai_log" ||
+  fail "lunor Hermes app behavior reaches canonical CLI installer"
+pass "lunor simple AI app installers preserve behavior with mocked dependencies"
+
+mkdir -p "$INSTALL_AI_HOME/.openclaw"
+printf '{}\n' >"$INSTALL_AI_HOME/.openclaw/openclaw.json"
+: >"$install_ai_log"
+HOME="$INSTALL_AI_HOME" INSTALL_AI_LOG="$install_ai_log" PATH="$INSTALL_AI_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-ai-openclaw" >/dev/null
+grep -Fxq 'lunor install openclaw cli --now' "$install_ai_log" ||
+  fail "lunor OpenClaw behavior reaches canonical CLI installer"
+grep -Fq 'lunor webapp install OpenClaw http://127.0.0.1:18789 /usr/share/openclaw/openclaw.png lunor launch openclaw' "$install_ai_log" ||
+  fail "lunor OpenClaw behavior creates web app with canonical launcher"
+pass "lunor OpenClaw app behavior preserves the installed-user path with mocked dependencies"
+
+: >"$install_ai_log"
+HOME="$INSTALL_AI_HOME" INSTALL_AI_LOG="$install_ai_log" PATH="$INSTALL_AI_BIN:$PATH" \
+  "$ROOT/bin/lunor-install-ai-t3-code" >/dev/null
+grep -Fxq 'lunor pkg add t3code-bin' "$install_ai_log" ||
+  fail "lunor T3 Code behavior reaches canonical package route"
+grep -Fxq 'lunor theme refresh' "$install_ai_log" ||
+  fail "lunor T3 Code behavior refreshes missing theme through canonical route"
+grep -Fxq 'lunor theme set t3code' "$install_ai_log" ||
+  fail "lunor T3 Code behavior syncs theme through canonical route"
+grep -Fq 't3 theme set omarchy --base-dir' "$install_ai_log" ||
+  fail "lunor T3 Code behavior preserves the stable published theme id"
+pass "lunor T3 Code install behavior preserves theme compatibility with mocked dependencies"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
