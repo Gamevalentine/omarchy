@@ -25,17 +25,29 @@ verify_core_packages() {
 }
 
 verify_kernel_headers() {
-  local kernel=linux-omarchy
-  local release
+  local expected=linux-omarchy
+  local release running_kernel headers
   release=$(uname -r)
-  omarchy-pkg-present linux-t2 && kernel=linux-t2
+  running_kernel=$(cat "/usr/lib/modules/$release/pkgbase")
+  omarchy-pkg-present linux-t2 && expected=linux-t2
 
-  [[ $(cat "/usr/lib/modules/$release/pkgbase") == "$kernel" ]] ||
-    fail "the installed system boots the supported kernel" "$release is not $kernel"
-  omarchy-pkg-present "$kernel-headers" || fail "kernel headers are installed" "$kernel-headers is missing"
+  if [[ $expected == linux-t2 ]]; then
+    [[ $running_kernel == linux-t2 ]] ||
+      fail "the installed system boots the supported kernel" "$release is $running_kernel, expected linux-t2"
+  else
+    # linux-omarchy is now a compatibility/meta package whose implementation
+    # may be a scheduler-specific kernel such as linux-omarchy-bore.
+    omarchy-pkg-present linux-omarchy ||
+      fail "the installed system boots the supported kernel" "linux-omarchy meta package is missing"
+    [[ $running_kernel == linux-omarchy || $running_kernel == linux-omarchy-* ]] ||
+      fail "the installed system boots the supported kernel" "$release uses unsupported pkgbase $running_kernel"
+  fi
+
+  headers="$running_kernel-headers"
+  omarchy-pkg-present "$headers" || fail "kernel headers are installed" "$headers is missing"
   [[ $(cat "/usr/lib/modules/$release/build/include/config/kernel.release") == "$release" ]] ||
     fail "headers match the running kernel" "$release has missing or mismatched headers"
-  pass "the running $kernel kernel has matching headers ($release)"
+  pass "the running $running_kernel kernel has matching headers ($release)"
 }
 
 verify_defaults() {
