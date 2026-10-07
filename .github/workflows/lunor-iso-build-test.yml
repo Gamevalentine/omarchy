@@ -122,7 +122,7 @@ jobs:
 
           # The interactive test harness must wait for the LUNOR-branded greeter.
           p = iso / "bin/omarchy-iso-test"
-          s = p.read_text().replace("Linux by DHH", "Start Setup")
+          s = p.read_text().replace("Linux by DHH", "LUNOR .S")
           p.write_text(s)
           PY
 
