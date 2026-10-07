@@ -1,0 +1,61 @@
+name: LUNOR install stage A check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-install-stage-a-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate install stage A migration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          scripts=(
+            bin/lunor-cmd-missing
+            bin/lunor-webapp-install
+            bin/lunor-install-and-launch
+            bin/lunor-install-app
+            bin/lunor-install-editor-zed
+            bin/lunor-install-terminal
+            bin/lunor-install-service-1password
+            bin/lunor-install-service-microsoft
+            bin/lunor-install-service-signal
+            bin/lunor-install-service-spotify
+          )
+
+          for script in "${scripts[@]}"; do
+            test -x "$script"
+            bash -n "$script"
+          done
+
+          if grep -Eq 'omarchy-(pkg|cmd-missing|launch-floating-terminal-with-presentation|webapp-install)' \
+            bin/lunor-install-and-launch bin/lunor-install-app bin/lunor-install-editor-zed \
+            bin/lunor-install-terminal bin/lunor-install-service-1password \
+            bin/lunor-install-service-microsoft bin/lunor-install-service-signal \
+            bin/lunor-install-service-spotify bin/lunor-webapp-install; then
+            echo "Install stage A still invokes migrated Omarchy binaries directly" >&2
+            exit 1
+          fi
+
+          if grep -Fq 'OMARCHY_PATH' bin/lunor-install-terminal; then
+            echo "Canonical terminal installer still depends on OMARCHY_PATH" >&2
+            exit 1
+          fi
+
+          grep -Fq 'EXEC_COMMAND="lunor launch webapp' bin/lunor-webapp-install
+          grep -Fq 'lunor pkg add' bin/lunor-install-app bin/lunor-install-and-launch \
+            bin/lunor-install-editor-zed bin/lunor-install-terminal \
+            bin/lunor-install-service-1password bin/lunor-install-service-signal \
+            bin/lunor-install-service-spotify
+
+          bash -n test/cli
+          ./bin/lunor commands --check
+          ./test/cli
