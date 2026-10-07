@@ -1,4 +1,4 @@
-name: LUNOR final QA audit v3
+name: LUNOR final QA audit v4
 
 on:
   push:
@@ -106,6 +106,12 @@ jobs:
           grep -Fq '"system.logout"' default/omarchy/omarchy-menu.jsonc
           grep -Fq '"system.reboot"' default/omarchy/omarchy-menu.jsonc
           grep -Fq '"system.shutdown"' default/omarchy/omarchy-menu.jsonc
+
+      - name: Install focused test dependencies
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.4
 
       - name: Run focused regression tests
         shell: bash
