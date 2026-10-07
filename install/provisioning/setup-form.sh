@@ -1,4 +1,4 @@
-# The setup form: every question Omarchy asks a human to describe their machine
+# The setup form: every question LUNOR OS asks a human to describe their machine
 # — keyboard, account, hostname, timezone — plus the rules those answers are
 # checked against. Shared by the two places that ask them: the ISO
 # configurator's user step and this package's first-boot owner setup
@@ -81,7 +81,7 @@ Ukrainian|ua'
 OMARCHY_USERNAME_PATTERN='^[a-z_][a-z0-9_-]*[$]?$'
 OMARCHY_RESERVED_USERNAMES='^(root|bin|daemon|mail|ftp|http|nobody|dbus|systemd-coredump|systemd-network|systemd-oom|systemd-journal-remote|systemd-resolve|systemd-timesync|tss|uuidd|alpm|git|avahi|cups|cups-browsed|lp|_talkd|polkitd|rtkit|qemu|brltty|gluster|rpc|libvirt-qemu|pcscd|nvidia-persistenced|sddm)$'
 OMARCHY_HOSTNAME_PATTERN='^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$'
-OMARCHY_HOSTNAME_DEFAULT='omarchy'
+OMARCHY_HOSTNAME_DEFAULT='lunor'
 
 # Installer targets are empty, so any account is fair game; first-boot setup
 # overrides this because its machine already has users.
@@ -152,7 +152,7 @@ omarchy_prompt_identity() {
 omarchy_prompt_hostname() {
   local status
   while true; do
-    hostname=$(gum input --placeholder "Letters, digits, and dashes (or return for 'omarchy')" --prompt.foreground="#845DF9" --prompt "Hostname> ") && status=0 || status=$?
+    hostname=$(gum input --placeholder "Letters, digits, and dashes (or return for 'lunor')" --prompt.foreground="#845DF9" --prompt "Hostname> ") && status=0 || status=$?
     ((status == 0)) || return $status
 
     if [[ -z $hostname ]]; then
