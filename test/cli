@@ -1394,6 +1394,125 @@ grep -Fq 'sudo tee /sys/bus/i2c/drivers/i2c_hid_acpi/unbind' "$ROOT/bin/lunor-re
   fail "lunor restart trackpad retains safe privileged hardware reset path"
 pass "lunor sensitive restart routines preserve lock and hardware safeguards"
 
+pkg_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[] | select(.binary | startswith("lunor-pkg-"))] | length
+')
+[[ $pkg_count == "9" ]] || fail "lunor exposes all 9 package management commands"
+pass "lunor package management group is fully migrated"
+
+output=$("$LUNOR" pkg add --help)
+assert_output_contains "lunor pkg add help is canonical" "$output" "lunor pkg add <packages...>"
+
+output=$("$LUNOR" pkg aur add --help)
+assert_output_contains "lunor AUR add help is canonical" "$output" "lunor pkg aur add <packages...>"
+
+output=$("$LUNOR" pkg drop --help)
+assert_output_contains "lunor pkg drop help is canonical" "$output" "lunor pkg drop <packages...>"
+
+output=$("$LUNOR" sudo keepalive --help)
+assert_output_contains "lunor sudo keepalive helper is routed" "$output" "Prompt for sudo once"
+
+output=$("$LUNOR" show done --help)
+assert_output_contains "lunor show done helper is routed" "$output" 'Display a "Done!" or "Failed!" message'
+
+make_tmpdir PKG_TEST_BIN
+pkg_state="$PKG_TEST_BIN/state"
+pkg_log="$PKG_TEST_BIN/pkg.log"
+: >"$pkg_state"
+: >"$pkg_log"
+
+cat >"$PKG_TEST_BIN/pacman" <<'EOF'
+#!/bin/bash
+printf 'pacman %s\n' "$*" >>"$PKG_TEST_LOG"
+case "$1" in
+  -Q)
+    pkg="\${3:-\${2:-}}"
+    grep -Fxq "$pkg" "$PKG_TEST_STATE"
+    ;;
+  -Qq)
+    cat "$PKG_TEST_STATE"
+    ;;
+  -S)
+    shift
+    for arg in "$@"; do
+      [[ $arg == --* ]] && continue
+      grep -Fxq "$arg" "$PKG_TEST_STATE" 2>/dev/null || printf '%s\n' "$arg" >>"$PKG_TEST_STATE"
+    done
+    ;;
+  -Rns)
+    shift
+    for arg in "$@"; do
+      [[ $arg == --* ]] && continue
+      grep -Fxv "$arg" "$PKG_TEST_STATE" >"$PKG_TEST_STATE.tmp" || true
+      mv "$PKG_TEST_STATE.tmp" "$PKG_TEST_STATE"
+    done
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+EOF
+
+cat >"$PKG_TEST_BIN/sudo" <<'EOF'
+#!/bin/bash
+printf 'sudo %s\n' "$*" >>"$PKG_TEST_LOG"
+exec "$@"
+EOF
+
+cat >"$PKG_TEST_BIN/yay" <<'EOF'
+#!/bin/bash
+printf 'yay %s\n' "$*" >>"$PKG_TEST_LOG"
+if [[ $1 == "-S" ]]; then
+  shift
+  for arg in "$@"; do
+    [[ $arg == --* ]] && continue
+    grep -Fxq "$arg" "$PKG_TEST_STATE" 2>/dev/null || printf '%s\n' "$arg" >>"$PKG_TEST_STATE"
+  done
+fi
+EOF
+chmod +x "$PKG_TEST_BIN/"{pacman,sudo,yay}
+
+if PKG_TEST_LOG="$pkg_log" PKG_TEST_STATE="$pkg_state" PATH="$PKG_TEST_BIN:$PATH" "$ROOT/bin/lunor-pkg-present" demo; then
+  fail "lunor pkg present reports a missing package as installed"
+fi
+PKG_TEST_LOG="$pkg_log" PKG_TEST_STATE="$pkg_state" PATH="$PKG_TEST_BIN:$PATH" "$ROOT/bin/lunor-pkg-missing" demo ||
+  fail "lunor pkg missing detects an absent package"
+
+PKG_TEST_LOG="$pkg_log" PKG_TEST_STATE="$pkg_state" PATH="$PKG_TEST_BIN:$PATH" "$ROOT/bin/lunor-pkg-add" demo
+grep -Fxq 'demo' "$pkg_state" || fail "lunor pkg add records package installation through pacman"
+PKG_TEST_LOG="$pkg_log" PKG_TEST_STATE="$pkg_state" PATH="$PKG_TEST_BIN:$PATH" "$ROOT/bin/lunor-pkg-present" demo ||
+  fail "lunor pkg present detects the installed package"
+pass "lunor core package presence and add helpers preserve behavior"
+
+PKG_TEST_LOG="$pkg_log" PKG_TEST_STATE="$pkg_state" PATH="$PKG_TEST_BIN:$PATH" "$ROOT/bin/lunor-pkg-drop" demo
+if grep -Fxq 'demo' "$pkg_state"; then
+  fail "lunor pkg drop removes installed package"
+fi
+grep -Fq 'pacman -Rns --noconfirm demo' "$pkg_log" ||
+  fail "lunor pkg drop preserves pacman removal semantics"
+pass "lunor package drop preserves removal behavior"
+
+: >"$pkg_log"
+PKG_TEST_LOG="$pkg_log" PKG_TEST_STATE="$pkg_state" PATH="$PKG_TEST_BIN:$PATH" "$ROOT/bin/lunor-pkg-aur-add" aur-demo
+grep -Fxq 'aur-demo' "$pkg_state" || fail "lunor AUR add installs missing package"
+grep -Fq 'yay -S --noconfirm --needed -- aur-demo' "$pkg_log" ||
+  fail "lunor AUR add preserves yay install semantics"
+pass "lunor AUR package add preserves behavior"
+
+grep -Fq -- '-A "lunor-update"' "$ROOT/bin/lunor-pkg-aur-accessible" ||
+  fail "lunor AUR availability check uses canonical user agent"
+grep -Fq 'source lunor-sudo-keepalive' "$ROOT/bin/lunor-pkg-install" ||
+  fail "lunor interactive package installer uses canonical sudo helper"
+grep -Fq 'source lunor-sudo-keepalive' "$ROOT/bin/lunor-pkg-aur-install" ||
+  fail "lunor interactive AUR installer uses canonical sudo helper"
+grep -Fq 'lunor show done' "$ROOT/bin/lunor-pkg-install" ||
+  fail "lunor interactive package installer uses canonical completion helper"
+grep -Fq 'lunor show done' "$ROOT/bin/lunor-pkg-aur-install" ||
+  fail "lunor interactive AUR installer uses canonical completion helper"
+grep -Fq 'lunor show done' "$ROOT/bin/lunor-pkg-remove" ||
+  fail "lunor interactive package remover uses canonical completion helper"
+pass "lunor interactive package commands use canonical dependencies"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
