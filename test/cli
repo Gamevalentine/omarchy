@@ -1280,6 +1280,120 @@ battlenet_error=$("$ROOT/bin/lunor-launch-battlenet" --invalid 2>&1 || true)
   fail "lunor Battle.net direct usage is canonical"
 pass "lunor remaining launch commands expose canonical direct usage"
 
+restart_count=$("$LUNOR" commands --all --json | jq '
+  [.commands[] | select(.binary | startswith("lunor-restart-"))] | length
+')
+[[ $restart_count == "16" ]] || fail "lunor exposes the complete set of 16 restart commands"
+pass "lunor restart group is fully migrated"
+
+output=$("$LUNOR" restart shell --help)
+assert_output_contains "lunor restart shell help is canonical" "$output" "lunor restart shell"
+
+output=$("$LUNOR" restart audio --help)
+assert_output_contains "lunor restart audio help is canonical" "$output" "lunor restart audio"
+
+make_tmpdir RESTART_TEST_BIN
+cat >"$RESTART_TEST_BIN/systemctl" <<'EOF'
+#!/bin/bash
+if [[ "$*" == "--user show-environment" ]]; then
+  if [[ $RESTART_SHELL_ENV_MODE == "legacy" ]]; then
+    printf 'OMARCHY_PATH=%s\n' "$RESTART_SHELL_TEST_ROOT"
+  else
+    printf 'LUNOR_PATH=%s\nOMARCHY_PATH=/invalid-legacy-path\n' "$RESTART_SHELL_TEST_ROOT"
+  fi
+else
+  printf 'systemctl %s\n' "$*" >>"$RESTART_TEST_LOG"
+fi
+EOF
+cat >"$RESTART_TEST_BIN/lunor" <<'EOF'
+#!/bin/bash
+printf 'lunor %s\n' "$*" >>"$RESTART_TEST_LOG"
+case "$*" in
+  "hyprland session locked") exit 0 ;;
+  "shell lock status") printf '{"secure":true,"requested":true}\n' ;;
+esac
+exit 0
+EOF
+cat >"$RESTART_TEST_BIN/rfkill" <<'EOF'
+#!/bin/bash
+printf 'rfkill %s\n' "$*" >>"$RESTART_TEST_LOG"
+EOF
+cat >"$RESTART_TEST_BIN/nmcli" <<'EOF'
+#!/bin/bash
+printf 'nmcli %s\n' "$*" >>"$RESTART_TEST_LOG"
+EOF
+cat >"$RESTART_TEST_BIN/pkill" <<'EOF'
+#!/bin/bash
+printf 'pkill %s\n' "$*" >>"$RESTART_TEST_LOG"
+EOF
+cat >"$RESTART_TEST_BIN/wpctl" <<'EOF'
+#!/bin/bash
+printf 'wpctl %s\n' "$*" >>"$RESTART_TEST_LOG"
+exit 0
+EOF
+cat >"$RESTART_TEST_BIN/sleep" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+chmod +x "$RESTART_TEST_BIN/"{systemctl,lunor,rfkill,nmcli,pkill,wpctl,sleep}
+
+restart_log="$RESTART_TEST_BIN/restart.log"
+PATH="$RESTART_TEST_BIN:$PATH" RESTART_TEST_LOG="$restart_log" "$ROOT/bin/lunor-restart-bluetooth" >/dev/null
+grep -Fxq 'rfkill unblock bluetooth' "$restart_log" || fail "lunor restart bluetooth unblocks adapter"
+grep -Fxq 'rfkill list bluetooth' "$restart_log" || fail "lunor restart bluetooth reports adapter"
+
+: >"$restart_log"
+PATH="$RESTART_TEST_BIN:$PATH" RESTART_TEST_LOG="$restart_log" "$ROOT/bin/lunor-restart-wifi" >/dev/null
+grep -Fxq 'rfkill unblock wifi' "$restart_log" || fail "lunor restart wifi unblocks adapter"
+grep -Fxq 'nmcli networking on' "$restart_log" || fail "lunor restart wifi enables networking"
+grep -Fxq 'nmcli radio wifi on' "$restart_log" || fail "lunor restart wifi enables Wi-Fi"
+grep -Fxq 'nmcli device wifi rescan' "$restart_log" || fail "lunor restart wifi triggers rescan"
+
+: >"$restart_log"
+PATH="$RESTART_TEST_BIN:$PATH" RESTART_TEST_LOG="$restart_log" "$ROOT/bin/lunor-restart-xcompose"
+grep -Fxq 'systemctl --user stop omarchy-fcitx5.service' "$restart_log" || fail "lunor restart xcompose preserves legacy unit compatibility"
+grep -Fxq 'pkill -x fcitx5' "$restart_log" || fail "lunor restart xcompose terminates old process"
+grep -Fxq 'systemctl --user start omarchy-fcitx5.service' "$restart_log" || fail "lunor restart xcompose restores existing unit"
+pass "lunor network and input service restarts preserve behavior"
+
+: >"$restart_log"
+PATH="$RESTART_TEST_BIN:$PATH" RESTART_TEST_LOG="$restart_log" "$ROOT/bin/lunor-restart-audio" >/dev/null
+grep -Fxq 'systemctl --user restart wireplumber.service pipewire.service pipewire-pulse.service' "$restart_log" ||
+  fail "lunor restart audio preserves service sequence"
+grep -Fxq 'wpctl status' "$restart_log" || fail "lunor restart audio checks health"
+if grep -Fq 'usbreset' "$restart_log"; then
+  fail "lunor restart audio does not reset USB hardware when services are healthy"
+fi
+pass "lunor audio restart preserves healthy recovery path"
+
+# The shell restart is only exercised through the locked-session refusal.
+# In particular the test must never kill a Quickshell instance.
+for mode in canonical legacy; do
+  : >"$restart_log"
+  shell_error=$(PATH="$RESTART_TEST_BIN:$PATH" RESTART_TEST_LOG="$restart_log" \
+    RESTART_SHELL_TEST_ROOT="$ROOT" RESTART_SHELL_ENV_MODE="$mode" \
+    HYPRLAND_INSTANCE_SIGNATURE=mock "$ROOT/bin/lunor-restart-shell" 2>&1 || true)
+  [[ $shell_error == *"Refusing to restart LUNOR OS shell while the session is locked."* ]] ||
+    fail "lunor shell restart refuses a secure lock ($mode)"
+  grep -Fxq 'lunor hyprland session locked' "$restart_log" ||
+    fail "lunor shell restart checks lock through canonical route ($mode)"
+  grep -Fxq 'lunor shell lock status' "$restart_log" ||
+    fail "lunor shell restart checks secure lock via canonical IPC ($mode)"
+done
+
+grep -Fq 'hl.dsp.exec_cmd("lunor-launch-shell")' "$ROOT/bin/lunor-restart-shell" ||
+  fail "lunor shell restart launches the canonical shell binary"
+grep -Fq 'LUNOR_SHELL_IPC_TIMEOUT=0.5s lunor shell' "$ROOT/bin/lunor-restart-shell" ||
+  fail "lunor shell restart uses canonical IPC timeout"
+grep -Fq "try-restart 'omarchy-*-invitation.service'" "$ROOT/bin/lunor-restart-shell" ||
+  fail "lunor shell restart preserves legacy invitation service recovery"
+
+grep -Fq '# omarchy:requires-sudo=true' "$ROOT/bin/lunor-restart-trackpad" ||
+  fail "lunor restart trackpad retains privilege metadata"
+grep -Fq 'sudo tee /sys/bus/i2c/drivers/i2c_hid_acpi/unbind' "$ROOT/bin/lunor-restart-trackpad" ||
+  fail "lunor restart trackpad retains safe privileged hardware reset path"
+pass "lunor sensitive restart routines preserve lock and hardware safeguards"
+
 "$CLI" commands --all >/dev/null
 pass "commands --all does not crash"
 
