@@ -5,7 +5,6 @@ set -euo pipefail
 source "$(dirname "$0")/base-test.sh"
 
 test_tmp=$(mktemp -d)
-trap 'rm -rf "$test_tmp"' EXIT
 
 test_home="$test_tmp/home"
 runtime_dir="$test_tmp/runtime"
@@ -24,6 +23,16 @@ current_background_name() {
 
 theme_a="tokyo-night"
 theme_b="catppuccin"
+
+# This regression needs two themes to contain the same background filename.
+# LUNOR OS intentionally removed the old shared omarchy.webp branding files,
+# so create an ephemeral neutral fixture instead of depending on shipped art.
+shared_fixture_name="zz-lunor-test-shared.webp"
+shared_fixture_a="$ROOT/themes/$theme_a/backgrounds/$shared_fixture_name"
+shared_fixture_b="$ROOT/themes/$theme_b/backgrounds/$shared_fixture_name"
+printf 'shared fixture a\n' >"$shared_fixture_a"
+printf 'shared fixture b\n' >"$shared_fixture_b"
+trap 'rm -f "$shared_fixture_a" "$shared_fixture_b"; rm -rf "$test_tmp"' EXIT
 
 set_theme "$theme_a"
 mapfile -t theme_a_backgrounds < <(find "$current_state/theme/backgrounds" -maxdepth 1 -type f -print | sort)
