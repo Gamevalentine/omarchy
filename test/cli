@@ -2035,7 +2035,7 @@ grep -Fq 'lunor pkg add heroic-games-launcher-bin' "$ROOT/bin/lunor-install-gami
   fail "lunor Heroic installer uses canonical package route"
 grep -Fq 'lunor pkg add lutris umu-launcher' "$ROOT/bin/lunor-install-gaming-lutris" ||
   fail "lunor Lutris installer uses canonical package route"
-grep -Fq 'lunor pkg add \\' "$ROOT/bin/lunor-install-gaming-retroarch" ||
+grep -Fq 'lunor pkg add' "$ROOT/bin/lunor-install-gaming-retroarch" ||
   fail "lunor RetroArch installer uses canonical package route"
 grep -Fq 'lunor pkg add steam' "$ROOT/bin/lunor-install-gaming-steam" ||
   fail "lunor Steam installer uses canonical package route"
