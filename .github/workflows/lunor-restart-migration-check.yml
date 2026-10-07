@@ -1,0 +1,46 @@
+name: LUNOR restart migration check
+
+on:
+  push:
+    branches:
+      - lunor/1.0-branding
+    paths:
+      - .github/workflows/lunor-restart-migration-check.yml
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate canonical restart commands
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts=(
+            bin/lunor-restart-audio
+            bin/lunor-restart-bluetooth
+            bin/lunor-restart-shell
+            bin/lunor-restart-trackpad
+            bin/lunor-restart-wifi
+            bin/lunor-restart-xcompose
+          )
+
+          for script in "${scripts[@]}"; do
+            test -x "$script"
+            bash -n "$script"
+          done
+
+          if grep -Eq 'omarchy-(cmd|restart|hyprland|shell|launch)-[a-z-]+' "${scripts[@]}"; then
+            echo "Canonical restart scripts still invoke old command binaries" >&2
+            exit 1
+          fi
+
+          grep -Fq 'LUNOR_PATH=' bin/lunor-restart-shell
+          grep -Fq 'hl.dsp.exec_cmd("lunor-launch-shell")' bin/lunor-restart-shell
+          grep -Fq 'omarchy-fcitx5.service' bin/lunor-restart-xcompose
+          grep -Fq '# omarchy:requires-sudo=true' bin/lunor-restart-trackpad
+
+          bash -n test/cli
+          ./bin/lunor commands --check
+          ./test/cli
