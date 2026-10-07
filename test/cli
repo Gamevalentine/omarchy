@@ -2299,7 +2299,7 @@ grep -Fxq 'lunor plugin enable omarchy.dropbox' "$install_final_log" ||
 pass "lunor Dropbox installer is covered with mocked dependencies"
 
 : >"$install_final_log"
-HOME="$INSTALL_FINAL_HOME" USER=demo INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
+HOME="$INSTALL_FINAL_HOME" USER=demo MOCK_GUM_CONFIRM=1 INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
   "$ROOT/bin/lunor-install-service-nordvpn" >/dev/null
 grep -Fxq 'lunor pkg add nordvpn-bin' "$install_final_log" ||
   fail "lunor NordVPN behavior reaches canonical package route"
@@ -2307,10 +2307,9 @@ grep -Fxq 'sudo systemctl enable --now nordvpnd' "$install_final_log" ||
   fail "lunor NordVPN behavior preserves daemon enable command"
 grep -Fxq 'sudo usermod -aG nordvpn demo' "$install_final_log" ||
   fail "lunor NordVPN behavior preserves group membership command"
-if grep -Fq 'lunor system reboot' "$install_final_log"; then
-  fail "lunor NordVPN mocked decline path must not request reboot"
-fi
-pass "lunor NordVPN installer is covered without changing services or rebooting"
+grep -Fxq 'lunor system reboot' "$install_final_log" ||
+  fail "lunor NordVPN accepted reboot path uses the canonical reboot route"
+pass "lunor NordVPN installer is covered with mocked service and reboot commands"
 
 : >"$install_final_log"
 INSTALL_FINAL_LOG="$install_final_log" PATH="$INSTALL_FINAL_BIN:$PATH" \
