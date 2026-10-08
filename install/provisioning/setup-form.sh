@@ -19,7 +19,8 @@
 #
 # Callers supply `notice <message> <seconds>` for validation feedback, and set
 # the variables these prompts write: keyboard, keyboard_label, username,
-# password, password_confirmation, full_name, email_address, hostname, timezone.
+# password, password_confirmation, full_name, email_address, hostname, timezone,
+# auto_login, login_mode_label.
 
 OMARCHY_FORM_BACK=1
 OMARCHY_FORM_SIGNAL=130
@@ -137,6 +138,23 @@ omarchy_prompt_password() {
       notice "Passwords didn't match!" 1
     fi
   done
+}
+
+omarchy_prompt_login_mode() {
+  local choice status
+  choice=$(printf '%s\n' \
+    "Automatic login (go straight to Desktop)" \
+    "Require account password at login" | \
+    gum choose --height 2 --selected "Automatic login (go straight to Desktop)" --header "Desktop login") && status=0 || status=$?
+  ((status == 0)) || return $status
+
+  if [[ $choice == "Automatic login (go straight to Desktop)" ]]; then
+    auto_login=true
+    login_mode_label="Automatic login"
+  else
+    auto_login=false
+    login_mode_label="Password required"
+  fi
 }
 
 # Both fields are skippable with Return, so an empty value is a real answer and

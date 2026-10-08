@@ -15,7 +15,24 @@
 # against a half-written tree, and that failed reload leaves a second engine
 # generation behind that turns the next restart's IPC kill into a crash.
 run_shell() {
-  QS_DISABLE_FILE_WATCHER=1 QS_NO_RELOAD_POPUP=1 \
+  local -a shell_env=(
+    QS_DISABLE_FILE_WATCHER=1
+    QS_NO_RELOAD_POPUP=1
+  )
+
+  # Hyprland itself can use VirtualBox 3D, but Qt/Quickshell may lose the
+  # Wayland connection there. Software rendering is the stable path we verified
+  # in LUNOR's VirtualBox smoke test. Real hardware and QEMU/KVM stay accelerated.
+  if [[ $(systemd-detect-virt 2>/dev/null || true) == "oracle" ]]; then
+    shell_env+=(
+      QT_QUICK_BACKEND=software
+      QSG_RHI_BACKEND=software
+      LIBGL_ALWAYS_SOFTWARE=1
+    )
+    logger -t omarchy-shell "VirtualBox detected; using software rendering for Quickshell."
+  fi
+
+  env "${shell_env[@]}" \
     systemd-cat -t omarchy-shell -- quickshell -n -p "$OMARCHY_PATH/shell" &
   shell_pid=$!
 

@@ -6,6 +6,11 @@ on:
       - lunor/1.0-clean-branding
     paths:
       - .github/workflows/lunor-iso-build-test.yml
+      - build/**
+      - bin/omarchy-launch-shell
+      - bin/omarchy-provision-owner
+      - install/**
+      - config/**
       - test/**
   workflow_dispatch:
 
@@ -42,6 +47,12 @@ jobs:
           set -euo pipefail
           git clone --depth 1 --branch quattro https://github.com/omacom/omarchy-iso.git lunor-iso
           git clone --depth 1 https://github.com/omacom/omarchy-pkgs.git lunor-pkgs
+
+      - name: Apply LUNOR Stage A boot and login overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
 
       - name: Apply LUNOR ISO branding overlay
         shell: bash

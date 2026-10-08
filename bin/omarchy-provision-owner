@@ -651,6 +651,7 @@ user_form() {
 
   step "Let's set your timezone..."
   omarchy_prompt_timezone || return $?
+  omarchy_prompt_login_mode || return $?
 }
 
 confirm_form() {
@@ -663,7 +664,8 @@ Password,$(printf "%${#password}s" | tr ' ' '*')
 Full name,${full_name:-[Skipped]}
 Email address,${email_address:-[Skipped]}
 Hostname,${hostname:-lunor}
-Timezone,${timezone:-UTC}" |
+Timezone,${timezone:-UTC}
+Desktop login,${login_mode_label:-Automatic login}" |
     gum table -s "," -p | sed "s/^/${PADDING_LEFT_SPACES}/"
 
   echo
@@ -770,16 +772,14 @@ configure_login() {
   printf '[Last]\nSession=omarchy.desktop\nUser=%s\n' "$username" >/var/lib/sddm/state.conf
   chown -R sddm:sddm /var/lib/sddm 2>/dev/null || true
 
-  # Autologin straight into the desktop after first-boot setup — the owner just
-  # authenticated in the form, so we don't make them retype at SDDM.
   mkdir -p /etc/sddm.conf.d
-  printf '[Autologin]\nUser=%s\nSession=omarchy.desktop\n' "$username" >/etc/sddm.conf.d/autologin.conf
-
-  # Encrypted installs keep autologin permanently (the LUKS prompt is the auth
-  # boundary). Unencrypted installs autologin only this first boot, then a
-  # one-shot service removes the drop-in so later boots use the normal SDDM
-  # login and the disk isn't left permanently open.
-  encrypted_install || install_autologin_once_cleanup
+  if [[ ${auto_login:-true} == true ]]; then
+    # LUNOR lets the owner choose a passwordless desktop while keeping the
+    # account password available for sudo/admin tasks.
+    printf '[Autologin]\nUser=%s\nSession=omarchy.desktop\n' "$username" >/etc/sddm.conf.d/autologin.conf
+  else
+    rm -f /etc/sddm.conf.d/autologin.conf
+  fi
 }
 
 # Install a self-removing service that makes the autologin last exactly one
