@@ -48,6 +48,17 @@ mkdir -p /tmp/lunor-quickshell-db
 pacman --config "$arch_only_conf" --noconfirm -Syw quickshell \\
   --cachedir "$offline_mirror_dir/" --dbpath /tmp/lunor-quickshell-db --needed
 
+# Preserve the exact Arch Extra dependency closure, not just quickshell itself.
+# The generic prune step only knows the main transaction; without this list it
+# can delete dependencies downloaded exclusively for the fallback.
+pacman --config "$arch_only_conf" --noconfirm \
+  --dbpath /tmp/lunor-quickshell-db -S --print --print-format '%f' quickshell \
+  > /tmp/lunor-quickshell-required-files
+[[ -s /tmp/lunor-quickshell-required-files ]] || {
+  echo "ERROR: could not resolve Arch Extra quickshell dependency closure" >&2
+  exit 1
+}
+
 mkdir -p /tmp/offlinedb
 """
 
@@ -78,7 +89,14 @@ if [[ -z $fallback_quickshell_file ]]; then
   echo "ERROR: Arch Extra quickshell fallback was not downloaded" >&2
   exit 1
 fi
-required_package_files+=("$fallback_quickshell_file")
+while IFS= read -r fallback_file; do
+  [[ -n $fallback_file ]] || continue
+  if [[ ! -f "$offline_mirror_dir/$fallback_file" ]]; then
+    echo "ERROR: quickshell fallback dependency is missing from cache: $fallback_file" >&2
+    exit 1
+  fi
+  required_package_files+=("$fallback_file")
+done < /tmp/lunor-quickshell-required-files
 
 printf '%s\\n' "${required_package_files[@]}" |
   bash /builder/prune-offline-mirror.sh "$offline_mirror_dir"
