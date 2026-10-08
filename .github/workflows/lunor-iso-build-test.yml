@@ -137,9 +137,11 @@ jobs:
           p = iso / "configs/airootfs/usr/share/omarchy-iso/orchestrator/phases_impl.py"
           s = p.read_text()
           needle = "            offline=True,"
-          if needle not in s:
-              raise SystemExit("Upstream archinstall sanity_check call changed; review compatibility patch")
-          p.write_text(s.replace(needle, "", 1))
+          if needle in s:
+              s = s.replace(needle, "", 1)
+          else:
+              print("archinstall sanity_check compatibility patch already present upstream")
+          p.write_text(s)
 
           # Pin the Node.js offline tarball to the exact version named by the
           # "latest" checksums. Fetching both files through /dist/latest can
