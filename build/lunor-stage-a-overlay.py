@@ -232,11 +232,12 @@ if s.count(full_old) != 1:
 s = s.replace(full_old, full_new, 1)
 p.write_text(s)
 
+continuation = chr(92) + "\n"
 replace_once(
     "configs/airootfs/root/.automated_script.sh",
-    "    --encrypt-file /root/user_encrypt_installation.txt \\\\\n",
-    "    --encrypt-file /root/user_encrypt_installation.txt \\\\\n"
-    "    --autologin-file /root/user_autologin.txt \\\\\n",
+    "    --encrypt-file /root/user_encrypt_installation.txt " + continuation,
+    "    --encrypt-file /root/user_encrypt_installation.txt " + continuation
+    + "    --autologin-file /root/user_autologin.txt " + continuation,
     "Stage A automated-script autologin arg",
 )
 
