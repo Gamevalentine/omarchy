@@ -20,7 +20,7 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 80
 
     steps:
       - name: Checkout LUNOR source
@@ -209,12 +209,31 @@ jobs:
           iso=$(ls -t release/*.iso | head -1)
           sha256sum "$iso" | tee "$iso.sha256"
 
+      # Preserve the ISO even if VM acceptance fails or times out.
+      - name: Upload LUNOR ISO
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunor-os-iso-${{ github.run_number }}
+          path: |
+            lunor-iso/release/*.iso
+            lunor-iso/release/*.sha256
+          retention-days: 7
+          if-no-files-found: error
+
       - name: VM install and acceptance test
         shell: bash
         run: |
           set -euo pipefail
           sudo chmod 0666 /dev/kvm
-          docker run --rm --device /dev/kvm             -v "$PWD:/w" -w /w/lunor-iso             archlinux:latest bash -euo pipefail -c '
+          container="lunor-vm-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cleanup() {
+            docker rm -f "$container" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          # Bound the entire VM process, including a hung acceptance runner.
+          timeout --signal=TERM --kill-after=30s 1800s \
+            docker run --name "$container" --rm --device /dev/kvm             -v "$PWD:/w" -w /w/lunor-iso             archlinux:latest bash -euo pipefail -c '
               pacman -Syu --noconfirm --needed                 qemu-system-x86 qemu-hw-display-virtio-gpu qemu-hw-display-virtio-vga qemu-img edk2-ovmf socat                 imagemagick tesseract tesseract-data-eng mtools dosfstools jq openssh openssl python curl ripgrep lua >/dev/null
               printf "#!/bin/sh\nexit 0\n" >/usr/local/bin/omarchy-pkg-add
               chmod 0755 /usr/local/bin/omarchy-pkg-add
@@ -248,17 +267,6 @@ jobs:
 
           identity=$(find lunor-iso/test-runs -type f -name 'lunor-identity.txt' | head -1 || true)
           [ -z "$identity" ] || cat "$identity"
-
-      - name: Upload LUNOR ISO
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lunor-os-iso-${{ github.run_number }}
-          path: |
-            lunor-iso/release/*.iso
-            lunor-iso/release/*.sha256
-          retention-days: 7
-          if-no-files-found: error
 
       - name: Upload VM QA artifacts
         if: always()
