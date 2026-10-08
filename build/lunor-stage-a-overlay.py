@@ -337,6 +337,22 @@ if s.count(provision_security) != 1:
     raise SystemExit("Stage A VM harness provision disk security changed upstream")
 s = s.replace(provision_security, provision_security_new, 1)
 
+mode_gate_old = '''  wait_for_screen "installation mode\\|recovery possible" 60
+  if ocr_screen | grep -qi "installation mode"; then
+    capture_console "success-installer-11-install-mode"
+    press ret # "Full disk install" is preselected
+  fi
+'''
+mode_gate_new = '''  wait_for_screen "installation mode\\|Disk security" 60
+  if ocr_screen | grep -qi "installation mode"; then
+    capture_console "success-installer-11-install-mode"
+    press ret # "Full disk install" is preselected
+  fi
+'''
+if s.count(mode_gate_old) != 1:
+    raise SystemExit("Stage A VM harness install-mode gate changed upstream")
+s = s.replace(mode_gate_old, mode_gate_new, 1)
+
 normal_security = '''  wait_for_screen "recovery possible" 60
   capture_console "success-installer-12-disk-warning-encrypted"
   if ! $ENCRYPT; then
