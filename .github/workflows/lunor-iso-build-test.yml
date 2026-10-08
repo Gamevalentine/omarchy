@@ -193,6 +193,12 @@ jobs:
           grep -Fq 'PRETTY_NAME="LUNOR OS"' lunor-pkgs/pkgbuilds/omarchy-settings-dev/PKGBUILD
           ! grep -Fq 'mirror.omarchy.org' lunor-iso/configs/airootfs/root/configurator
 
+      - name: Apply LUNOR quickshell mirror fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 lunor-source/build/lunor-quickshell-fallback.py lunor-iso
+
       - name: Build LUNOR OS ISO from this branch
         shell: bash
         run: |
