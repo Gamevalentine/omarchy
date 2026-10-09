@@ -44,7 +44,13 @@ jobs:
             https://github.com/omacom/omarchy-iso.git lunor-harness
           rsync -a lunor-harness/ lunor-iso/
           python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
-          # Check test harness before starting the VM; the outer Docker timeout bounds execution.
+          # Match the proven Run 19 VM harness: the LUNOR ISO greeter no longer
+          # shows the upstream "Linux by DHH" text. Without this adjustment
+          # QEMU waits 300s on a healthy installer before failing.
+          python3 -c 'from pathlib import Path; p=Path("lunor-iso/bin/omarchy-iso-test"); s=p.read_text(); assert s.count("Linux by DHH")==3, "unexpected greeter count"; p.write_text(s.replace("Linux by DHH", "LUNOR .S"))'
+          ! grep -Fq 'Linux by DHH' lunor-iso/bin/omarchy-iso-test
+          grep -Fq 'wait_for_screen "LUNOR .S" 300' lunor-iso/bin/omarchy-iso-test
+          bash -n lunor-iso/bin/omarchy-iso-test
           bash -n lunor-iso/bin/omarchy-iso-test
       - name: "VM: baseline vs geometry vs software renderer"
         run: |
