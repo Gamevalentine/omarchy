@@ -34,8 +34,8 @@ s = s.replace("Linux by DHH", "LUNOR .S")
 # Hidden overlays are mapped on a different layer; do not confuse mapped
 # surfaces with visible ones in the keyboard-shortcut smoke checks.
 once(
-    r"[.. | objects | select(.namespace? == $namespace)] | length > 0",
-    r'[.[].levels | to_entries[]? | select((.key | tonumber) == 3) | .value[]? | select(.namespace? == $namespace)] | length > 0',
+    r"[.. | objects | select(.namespace? == \$namespace)] | length > 0",
+    r'[.[].levels | to_entries[]? | select((.key | tonumber) == 3) | .value[]? | select(.namespace? == \$namespace)] | length > 0',
     "visible overlay layer",
 )
 
