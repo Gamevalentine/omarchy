@@ -1,0 +1,19 @@
+name: LUNOR VM-only ISO 19 smoke test
+
+on:
+  push:
+    branches:
+      - lunor/1.0-clean-branding
+    paths:
+      - .github/workflows/lunor-vm-iso19-smoke.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-existing-iso:
+    uses: ./.github/workflows/lunor-iso-build-test.yml
+    with:
+      mode: vm-only
+      iso_run_id: '37879699555'
