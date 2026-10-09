@@ -1,0 +1,113 @@
+name: LUNOR 1E - VM ShellColor acceptance
+
+on:
+  push:
+    branches:
+      - lunor/qt612-shellcolor
+    paths:
+      - build/lunor-1e-vm-harness.py
+      - .github/workflows/lunor-shellcolor-vm.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  shellcolor-vm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - name: Checkout LUNOR ShellColor patch branch
+        uses: actions/checkout@v4
+        with:
+          path: lunor-source
+
+      - name: Assert standalone VM testing prerequisites
+        run: |
+          set -euo pipefail
+          test -e /dev/kvm
+          free -h
+          df -h /
+          avail=$(df -BG --output=avail / | tail -1 | tr -dc 0-9)
+          [ "$avail" -ge 35 ] || { echo "::error::Insufficient disk for VM"; exit 1; }
+          test -f lunor-source/shell/Commons/ShellColor.qml
+          grep -qxF 'singleton ShellColor 1.0 ShellColor.qml' lunor-source/shell/Commons/qmldir
+          test ! -e lunor-source/shell/Commons/Color.qml
+          python3 -m py_compile lunor-source/build/lunor-1e-vm-harness.py
+          echo "Source sha:"
+          git -C lunor-source rev-parse HEAD
+
+      - name: Reuse SHA-verified Run 19 ISO (no ISO build)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p lunor-iso/release
+          gh run download 37879699555 --repo "$GITHUB_REPOSITORY" \
+            --name lunor-os-iso-19 --dir lunor-iso/release
+          cd lunor-iso
+          sha256sum -c release/*.sha256
+          ls -lh release/*.iso
+
+      - name: Prepare Stage A compatible VM test harness
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch quattro \
+            https://github.com/omacom/omarchy-iso.git lunor-harness
+          rsync -a lunor-harness/ lunor-iso/
+          python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
+          python3 lunor-source/build/lunor-1e-vm-harness.py lunor-iso
+          bash -n lunor-iso/bin/omarchy-iso-test
+          grep -Fq 'apply_lunor_1e_shell' lunor-iso/bin/omarchy-iso-test
+          grep -Fq 'wait_for_screen "LUNOR .S" 300' lunor-iso/bin/omarchy-iso-test
+          echo "VM harness patched, shell replacement is mandatory before GUI tests"
+
+      - name: VM install, inject patched shell and verify graphical acceptance
+        run: |
+          set -euo pipefail
+          sudo chmod 0666 /dev/kvm
+          container="lunor-1e-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          cleanup(){ docker rm -f "$container" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          timeout --signal=TERM --kill-after=30s 3600s \
+            docker run --name "$container" --rm --device /dev/kvm \
+              -v "$PWD:/w" -w /w/lunor-iso \
+              archlinux:latest bash -euo pipefail -c '
+                pacman -Syu --noconfirm --needed \
+                  qemu-system-x86 qemu-hw-display-virtio-gpu qemu-hw-display-virtio-vga \
+                  qemu-img edk2-ovmf socat imagemagick tesseract tesseract-data-eng \
+                  mtools dosfstools jq openssh openssl python curl ripgrep lua >/dev/null
+                printf "#!/bin/sh\nexit 0\n" >/usr/local/bin/omarchy-pkg-add
+                chmod 0755 /usr/local/bin/omarchy-pkg-add
+                export OMARCHY_PATH=/w/lunor-source
+                ./bin/omarchy-iso-test release/*.iso \
+                  --sync-omarchy /w/lunor-source --no-preview \
+                  --memory 8192 --timeout 2400
+              '
+
+      - name: Inspect VM test summary and exceptions
+        if: always()
+        run: |
+          set -u
+          if [ -d lunor-iso/test-runs ]; then
+            sudo chown -R "$(id -u):$(id -g)" lunor-iso/test-runs || true
+            find lunor-iso/test-runs -type f -name 'lunor-1e-provenance.txt' -exec cat {} \;
+            find lunor-iso/test-runs -type f -name 'lunor-1e-packages.txt' -exec cat {} \;
+            find lunor-iso/test-runs -type f -name 'lunor-1e-shell.log' -exec sh -c 'echo "=== QML runtime errors ==="; grep -iE "TypeError|undefined|ReferenceError|error.*Color" "$1" | tail -60 || true' _ {} \;
+            find lunor-iso/test-runs -type f -name 'success-menu*.png' -print | head -20
+            find lunor-iso/test-runs -type f -name 'success-clipboard*.png' -print | head -20
+          fi
+
+      - name: Upload QA screenshots, version audit and Quickshell logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunor-shellcolor-1e-${{ github.run_number }}
+          path: |
+            lunor-iso/test-runs/**/*.png
+            lunor-iso/test-runs/**/*.txt
+            lunor-iso/test-runs/**/*.json
+            lunor-iso/test-runs/**/*.log
+          retention-days: 7
+          if-no-files-found: warn
