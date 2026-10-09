@@ -46,7 +46,7 @@ jobs:
           python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
           # Check test harness before starting the VM; the outer Docker timeout bounds execution.
           bash -n lunor-iso/bin/omarchy-iso-test
-      - name: VM: baseline vs geometry vs software renderer
+      - name: "VM: baseline vs geometry vs software renderer"
         run: |
           set -euo pipefail
           sudo chmod 0666 /dev/kvm
