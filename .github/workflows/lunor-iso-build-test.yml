@@ -28,6 +28,16 @@ on:
         type: string
         required: false
         default: ''
+  workflow_call:
+    inputs:
+      mode:
+        description: 'Execution mode'
+        type: string
+        default: build-and-test
+      iso_run_id:
+        description: 'Existing ISO build run ID (vm-only)'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -35,7 +45,7 @@ permissions:
 
 jobs:
   build-iso:
-    if: ${{ github.event_name == 'push' || inputs.mode != 'vm-only' }}
+    if: ${{ inputs.mode != 'vm-only' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 80
 
@@ -227,7 +237,7 @@ jobs:
 
   vm-test:
     needs: build-iso
-    if: ${{ always() && (github.event_name == 'push' || inputs.mode != 'build-only') && (needs.build-iso.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'vm-only' && needs.build-iso.result == 'skipped')) }}
+    if: ${{ always() && inputs.mode != 'build-only' && (needs.build-iso.result == 'success' || (inputs.mode == 'vm-only' && needs.build-iso.result == 'skipped')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 50
 
@@ -244,7 +254,7 @@ jobs:
           test -e /dev/kvm || { echo '::error::KVM is unavailable on this runner.'; exit 1; }
 
       - name: Validate existing ISO run ID
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'vm-only' }}
+        if: ${{ inputs.mode == 'vm-only' }}
         shell: bash
         env:
           ISO_RUN_ID: ${{ inputs.iso_run_id }}
