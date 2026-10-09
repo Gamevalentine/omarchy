@@ -16,3 +16,4 @@ jobs:
     uses: ./.github/workflows/lunor-iso-build-test.yml
     with:
       mode: build-and-test
+# QA rerun 2026-10-09: package proven Weather/Bar fixes into ISO and re-verify.
