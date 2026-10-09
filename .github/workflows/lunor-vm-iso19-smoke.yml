@@ -17,3 +17,5 @@ jobs:
     with:
       mode: vm-only
       iso_run_id: '37879699555'
+
+# VM retest 2: include Stage A login and disk prompts in reused-ISO harness.
