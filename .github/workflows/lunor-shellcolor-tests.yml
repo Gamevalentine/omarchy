@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout diagnostics branch
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - name: Validate changed files and shell syntax
         run: |
           set -euo pipefail
