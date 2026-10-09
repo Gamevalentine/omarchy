@@ -28,6 +28,11 @@ on:
         type: string
         required: false
         default: ''
+      qa_bar_overlay:
+        description: 'Temporary candidate Bar.qml overlay into disposable VM (not into ISO)'
+        type: boolean
+        required: false
+        default: false
   workflow_call:
     inputs:
       mode:
@@ -38,6 +43,10 @@ on:
         description: 'Existing ISO build run ID (vm-only)'
         type: string
         default: ''
+      qa_bar_overlay:
+        description: 'Install current Bar.qml in a disposable VM only'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -317,6 +326,15 @@ jobs:
           PY
           bash -n lunor-iso/bin/omarchy-iso-test
           grep -Fq 'timeout --signal=TERM --kill-after=10s 360s' lunor-iso/bin/omarchy-iso-test
+
+      - name: Overlay candidate Bar.qml in disposable VM harness
+        if: ${{ inputs.mode == 'vm-only' && inputs.qa_bar_overlay }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 lunor-source/build/lunor-vm-bar-smoke-overlay.py lunor-iso/bin/omarchy-iso-test
+          bash -n lunor-iso/bin/omarchy-iso-test
+          grep -Fq 'LUNOR QA: overlaying candidate Bar.qml into disposable VM' lunor-iso/bin/omarchy-iso-test
 
       - name: Download ISO artifact for VM test
         uses: actions/download-artifact@v4
