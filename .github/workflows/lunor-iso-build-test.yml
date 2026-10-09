@@ -271,6 +271,14 @@ jobs:
           set -euo pipefail
           git clone --depth 1 --branch quattro https://github.com/omacom/omarchy-iso.git lunor-iso
 
+      - name: Apply LUNOR Stage A installer test transitions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
+          grep -Fq 'wait_for_screen "Desktop login" 60' lunor-iso/bin/omarchy-iso-test
+          grep -Fq 'wait_for_screen "installation mode\|Disk security" 60' lunor-iso/bin/omarchy-iso-test
+
       - name: Apply LUNOR VM harness compatibility patch
         shell: bash
         run: |
