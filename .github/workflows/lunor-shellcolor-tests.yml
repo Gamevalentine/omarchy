@@ -1,0 +1,51 @@
+name: LUNOR ShellColor fast regression
+
+on:
+  push:
+    branches:
+      - lunor/qt612-shellcolor
+    paths:
+      - shell/**
+      - test/shell.d/**
+      - .github/workflows/lunor-shellcolor-tests.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-and-node-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout diagnostics branch
+        uses: actions/checkout@v4
+      - name: Validate changed files and shell syntax
+        run: |
+          set -euo pipefail
+          git diff --check HEAD^ HEAD
+          bash -n test/shell.d/shell-color-name-guard-test.sh
+          bash -n test/shell.d/color-reference-test.sh
+          bash -n test/shell.d/bar-test.sh
+      - name: Check for shadowed singleton references
+        run: |
+          set -euo pipefail
+          bash test/shell.d/shell-color-name-guard-test.sh
+      - name: Validate palette reference behavior
+        run: |
+          set -euo pipefail
+          bash test/shell.d/color-reference-test.sh
+      - name: Check bar theme bindings
+        run: |
+          set -euo pipefail
+          bash test/shell.d/bar-test.sh
+      - name: Check menu and clipboard model regressions
+        run: |
+          set -euo pipefail
+          bash test/shell.d/menu-test.sh
+          bash test/shell.d/clipboard-test.sh
+      - name: Check border geometry and shell theme templates
+        run: |
+          set -euo pipefail
+          bash test/shell.d/border-geometry-test.sh
+          bash test/shell.d/theme-templates-test.sh
