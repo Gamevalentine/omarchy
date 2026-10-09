@@ -1,0 +1,18 @@
+name: LUNOR updated ISO full QA
+
+on:
+  push:
+    branches:
+      - lunor/1.0-clean-branding
+    paths:
+      - .github/workflows/lunor-full-qa-current.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build-then-verify:
+    uses: ./.github/workflows/lunor-iso-build-test.yml
+    with:
+      mode: build-and-test
