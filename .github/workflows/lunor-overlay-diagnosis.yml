@@ -1,0 +1,93 @@
+name: LUNOR overlay diagnostic (existing ISO)
+on:
+  push:
+    branches:
+      - lunor/overlay-diagnostics
+    paths:
+      - .github/workflows/lunor-overlay-diagnosis.yml
+      - test/acceptance
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  overlay-diagnosis:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - name: Checkout isolated diagnostic source
+        uses: actions/checkout@v5
+        with:
+          path: lunor-source
+      - name: Validate KVM and disk
+        run: |
+          set -euo pipefail
+          df -h /
+          test -e /dev/kvm
+          avail=$(df -BG --output=avail / | tail -1 | tr -dc 0-9)
+          [ "$avail" -ge 35 ] || { echo "::error::Insufficient VM disk"; exit 1; }
+      - name: Download saved Run 19 ISO - no rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p lunor-iso/release
+          gh run download 37879699555 --repo "$GITHUB_REPOSITORY" \
+             --name lunor-os-iso-19 --dir lunor-iso/release
+          cd lunor-iso/release
+          ls -lh
+          sha256sum -c ./*.sha256
+      - name: Prepare compatible VM harness
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch quattro \
+            https://github.com/omacom/omarchy-iso.git lunor-harness
+          rsync -a lunor-harness/ lunor-iso/
+          python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("lunor-iso/bin/omarchy-iso-test")
+          s=p.read_text()
+          old='ssh_guest() {\n  ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          new='ssh_guest() {\n  timeout --signal=TERM --kill-after=10s 240s \\\n    ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          if s.count(old)!=1: raise SystemExit("Upstream SSH helper changed")
+          p.write_text(s.replace(old,new,1))
+          PY
+          bash -n lunor-iso/bin/omarchy-iso-test
+      - name: VM: baseline vs geometry vs software renderer
+        run: |
+          set -euo pipefail
+          sudo chmod 0666 /dev/kvm
+          container="lunor-diag-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          cleanup(){ docker rm -f "$container" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          timeout --signal=TERM --kill-after=30s 3300s \
+            docker run --name "$container" --rm --device /dev/kvm \
+              -v "$PWD:/w" -w /w/lunor-iso archlinux:latest bash -euo pipefail -c '
+                pacman -Syu --noconfirm --needed \
+                  qemu-system-x86 qemu-hw-display-virtio-gpu qemu-hw-display-virtio-vga \
+                  qemu-img edk2-ovmf socat imagemagick tesseract \
+                  tesseract-data-eng mtools dosfstools jq openssh openssl \
+                  python curl ripgrep lua >/dev/null
+                printf "#!/bin/sh\nexit 0\n" >/usr/local/bin/omarchy-pkg-add
+                chmod 0755 /usr/local/bin/omarchy-pkg-add
+                export OMARCHY_PATH=/w/lunor-source
+                ./bin/omarchy-iso-test release/*.iso \
+                  --sync-omarchy /w/lunor-source --no-preview \
+                  --memory 8192 --timeout 2400
+              '
+      - name: Upload logs and screenshots even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunor-overlay-diag-${{ github.run_number }}
+          path: |
+            lunor-iso/test-runs/**/omarchy-acceptance/diag-*.png
+            lunor-iso/test-runs/**/omarchy-acceptance/diag-*.json
+            lunor-iso/test-runs/**/omarchy-acceptance/diag-*.log
+            lunor-iso/test-runs/**/omarchy-acceptance/diag-*.txt
+            lunor-iso/test-runs/**/omarchy-acceptance/diag-*.qml
+            lunor-iso/test-runs/**/omarchy-acceptance/diag-*.sh
+            lunor-iso/test-runs/**/failure-*.png
+          retention-days: 7
+          if-no-files-found: warn
