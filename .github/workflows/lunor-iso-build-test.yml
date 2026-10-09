@@ -13,12 +13,29 @@ on:
       - config/**
       - test/**
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Choose ISO build, VM test, or both'
+        type: choice
+        required: true
+        default: build-and-test
+        options:
+          - build-and-test
+          - build-only
+          - vm-only
+      iso_run_id:
+        description: 'Existing GitHub Actions run ID with a LUNOR ISO artifact (vm-only)'
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
-  build-and-test:
+  build-iso:
+    if: ${{ github.event_name == 'push' || inputs.mode != 'vm-only' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 80
 
@@ -34,10 +51,9 @@ jobs:
           set -euo pipefail
           df -h /
           free -h
-          test -e /dev/kvm
           avail_gb=$(df -BG --output=avail / | tail -1 | tr -dc 0-9)
           [ "$avail_gb" -ge 45 ] || {
-            echo "::error::Only ${avail_gb} GB free; LUNOR ISO build + VM test needs about 45 GB."
+            echo "::error::Only ${avail_gb} GB free; LUNOR ISO build needs about 45 GB."
             exit 1
           }
 
@@ -169,18 +185,6 @@ jobs:
               raise SystemExit("Upstream Node.js offline download block changed; review compatibility patch")
           p.write_text(s.replace(node_old, node_new, 1))
 
-          # Keep the interactive VM harness compatible with the current shell.
-          # OverlayWindow surfaces remain mapped when hidden, so shortcut tests
-          # must check whether a surface is on the overlay layer, not whether
-          # the namespace still exists anywhere in Hyprland's layer tree.
-          p = iso / "bin/omarchy-iso-test"
-          s = p.read_text().replace("Linux by DHH", "LUNOR .S")
-          layer_needle = r"[.. | objects | select(.namespace? == \$namespace)] | length > 0"
-          layer_replacement = r'[.[].levels | to_entries[]? | select((.key | tonumber) == 3) | .value[]? | select(.namespace? == \$namespace)] | length > 0'
-          if layer_needle not in s:
-              raise SystemExit("Upstream shortcut layer check changed; review VM harness compatibility patch")
-          s = s.replace(layer_needle, layer_replacement, 1)
-          p.write_text(s)
           PY
 
           # Fail before the expensive build if a normal installer/boot surface
@@ -198,24 +202,6 @@ jobs:
         run: |
           set -euo pipefail
           python3 lunor-source/build/lunor-quickshell-fallback.py lunor-iso
-
-      - name: Bound VM guest SSH sessions and retain failure diagnostics
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path("lunor-iso/bin/omarchy-iso-test")
-          text = p.read_text()
-          old = 'ssh_guest() {\n  ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
-          new = 'ssh_guest() {\n  timeout --signal=TERM --kill-after=10s 360s \\\n    ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
-          if text.count(old) != 1:
-              raise SystemExit("Upstream VM harness SSH entrypoint changed; review guard")
-          p.write_text(text.replace(old, new, 1))
-          PY
-          bash -n lunor-iso/bin/omarchy-iso-test
-          grep -Fq 'timeout --signal=TERM --kill-after=10s 360s' lunor-iso/bin/omarchy-iso-test
 
       - name: Build LUNOR OS ISO from this branch
         shell: bash
@@ -238,6 +224,104 @@ jobs:
             lunor-iso/release/*.sha256
           retention-days: 7
           if-no-files-found: error
+
+  vm-test:
+    needs: build-iso
+    if: ${{ always() && (github.event_name == 'push' || inputs.mode != 'build-only') && (needs.build-iso.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'vm-only' && needs.build-iso.result == 'skipped')) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+
+    steps:
+      - name: Checkout LUNOR source
+        uses: actions/checkout@v5
+        with:
+          path: lunor-source
+
+      - name: Check VM virtualization support
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -e /dev/kvm || { echo '::error::KVM is unavailable on this runner.'; exit 1; }
+
+      - name: Validate existing ISO run ID
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'vm-only' }}
+        shell: bash
+        env:
+          ISO_RUN_ID: ${{ inputs.iso_run_id }}
+        run: |
+          set -euo pipefail
+          [[ "$ISO_RUN_ID" =~ ^[1-9][0-9]*$ ]] || {
+            echo '::error::vm-only requires the numeric run ID of an unexpired ISO build artifact.'
+            exit 1
+          }
+
+      - name: Fetch upstream VM test harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch quattro https://github.com/omacom/omarchy-iso.git lunor-iso
+
+      - name: Apply LUNOR VM harness compatibility patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          iso = Path('lunor-iso')
+          # Keep the interactive VM harness compatible with the current shell.
+          # OverlayWindow surfaces remain mapped when hidden, so shortcut tests
+          # must check whether a surface is on the overlay layer, not whether
+          # the namespace still exists anywhere in Hyprland's layer tree.
+          p = iso / "bin/omarchy-iso-test"
+          s = p.read_text().replace("Linux by DHH", "LUNOR .S")
+          layer_needle = r"[.. | objects | select(.namespace? == \$namespace)] | length > 0"
+          layer_replacement = r'[.[].levels | to_entries[]? | select((.key | tonumber) == 3) | .value[]? | select(.namespace? == \$namespace)] | length > 0'
+          if layer_needle not in s:
+              raise SystemExit("Upstream shortcut layer check changed; review VM harness compatibility patch")
+          s = s.replace(layer_needle, layer_replacement, 1)
+          p.write_text(s)
+          PY
+
+      - name: Bound VM guest SSH sessions and retain failure diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("lunor-iso/bin/omarchy-iso-test")
+          text = p.read_text()
+          old = 'ssh_guest() {\n  ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          new = 'ssh_guest() {\n  timeout --signal=TERM --kill-after=10s 360s \\\n    ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          if text.count(old) != 1:
+              raise SystemExit("Upstream VM harness SSH entrypoint changed; review guard")
+          p.write_text(text.replace(old, new, 1))
+          PY
+          bash -n lunor-iso/bin/omarchy-iso-test
+          grep -Fq 'timeout --signal=TERM --kill-after=10s 360s' lunor-iso/bin/omarchy-iso-test
+
+      - name: Download ISO artifact for VM test
+        uses: actions/download-artifact@v4
+        with:
+          pattern: lunor-os-iso-*
+          merge-multiple: true
+          path: lunor-iso/release
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.mode == 'vm-only' && inputs.iso_run_id || github.run_id }}
+
+      - name: Verify downloaded ISO checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t isos < <(find lunor-iso/release -maxdepth 1 -type f -name '*.iso')
+          mapfile -t hashes < <(find lunor-iso/release -maxdepth 1 -type f -name '*.sha256')
+          (( ${#isos[@]} == 1 && ${#hashes[@]} == 1 )) || {
+            echo '::error::Expected exactly one ISO and one SHA256 file in the selected artifact.'
+            exit 1
+          }
+          test -s "${isos[0]}"
+          (cd lunor-iso && sha256sum --check release/*.sha256)
 
       - name: VM install and acceptance test
         shell: bash
