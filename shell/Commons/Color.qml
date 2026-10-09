@@ -97,41 +97,21 @@ QtObject {
     property color border: root.composed("notifications.border", "notifications.border-alpha", root.accent, 1.0)
     property color countdown: root.pick("notifications.countdown", root.accent)
   }
-  // Menu, clipboard and emoji picker share these roles. If an imported
-  // theme resolves menu colors to unreadable text-on-background, fall back
-  // to the already-working popup palette rather than drawing blank panels.
-  function linearChannel(value) {
-    return value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4)
-  }
-
-  function luminance(color) {
-    return 0.2126 * linearChannel(color.r)
-         + 0.7152 * linearChannel(color.g)
-         + 0.0722 * linearChannel(color.b)
-  }
-
-  function contrastRatio(foreground, background) {
-    var a = luminance(foreground)
-    var b = luminance(background)
-    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
-  }
-
+  // LUNOR: keep light-theme text readable on fullscreen menu, clipboard,
+  // emoji and launcher-style overlays. In the VM the regular audio panel
+  // uses black on white, but the fullscreen menu panel paints black; default
+  // black menu text becomes invisible. Use a stable dark card for light themes
+  // until upstream's overlay renderer handles the light surface correctly.
+  // Dark-theme palettes keep their existing theme-defined colors.
   readonly property QtObject menu: QtObject {
-    property color requestedBackground: root.composed("menu.background", "menu.background-alpha", root.background, 1.0)
-    property color requestedText: root.pick("menu.text", root.foreground)
-    property bool needsContrastFallback: {
-      var ratio = root.contrastRatio(requestedText, requestedBackground)
-      return !isFinite(ratio) || ratio < 4.5
-    }
-    property color background: needsContrastFallback ? root.popups.background : requestedBackground
-    property color text: needsContrastFallback ? root.popups.text : requestedText
-    property color border: needsContrastFallback ? root.popups.border : root.composed("menu.border", "menu.border-alpha", root.foreground, 1.0)
-    // A stray fully opaque scrim can conceal the desktop and the card.
-    property color requestedScrim: root.composed("menu.scrim", "menu.scrim-alpha", root.background, 0.5)
-    property color scrim: requestedScrim.a > 0.8 ? Util.alpha(requestedScrim, 0.5) : requestedScrim
-    property color selectedBackground: needsContrastFallback ? Util.alpha(root.popups.text, 0.08) : root.composed("menu.selected-background", "menu.selected-background-alpha", root.foreground, 0.08)
-    property color selectedText: needsContrastFallback ? root.popups.text : root.pick("menu.selected-text", root.accent)
-    property color selectedBorder: root.composed("menu.selected-border", "menu.selected-border-alpha", root.foreground, 0.0)
+    property bool lightTheme: root.luminance(root.popups.text) < 0.20
+    property color background: lightTheme ? "#1a1b26" : root.composed("menu.background", "menu.background-alpha", root.background, 1.0)
+    property color text: lightTheme ? "#f4f5ff" : root.pick("menu.text", root.foreground)
+    property color border: lightTheme ? "#8a96b5" : root.composed("menu.border", "menu.border-alpha", root.foreground, 1.0)
+    property color scrim: lightTheme ? Qt.rgba(0, 0, 0, 0.35) : root.composed("menu.scrim", "menu.scrim-alpha", root.background, 0.5)
+    property color selectedBackground: lightTheme ? "#2d344b" : root.composed("menu.selected-background", "menu.selected-background-alpha", root.foreground, 0.08)
+    property color selectedText: lightTheme ? "#ffffff" : root.pick("menu.selected-text", root.accent)
+    property color selectedBorder: lightTheme ? "#8697bd" : root.composed("menu.selected-border", "menu.selected-border-alpha", root.foreground, 0.0)
   }
   // polkit + lock share a single border-alpha across border / border-active /
   // border-error: the three states are mutually exclusive in time, so one

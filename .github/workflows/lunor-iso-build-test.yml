@@ -199,6 +199,24 @@ jobs:
           set -euo pipefail
           python3 lunor-source/build/lunor-quickshell-fallback.py lunor-iso
 
+      - name: Bound VM guest SSH sessions and retain failure diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("lunor-iso/bin/omarchy-iso-test")
+          text = p.read_text()
+          old = 'ssh_guest() {\n  ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          new = 'ssh_guest() {\n  timeout --signal=TERM --kill-after=10s 360s \\\n    ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          if text.count(old) != 1:
+              raise SystemExit("Upstream VM harness SSH entrypoint changed; review guard")
+          p.write_text(text.replace(old, new, 1))
+          PY
+          bash -n lunor-iso/bin/omarchy-iso-test
+          grep -Fq 'timeout --signal=TERM --kill-after=10s 360s' lunor-iso/bin/omarchy-iso-test
+
       - name: Build LUNOR OS ISO from this branch
         shell: bash
         run: |
