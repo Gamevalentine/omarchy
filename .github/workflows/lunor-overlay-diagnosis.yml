@@ -34,9 +34,9 @@ jobs:
           mkdir -p lunor-iso/release
           gh run download 37879699555 --repo "$GITHUB_REPOSITORY" \
              --name lunor-os-iso-19 --dir lunor-iso/release
-          cd lunor-iso/release
-          ls -lh
-          sha256sum -c ./*.sha256
+          cd lunor-iso
+          ls -lh release/
+          sha256sum -c release/*.sha256
       - name: Prepare compatible VM harness
         run: |
           set -euo pipefail
