@@ -97,21 +97,14 @@ QtObject {
     property color border: root.composed("notifications.border", "notifications.border-alpha", root.accent, 1.0)
     property color countdown: root.pick("notifications.countdown", root.accent)
   }
-  // LUNOR: keep light-theme text readable on fullscreen menu, clipboard,
-  // emoji and launcher-style overlays. In the VM the regular audio panel
-  // uses black on white, but the fullscreen menu panel paints black; default
-  // black menu text becomes invisible. Use a stable dark card for light themes
-  // until upstream's overlay renderer handles the light surface correctly.
-  // Dark-theme palettes keep their existing theme-defined colors.
   readonly property QtObject menu: QtObject {
-    property bool lightTheme: root.luminance(root.popups.text) < 0.20
-    property color background: lightTheme ? "#1a1b26" : root.composed("menu.background", "menu.background-alpha", root.background, 1.0)
-    property color text: lightTheme ? "#f4f5ff" : root.pick("menu.text", root.foreground)
-    property color border: lightTheme ? "#8a96b5" : root.composed("menu.border", "menu.border-alpha", root.foreground, 1.0)
-    property color scrim: lightTheme ? Qt.rgba(0, 0, 0, 0.35) : root.composed("menu.scrim", "menu.scrim-alpha", root.background, 0.5)
-    property color selectedBackground: lightTheme ? "#2d344b" : root.composed("menu.selected-background", "menu.selected-background-alpha", root.foreground, 0.08)
-    property color selectedText: lightTheme ? "#ffffff" : root.pick("menu.selected-text", root.accent)
-    property color selectedBorder: lightTheme ? "#8697bd" : root.composed("menu.selected-border", "menu.selected-border-alpha", root.foreground, 0.0)
+    property color background: root.composed("menu.background", "menu.background-alpha", root.background, 1.0)
+    property color text: root.pick("menu.text", root.foreground)
+    property color border: root.composed("menu.border", "menu.border-alpha", root.foreground, 1.0)
+    property color scrim: root.composed("menu.scrim", "menu.scrim-alpha", root.background, 0.5)
+    property color selectedBackground: root.composed("menu.selected-background", "menu.selected-background-alpha", root.foreground, 0.08)
+    property color selectedText: root.pick("menu.selected-text", root.accent)
+    property color selectedBorder: root.composed("menu.selected-border", "menu.selected-border-alpha", root.foreground, 0.0)
   }
   // polkit + lock share a single border-alpha across border / border-active /
   // border-error: the three states are mutually exclusive in time, so one
