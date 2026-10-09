@@ -39,6 +39,9 @@ Item {
   // killing the entire shell. Hidden panels stay mapped but park off-screen
   // without an exclusion zone; updated by the FileView watcher further down.
   property bool barHidden: false
+  // A visibility flag may change while the async file probe is already running.
+  // Queue one fresh read after it exits rather than dropping the newer state.
+  property bool barHiddenProbePending: false
   property string home: Quickshell.env("HOME")
   property string stateHome: home + "/.local/state"
   property string omarchyConfigDir: home + "/.config/omarchy"
@@ -1178,31 +1181,43 @@ Item {
   // Presence of the `bar-off` flag = bar hidden. Watching the parent toggles
   // directory because FileView can't observe a file that doesn't exist yet,
   // and the flag is created/removed by `omarchy-toggle-bar`.
+  function requestBarHiddenSync() {
+    // Setting running=true while an earlier read is in flight is a no-op.
+    // The earlier read can return the old state after the flag has flipped.
+    if (barHiddenProbe.running) {
+      root.barHiddenProbePending = true
+    } else {
+      barHiddenProbe.running = true
+    }
+  }
+
   Process {
     id: barHiddenProbe
     running: true
     command: ["bash", "-c", "[[ -f $HOME/.local/state/omarchy/toggles/bar-off ]] && echo yes || echo no"]
     stdout: SplitParser { onRead: function(line) { root.barHidden = String(line).trim() === "yes" } }
+    onExited: {
+      if (root.barHiddenProbePending) {
+        root.barHiddenProbePending = false
+        // Run after Process.running becomes false; never kill an in-flight read.
+        Qt.callLater(function() { barHiddenProbe.running = true })
+      }
+    }
   }
   FileView {
     path: root.home + "/.local/state/omarchy/toggles"
     watchChanges: true
     printErrors: false
-    onFileChanged: barHiddenProbe.running = true
+    onFileChanged: root.requestBarHiddenSync()
   }
 
-  // The directory watch can permanently stop delivering events after flag
-  // changes land in quick succession, stranding the bar off screen until the
-  // shell restarts. `omarchy-toggle-bar` nudges this after flipping the flag
-  // so the probe re-reads it even when the watch has gone quiet.
+  // The file watcher alone is not enough when flags change in quick
+  // succession. The toggle command requests an IPC read after every flip.
   ShellIpc {
     target: "omarchy.bar"
 
-    // Start rather than restart: a probe already in flight was launched by the
-    // directory watch after the flag flipped, so its answer is current, and
-    // killing it here can swallow the result entirely.
     function syncHidden(): void {
-      barHiddenProbe.running = true
+      root.requestBarHiddenSync()
     }
   }
 
