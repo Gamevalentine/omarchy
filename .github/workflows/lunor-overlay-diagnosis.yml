@@ -44,15 +44,7 @@ jobs:
             https://github.com/omacom/omarchy-iso.git lunor-harness
           rsync -a lunor-harness/ lunor-iso/
           python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path("lunor-iso/bin/omarchy-iso-test")
-          s=p.read_text()
-          old='ssh_guest() {\n  ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
-          new='ssh_guest() {\n  timeout --signal=TERM --kill-after=10s 240s \\\n    ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
-          if s.count(old)!=1: raise SystemExit("Upstream SSH helper changed")
-          p.write_text(s.replace(old,new,1))
-          PY
+          # Check test harness before starting the VM; the outer Docker timeout bounds execution.
           bash -n lunor-iso/bin/omarchy-iso-test
       - name: VM: baseline vs geometry vs software renderer
         run: |
