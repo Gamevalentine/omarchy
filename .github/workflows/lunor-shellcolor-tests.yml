@@ -22,6 +22,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
+      - name: Install test-only ripgrep dependency
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ripgrep
+          command -v rg
       - name: Validate changed files and shell syntax
         run: |
           set -euo pipefail
