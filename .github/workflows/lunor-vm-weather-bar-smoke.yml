@@ -1,0 +1,20 @@
+name: LUNOR Weather and Bar VM smoke
+
+on:
+  push:
+    branches:
+      - lunor/1.0-clean-branding
+    paths:
+      - .github/workflows/lunor-vm-weather-bar-smoke.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  check-weather-and-bar:
+    uses: ./.github/workflows/lunor-iso-build-test.yml
+    with:
+      mode: vm-only
+      iso_run_id: '37918663277'
+      qa_bar_overlay: true
