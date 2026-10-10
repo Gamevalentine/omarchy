@@ -1,11 +1,7 @@
 name: LUNOR USB image feasibility (private lab output only)
 
+# Manual trigger only: do not start expensive jobs automatically on each fix.
 on:
-  push:
-    branches: [lunor/usb-image-lab]
-    paths:
-      - .github/workflows/lunor-usb-image-lab.yml
-      - build/lunor-usb-image-lab.sh
   workflow_dispatch:
 
 permissions:
@@ -15,7 +11,7 @@ permissions:
 jobs:
   usb-image-lab:
     runs-on: ubuntu-24.04
-    timeout-minutes: 80
+    timeout-minutes: 40
     steps:
       - name: Checkout USB laboratory branch
         uses: actions/checkout@v4
@@ -70,11 +66,16 @@ jobs:
           test "$(find lunor-iso/release -maxdepth 1 -name '*.iso' | wc -l)" -eq 1
 
       - name: Install virtual disk and test boot portability
+        timeout-minutes: 35
         shell: bash
         run: |
           set -euo pipefail
           sudo chmod 0666 /dev/kvm
-          docker run --rm --device /dev/kvm -v "$PWD:/w" -w /w \
+          container="lunor-usb-lab-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cleanup() { docker rm -f "$container" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          timeout --signal=TERM --kill-after=30s 1950s \
+            docker run --name "$container" --rm --device /dev/kvm -v "$PWD:/w" -w /w \
             archlinux:latest bash -euo pipefail -c '
               pacman -Syu --noconfirm --needed \
                 qemu-system-x86 qemu-hw-display-virtio-gpu qemu-hw-display-virtio-vga \
@@ -84,11 +85,11 @@ jobs:
               chmod 0755 /usr/local/bin/omarchy-pkg-add
               export OMARCHY_PATH=/w/lunor-source
               cd /w/lunor-iso
-              timeout --signal=TERM --kill-after=30s 3000s \
+              timeout --signal=TERM --kill-after=20s 1500s \
                 ./bin/omarchy-iso-test release/*.iso \
-                  --install-only --no-preview --memory 8192 --timeout 2400
+                  --install-only --no-preview --memory 8192 --timeout 1100
               cd /w/lunor-source
-              timeout --signal=TERM --kill-after=30s 900s \
+              timeout --signal=TERM --kill-after=20s 450s \
                 bash build/lunor-usb-image-lab.sh
             '
 
