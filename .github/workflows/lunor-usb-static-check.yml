@@ -1,0 +1,28 @@
+name: LUNOR USB lab fast safety check
+
+on:
+  push:
+    branches: [lunor/usb-image-lab]
+    paths:
+      - .github/workflows/lunor-usb-image-lab.yml
+      - .github/workflows/lunor-usb-static-check.yml
+      - build/lunor-usb-image-lab.sh
+      - build/lunor-usb-preflight.py
+      - docs/usb-image-lab.md
+      - docs/lunor-usb-audit.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-safety:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check Bash syntax without running a VM
+        run: bash -n build/lunor-usb-image-lab.sh
+      - name: Validate USB lab safety gates
+        run: python3 build/lunor-usb-preflight.py
