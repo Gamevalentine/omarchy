@@ -101,6 +101,5 @@ jobs:
           path: |
             lunor-source/usb-image-lab-report/*.txt
             lunor-source/usb-image-lab-report/*.json
-            lunor-source/usb-image-lab-report/*.log
           retention-days: 7
           if-no-files-found: ignore
