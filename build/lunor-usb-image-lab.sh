@@ -11,8 +11,8 @@ base="${disks[0]}"
 base_dir="$(dirname "$base")"
 [[ -s "$base_dir/id_ed25519" ]] || { echo 'Test SSH key missing' >&2; exit 1; }
 qemu-img check -f qcow2 "$base" | tee "$out/qcow2-check.txt"
-qemu-img info --output=json "$base" | jq '{format, virtual_size, actual_size}' | tee "$out/disk-info.json"
-size=$(qemu-img info --output=json "$base" | jq -r .virtual_size)
+qemu-img info --output=json "$base" | jq '{format, virtual_size: .["virtual-size"], actual_size: .["actual-size"]}' | tee "$out/disk-info.json"
+size=$(qemu-img info --output=json "$base" | jq -r '."virtual-size"')
 (( size <= 60000000000 )) || { echo 'Disk image is too big for USB 64 GB' >&2; exit 1; }
 
 # Probe partition table and EFI fallback without touching host block devices.
@@ -47,7 +47,7 @@ qemu-system-x86_64 \
   -device usb-storage,bus=xhci.0,drive=disk0,bootindex=1 \
   -device virtio-vga -display none -vnc 127.0.0.1:8 \
   -netdev user,id=net0,hostfwd=tcp:127.0.0.1:2233-:22 \
-  -device virtio-net-pci,netdev=n0 \
+  -device virtio-net-pci,netdev=net0 \
   -serial "file:$out/boot-serial.log" \
   -pidfile "$out/usb-qemu.pid" -daemonize
 vm_pid="$(cat "$out/usb-qemu.pid")"
