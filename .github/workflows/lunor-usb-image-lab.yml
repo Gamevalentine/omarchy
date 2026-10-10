@@ -1,0 +1,105 @@
+name: LUNOR USB image feasibility (private lab output only)
+
+on:
+  push:
+    branches: [lunor/usb-image-lab]
+    paths:
+      - .github/workflows/lunor-usb-image-lab.yml
+      - build/lunor-usb-image-lab.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  usb-image-lab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - name: Checkout USB laboratory branch
+        uses: actions/checkout@v4
+        with:
+          path: lunor-source
+
+      - name: Check runner KVM and disk space
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -e /dev/kvm || { echo '::error::KVM unavailable'; exit 1; }
+          df -h /
+          free -h
+          test "$(df -BG --output=avail / | tail -1 | tr -dc 0-9)" -ge 35 || {
+            echo '::error::Need at least 35 GB free'; exit 1;
+          }
+          bash -n lunor-source/build/lunor-usb-image-lab.sh
+
+      - name: Prepare existing upstream VM installer harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch quattro https://github.com/omacom/omarchy-iso.git lunor-iso
+          python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('lunor-iso/bin/omarchy-iso-test')
+          s=p.read_text().replace('Linux by DHH', 'LUNOR .S')
+          # Cap each guest SSH attempt in case the installer is stuck.
+          old='ssh_guest() {\n  ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          new='ssh_guest() {\n  timeout --signal=TERM --kill-after=10s 360s \\\n    ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          if s.count(old) != 1:
+              raise SystemExit('Unexpected upstream SSH function: abort safely')
+          p.write_text(s.replace(old,new,1))
+          PY
+          bash -n lunor-iso/bin/omarchy-iso-test
+
+      - name: Download verified LUNOR ISO from October 9 QA run
+        uses: actions/download-artifact@v4
+        with:
+          name: lunor-os-iso-2
+          path: lunor-iso/release
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '37935766465'
+
+      - name: Verify ISO checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd lunor-iso && sha256sum -c release/*.sha256)
+          test "$(find lunor-iso/release -maxdepth 1 -name '*.iso' | wc -l)" -eq 1
+
+      - name: Install virtual disk and test boot portability
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo chmod 0666 /dev/kvm
+          docker run --rm --device /dev/kvm -v "$PWD:/w" -w /w \
+            archlinux:latest bash -euo pipefail -c '
+              pacman -Syu --noconfirm --needed \
+                qemu-system-x86 qemu-hw-display-virtio-gpu qemu-hw-display-virtio-vga \
+                qemu-img edk2-ovmf socat imagemagick tesseract tesseract-data-eng \
+                mtools dosfstools jq openssh openssl python curl ripgrep lua util-linux >/dev/null
+              printf "#!/bin/sh\nexit 0\n" >/usr/local/bin/omarchy-pkg-add
+              chmod 0755 /usr/local/bin/omarchy-pkg-add
+              export OMARCHY_PATH=/w/lunor-source
+              cd /w/lunor-iso
+              timeout --signal=TERM --kill-after=30s 3000s \
+                ./bin/omarchy-iso-test release/*.iso \
+                  --install-only --no-preview --memory 8192 --timeout 2400
+              cd /w/lunor-source
+              timeout --signal=TERM --kill-after=30s 900s \
+                bash build/lunor-usb-image-lab.sh
+            '
+
+      - name: Upload small QA reports, never installed disk
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunor-usb-image-lab-report
+          path: |
+            lunor-source/usb-image-lab-report/*.txt
+            lunor-source/usb-image-lab-report/*.json
+            lunor-source/usb-image-lab-report/*.log
+          retention-days: 7
+          if-no-files-found: ignore
