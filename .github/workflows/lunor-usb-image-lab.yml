@@ -29,12 +29,21 @@ jobs:
             echo '::error::Need at least 35 GB free'; exit 1;
           }
           bash -n lunor-source/build/lunor-usb-image-lab.sh
+          python3 lunor-source/build/lunor-usb-preflight.py
 
       - name: Prepare existing upstream VM installer harness
         shell: bash
         run: |
           set -euo pipefail
           git clone --depth 1 --branch quattro https://github.com/omacom/omarchy-iso.git lunor-iso
+          # Lock the external installer harness to the audited revision.
+          # If upstream moves, fail safely rather than silently changing the build.
+          expected_upstream=4f4b3e3da9214da2e1625b3de935745148d16fbc
+          actual_upstream=$(git -C lunor-iso rev-parse HEAD)
+          [ "$actual_upstream" = "$expected_upstream" ] || {
+            echo "::error::omarchy-iso upstream changed; audit new revision before reuse."
+            exit 1
+          }
           python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
           python3 - <<'PY'
           from pathlib import Path
