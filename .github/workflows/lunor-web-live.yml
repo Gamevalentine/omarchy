@@ -1,0 +1,81 @@
+name: LUNOR real desktop in browser (temporary QA)
+
+on:
+  push:
+    branches: [lunor/web-live-qa]
+    paths:
+      - .github/workflows/lunor-web-live.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: lunor-web-live-qa
+  cancel-in-progress: true
+
+jobs:
+  web-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - name: Checkout isolated LUNOR web test branch
+        uses: actions/checkout@v4
+        with:
+          path: lunor-source
+      - name: Guard source, authentication and runner capabilities
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n lunor-source/build/lunor-web-live.sh
+          test -e /dev/kvm || { echo "::error::KVM not available"; exit 1; }
+          test "$(df -BG --output=avail / | tail -1 | tr -dc 0-9)" -ge 45 || {
+            echo "::error::Insufficient runner disk space"; exit 1;
+          }
+          grep -Eq '^lunor:\$6\$' lunor-source/build/lunor-web-htpasswd
+          grep -Fq 'auth_basic_user_file /etc/nginx/lunor-web-htpasswd;' lunor-source/build/lunor-web-live.sh
+      - name: Download audited ISO harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch quattro https://github.com/omacom/omarchy-iso.git lunor-iso
+          python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('lunor-iso/bin/omarchy-iso-test')
+          s = p.read_text().replace('Linux by DHH', 'LUNOR .S')
+          needle = 'ssh_guest() {\n  ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          replacement = 'ssh_guest() {\n  timeout --signal=TERM --kill-after=10s 360s \\\n    ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          if s.count(needle) != 1:
+              raise SystemExit('Installer harness changed; fail closed')
+          p.write_text(s.replace(needle, replacement, 1))
+          PY
+          bash -n lunor-iso/bin/omarchy-iso-test
+      - name: Download verified LUNOR October 9 ISO
+        uses: actions/download-artifact@v4
+        with:
+          name: lunor-os-iso-2
+          path: lunor-iso/release
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          run-id: '37935766465'
+      - name: Verify ISO checksum before VM installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd lunor-iso && sha256sum --check release/*.sha256)
+          test "$(find lunor-iso/release -maxdepth 1 -name '*.iso' | wc -l)" -eq 1
+      - name: Install disposable LUNOR guest and expose authenticated HTTPS noVNC
+        shell: bash
+        timeout-minutes: 65
+        run: |
+          set -euo pipefail
+          bash lunor-source/build/lunor-web-live.sh
+      - name: Preserve small failure diagnostics (no VM disks, credentials or browser logs)
+        if: failure()
+        shell: bash
+        run: |
+          if test -f preview-debug/install.log; then
+            tail -n 100 preview-debug/install.log | sed -E 's#https://[a-z0-9-]+\.trycloudflare\.com#[preview-url-omitted]#g'
+          fi
