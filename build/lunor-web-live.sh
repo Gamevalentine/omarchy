@@ -115,12 +115,21 @@ if [[ -z "$url" ]]; then
 fi
 echo "::notice title=LUNOR Browser Preview::${url}/vnc.html"
 echo "LUNOR HTTPS PREVIEW: $url/vnc.html?autoconnect=1&resize=scale"
+# Surface the link on GitHub Actions Summary so testers do not need to search logs.
+if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+  {
+    printf '## LUNOR OS — Trải nghiệm trực tiếp trên web\n\n'
+    printf 'Mở trong khi job đang chạy: [**Vào LUNOR OS**](%s/vnc.html?autoconnect=1)\n\n' "$url"
+    printf 'Phiên dùng thử 60 phút kể từ lúc link được tạo. Link tạm tự hết hạn khi job kết thúc.\n'
+    printf 'Chỉ dùng dữ liệu thử nghiệm; không lưu thông tin cá nhân.\n'
+  } >> "$GITHUB_STEP_SUMMARY"
+fi
 echo "Browser proxy is password protected. No secret is logged."
 echo "Disposable VM demo login: omarchy / omarchy"
-echo "Preview session expires automatically in 35 minutes. Do not save personal data."
+echo "Preview session expires automatically in 60 minutes. Do not save personal data."
 
 curl --max-time 10 -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ | grep -qx 401
-end=$((SECONDS+2100))
+end=$((SECONDS+3600))
 while (( SECONDS < end )); do
   if ! kill -0 "$docker_pid" 2>/dev/null; then
     echo "::error::LUNOR VM ended unexpectedly."
