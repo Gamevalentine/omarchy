@@ -1,7 +1,12 @@
 name: LUNOR real desktop in browser (temporary QA)
 
-# Tester starts the VM when ready; no cost or wasted preview window from source edits.
+# Start a temporary VM only from an explicit run-request commit or manual dispatch.
+# Ordinary code changes never start costly preview sessions.
 on:
+  push:
+    branches: [lunor/web-live-qa]
+    paths:
+      - build/lunor-web-run-request.txt
   workflow_dispatch:
 
 permissions:
