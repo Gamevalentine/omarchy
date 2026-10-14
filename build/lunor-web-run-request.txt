@@ -1,4 +1,4 @@
 On-demand LUNOR browser QA session trigger.
-Requested by user: 2026-10-14 (start temporary real LUNOR browser preview).
-This marker's updates alone launch the expensive preview workflow; ordinary source edits do not.
-The VM preview auto-closes 60 minutes after its HTTPS tunnel is ready.
+Session: #4 — user confirmed ready for live testing, 2026-10-14.
+Run only for this explicit request; web preview time starts when HTTPS link appears.
+The GitHub VM and temporary HTTPS tunnel stop automatically 60 minutes after the link is ready.
