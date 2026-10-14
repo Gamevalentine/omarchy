@@ -1,0 +1,3 @@
+On-demand LUNOR browser QA session trigger.
+Update this file on branch lunor/web-live-qa only when the user is ready to test.
+No live VM should run from ordinary source edits.
