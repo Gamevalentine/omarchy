@@ -1,3 +1,4 @@
 On-demand LUNOR browser QA session trigger.
-Update this file on branch lunor/web-live-qa only when the user is ready to test.
-No live VM should run from ordinary source edits.
+Requested by user: 2026-10-14 (start temporary real LUNOR browser preview).
+This marker's updates alone launch the expensive preview workflow; ordinary source edits do not.
+The VM preview auto-closes 60 minutes after its HTTPS tunnel is ready.
