@@ -1,10 +1,7 @@
 name: LUNOR real desktop in browser (temporary QA)
 
+# Tester starts the VM when ready; no cost or wasted preview window from source edits.
 on:
-  push:
-    branches: [lunor/web-live-qa]
-    paths:
-      - .github/workflows/lunor-web-live.yml
   workflow_dispatch:
 
 permissions:
@@ -18,7 +15,7 @@ concurrency:
 jobs:
   web-preview:
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    timeout-minutes: 125
     steps:
       - name: Checkout isolated LUNOR web test branch
         uses: actions/checkout@v4
@@ -68,7 +65,7 @@ jobs:
           test "$(find lunor-iso/release -maxdepth 1 -name '*.iso' | wc -l)" -eq 1
       - name: Install disposable LUNOR guest and expose authenticated HTTPS noVNC
         shell: bash
-        timeout-minutes: 65
+        timeout-minutes: 115
         run: |
           set -euo pipefail
           bash lunor-source/build/lunor-web-live.sh
