@@ -68,12 +68,32 @@ jobs:
           set -euo pipefail
           (cd lunor-iso && sha256sum --check release/*.sha256)
           test "$(find lunor-iso/release -maxdepth 1 -name '*.iso' | wc -l)" -eq 1
-      - name: Install disposable LUNOR guest and expose authenticated HTTPS noVNC
+      - name: Install, boot to Hyprland, and PUBLISH ready HTTPS link
         shell: bash
-        timeout-minutes: 115
+        timeout-minutes: 60
         run: |
           set -euo pipefail
+          bash -n lunor-source/build/lunor-web-hold.sh
           bash lunor-source/build/lunor-web-live.sh
+      - name: Keep READY desktop online while the tester opens the published link
+        shell: bash
+        timeout-minutes: 65
+        run: |
+          set -euo pipefail
+          bash lunor-source/build/lunor-web-hold.sh
+      - name: Shut down disposable guest and temporary HTTPS bridge
+        if: always()
+        shell: bash
+        run: |
+          vm_container="lunor-web-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker rm -f "$vm_container" >/dev/null 2>&1 || true
+          for service in cloudflared websockify; do
+            file="preview-debug/$service.pid"
+            if [[ -s "$file" ]]; then
+              kill "$(cat "$file")" >/dev/null 2>&1 || true
+            fi
+          done
+          echo "Preview resources shut down."
       - name: Preserve small failure diagnostics (no VM disks, credentials or browser logs)
         if: failure()
         shell: bash
