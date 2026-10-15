@@ -6,6 +6,8 @@ on:
     branches: [lunor/web-live-qa]
     paths:
       - build/lunor-web-live.sh
+      - build/lunor-web-hold.sh
+      - .github/workflows/lunor-web-live.yml
       - .github/workflows/lunor-web-ready-check.yml
   workflow_dispatch:
 
@@ -19,7 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check script syntax
-        run: bash -n build/lunor-web-live.sh
+        run: |
+          bash -n build/lunor-web-live.sh
+          bash -n build/lunor-web-hold.sh
       - name: Verify startup gates (without downloading or starting LUNOR)
         shell: bash
         run: |
@@ -31,7 +35,15 @@ jobs:
           grep -Fq 'desktop_ready()' build/lunor-web-live.sh
           grep -Fq 'hypr_ready=false' build/lunor-web-live.sh
           grep -Fq 'echo "LUNOR HTTPS PREVIEW:' build/lunor-web-live.sh
-          grep -Fq 'end=$((SECONDS+3600))' build/lunor-web-live.sh
+          grep -Fq 'ready-at-epoch.txt' build/lunor-web-live.sh
+          grep -Fq 'end=$((start+3600))' build/lunor-web-hold.sh
+          grep -Fq 'LUNOR Browser' build/lunor-web-live.sh || grep -Fq 'LUNOR HTTPS PREVIEW:' build/lunor-web-live.sh
+          grep -Fq 'Keep READY desktop online' .github/workflows/lunor-web-live.yml
+          grep -Fq 'Shut down disposable guest' .github/workflows/lunor-web-live.yml
+          if grep -Fq 'end=$((SECONDS+3600))' build/lunor-web-live.sh; then
+            echo "::error::Original single-step timer must not remain in the link-publishing step"
+            exit 1
+          fi
           if grep -Fq 'until (echo >/dev/tcp/127.0.0.1/5900) >/dev/null 2>&1; do' build/lunor-web-live.sh; then
             echo "::error::Premature VNC socket readiness gate is still present"
             exit 1
