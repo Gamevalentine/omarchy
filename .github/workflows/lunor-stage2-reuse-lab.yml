@@ -1,0 +1,114 @@
+name: LUNOR Stage 2 — installed disk reuse (private VM QA)
+
+# Only a deliberate request marker starts the expensive QA.
+on:
+  push:
+    branches: [lunor/stage2-reusable-vm]
+    paths:
+      - build/lunor-stage2-run-request.txt
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: lunor-stage2-vm-lab
+  cancel-in-progress: true
+
+jobs:
+  reuse-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout isolated Stage 2 LUNOR source
+        uses: actions/checkout@v4
+        with:
+          path: lunor-source
+
+      - name: Fast safety preflight before downloading ISO
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n lunor-source/build/lunor-stage2-lab.sh
+          test -e /dev/kvm || { echo "::error::KVM unavailable"; exit 1; }
+          test "$(df -BG --output=avail / | tail -1 | tr -dc 0-9)" -ge 45 || {
+            echo "::error::Less than 45GB available on disposable CI runner"; exit 1;
+          }
+          grep -Fq -- '--reuse-base' lunor-source/build/lunor-stage2-lab.sh
+          grep -Fq 'base_sha256_after_reboots' lunor-source/build/lunor-stage2-lab.sh
+          grep -Fq 'public_distribution=BLOCKED' lunor-source/build/lunor-stage2-lab.sh
+          mkdir -p stage2-report
+          git -C lunor-source rev-parse HEAD > stage2-report/source-commit.txt
+
+      - name: Prepare pinned upstream ISO VM QA harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          pinned=8d57ac988b734581d4070fdc832ca1f924e32112
+          git init -q lunor-iso
+          git -C lunor-iso remote add origin https://github.com/omacom/omarchy-iso.git
+          git -C lunor-iso fetch --depth 1 origin "$pinned"
+          git -C lunor-iso checkout -q --detach FETCH_HEAD
+          test "$(git -C lunor-iso rev-parse HEAD)" = "$pinned"
+          printf '%s\n' "$pinned" > stage2-report/upstream-commit.txt
+          python3 lunor-source/build/lunor-stage-a-overlay.py lunor-iso
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("lunor-iso/bin/omarchy-iso-test")
+          s=p.read_text().replace("Linux by DHH", "LUNOR .S")
+          old='ssh_guest() {\n  ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          new='ssh_guest() {\n  timeout --signal=TERM --kill-after=10s 240s \\\n    ssh -i "$SSH_KEY" -p "$SSH_PORT" \\'
+          if s.count(old)!=1: raise SystemExit("Harness changed: refuse to test")
+          p.write_text(s.replace(old,new,1))
+          PY
+          bash -n lunor-iso/bin/omarchy-iso-test
+          grep -Fq -- '--reuse-base' lunor-iso/bin/omarchy-iso-test
+          grep -Fq 'acceptance_phase()' lunor-iso/bin/omarchy-iso-test
+
+      - name: Download exact LUNOR ISO from proven October 9 build
+        uses: actions/download-artifact@v4
+        with:
+          name: lunor-os-iso-2
+          path: lunor-iso/release
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          run-id: '37935766465'
+
+      - name: Verify downloaded LUNOR ISO
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd lunor-iso && sha256sum --check release/*.sha256)
+
+      - name: ONE install then TWO independently booted Hyprland QA sessions
+        shell: bash
+        timeout-minutes: 41
+        run: |
+          set -euo pipefail
+          sudo chmod 0666 /dev/kvm
+          container="lunor-stage2-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          cleanup() { docker rm -f "$container" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          timeout --signal=TERM --kill-after=30s 2400s \
+            docker run --rm --name "$container" --device /dev/kvm \
+            -v "$PWD:/w" -w /w/lunor-iso \
+            -e LUNOR_STAGE2_ISOLATED=YES \
+            archlinux:latest bash -euo pipefail -c '
+              pacman -Syu --noconfirm --needed \
+                qemu-system-x86 qemu-hw-display-virtio-gpu qemu-hw-display-virtio-vga \
+                qemu-img edk2-ovmf socat imagemagick tesseract tesseract-data-eng \
+                mtools dosfstools jq openssh openssl python curl ripgrep lua >/dev/null
+              printf "#!/bin/sh\nexit 0\n" >/usr/local/bin/omarchy-pkg-add
+              chmod 0755 /usr/local/bin/omarchy-pkg-add
+              bash /w/lunor-source/build/lunor-stage2-lab.sh
+            '
+
+      - name: Publish limited Stage 2 QA summary only — NEVER QCOW2
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunor-stage2-qa-summary
+          path: stage2-report/summary.txt
+          retention-days: 7
+          if-no-files-found: ignore
