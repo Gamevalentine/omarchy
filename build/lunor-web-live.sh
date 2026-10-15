@@ -4,13 +4,8 @@ set -Eeuo pipefail
 cd "$GITHUB_WORKSPACE"
 vm_container="lunor-web-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 mkdir -p preview-debug
-cleanup() {
-  docker rm -f "$vm_container" >/dev/null 2>&1 || true
-  for name in cloudflared websockify; do
-    [[ ! -f "preview-debug/$name.pid" ]] || kill "$(cat "preview-debug/$name.pid")" >/dev/null 2>&1 || true
-  done
-}
-trap cleanup EXIT
+# This phase returns immediately after desktop and HTTPS are READY.
+# The next GitHub Actions step holds the session open, and final cleanup is always separate.
 
 sudo apt-get update -qq
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nginx novnc websockify curl
@@ -121,6 +116,7 @@ QMP
     exit 1
   ' >preview-debug/install.log 2>&1 &
 docker_pid=$!
+echo "$docker_pid" >preview-debug/docker.pid
 
 deadline=$((SECONDS+1800))
 # A listening VNC socket alone is NOT desktop readiness.
@@ -183,17 +179,9 @@ echo "Disposable VM demo login: omarchy / omarchy"
 echo "Preview session expires automatically in 60 minutes. Do not save personal data."
 
 curl --max-time 10 -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ | grep -qx 401
-end=$((SECONDS+3600))
-while (( SECONDS < end )); do
-  if ! kill -0 "$docker_pid" 2>/dev/null; then
-    echo "::error::LUNOR VM ended unexpectedly."
-    tail -n 80 preview-debug/install.log || true
-    exit 1
-  fi
-  kill -0 "$(cat preview-debug/cloudflared.pid)" 2>/dev/null || {
-    echo "::error::Cloudflare tunnel disconnected."
-    exit 1
-  }
-  sleep 15
-done
-echo "Temporary demo session expired; shutting down VM and tunnel."
+# This step must now COMPLETE while the VM/tunnel remain online.
+# GitHub can publish the link in the run summary before the hold-open step ends.
+date +%s > preview-debug/ready-at-epoch.txt
+printf '%s\n' "$url" > preview-debug/preview-url.txt
+echo "::notice title=LUNOR Ready Now::Open the link in the run summary while the next job step runs."
+echo "LUNOR_WEB_READY_STEP_COMPLETE: the 60-minute hold happens in the next workflow step."
