@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="LUNOR Web — Cổng kiểm thử LUNOR OS trên trình duyệt. Trạng thái máy ảo và liên kết vận hành minh bạch." />
+  <title>LUNOR Web · Trung tâm thử nghiệm</title>
+  <style>
+    :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#e8edf7;background:#080d16}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 70% -30%,#24436366 0%,transparent 56%),#080d16}
+    a{color:inherit;text-decoration:none}.shell{max-width:1120px;margin:auto;padding:26px 24px 48px}
+    header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #263248;padding-bottom:22px;gap:16px}
+    .brand{font-size:22px;font-weight:800;letter-spacing:.25em}.brand b{color:#88bcff}
+    .tiny{color:#8c9bb4;font-size:12px;letter-spacing:.1em}.nav{color:#b9c7dd;font-size:14px}
+    main{padding:92px 0 34px}.kicker{color:#9bc5ff;letter-spacing:.18em;font-size:12px;font-weight:700}
+    h1{font-size:clamp(36px,6vw,66px);line-height:1.12;letter-spacing:-.05em;max-width:800px;margin:18px 0}
+    .lead{color:#aebbd0;font-size:18px;line-height:1.7;max-width:670px;margin:0 0 32px}
+    .actions{display:flex;flex-wrap:wrap;gap:12px}
+    .btn{background:#e7f0ff;color:#101c2e;font-weight:700;padding:13px 18px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;border:1px solid transparent;font-size:14px;cursor:pointer}
+    .btn.secondary{background:#111b2b;color:#dce8fa;border-color:#33435c}.btn:hover{filter:brightness(1.1)}
+    .panel{border:1px solid #2e4059;border-radius:20px;background:#101928d9;padding:24px;margin-top:24px;box-shadow:0 25px 60px #0005}
+    .section-label{color:#8fa8ca;letter-spacing:.1em;font-size:11px;font-weight:800}
+    .stat{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:22px;font-weight:750}.dot{width:10px;height:10px;background:#8693a8;border-radius:50%}
+    .dot.active{background:#6ac69a;box-shadow:0 0 0 5px #6ac69a20}
+    .dot.waiting{background:#e1b46c}
+    .explain{color:#a9b8ce;line-height:1.7;font-size:14px;max-width:760px}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:22px}
+    .mini{padding:20px;border:1px solid #26364e;border-radius:16px;background:#0f1826}
+    .mini h3{font-size:15px;margin:0 0 10px}.mini p{font-size:13px;color:#a5b5cc;line-height:1.65;margin:0}
+    .hint{margin-top:22px;padding:14px 17px;border-radius:12px;background:#172231;color:#b8c9df;font-size:13px;line-height:1.65;border:1px solid #344861}
+    footer{color:#7184a1;margin-top:45px;font-size:12px}
+    @media(max-width:700px){.shell{padding:20px 17px}main{padding-top:60px}.grid{grid-template-columns:1fr}header .nav{font-size:12px}.panel{padding:18px}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header><div><div class="brand">LUN<b>OR</b></div><div class="tiny">WEB LAB · DEVELOPMENT</div></div><a class="nav" href="https://github.com/Gamevalentine/omarchy" target="_blank" rel="noopener noreferrer">Mã nguồn ↗</a></header>
+    <main>
+      <div class="kicker">HỆ SINH THÁI LUNOR</div>
+      <h1>Trải nghiệm LUNOR OS<br/>ngay trên trình duyệt.</h1>
+      <p class="lead">Đây là cổng thử nghiệm dành cho <strong>LUNOR OS thật</strong>. Trang web hoạt động độc lập, còn desktop chỉ truy cập được khi máy ảo LUNOR đã khởi động và kết nối an toàn.</p>
+      <div class="actions">
+        <a id="runs" class="btn" href="https://github.com/Gamevalentine/omarchy/actions/workflows/lunor-web-live.yml" target="_blank" rel="noopener noreferrer">Xem phiên chạy máy ảo ↗</a>
+        <button class="btn secondary" id="refresh" type="button">Kiểm tra trạng thái</button>
+      </div>
+      <section class="panel" aria-live="polite">
+        <div class="section-label">TRẠNG THÁI LUNOR VM</div>
+        <div class="stat"><span class="dot" id="dot"></span><span id="status">Đang kiểm tra...</span></div>
+        <p class="explain" id="detail">Website và máy ảo là hai dịch vụ khác nhau. Chúng tôi chỉ thông báo “sẵn sàng” khi có bằng chứng LUNOR thật có thể truy cập.</p>
+        <div class="hint" id="notice">Cloudflare Pages không chạy hệ điều hành Linux. Cần nối máy ảo LUNOR với Cloudflare Tunnel hoặc một máy chủ tương đương; kết nối này chưa được thiết lập.</div>
+      </section>
+      <div class="grid">
+        <section class="mini"><h3>01 · Website ổn định</h3><p>Trang giao diện đặt trên Cloudflare Pages, không bị mất tên miền khi máy ảo tắt.</p></section>
+        <section class="mini"><h3>02 · Máy ảo thật</h3><p>LUNOR chạy bằng QEMU ở máy chủ riêng. Hiện chưa có dịch vụ máy ảo duy trì hoạt động phía sau Cloudflare.</p></section>
+        <section class="mini"><h3>03 · Điều khiển desktop</h3><p>Khi có máy ảo và Tunnel, noVNC sẽ cho phép bạn thử menu, bàn phím, chuột và các ứng dụng.</p></section>
+      </div>
+      <footer>Thử nghiệm kỹ thuật · Không cung cấp bản Linux mô phỏng · Không lưu dữ liệu riêng tư vào môi trường QA.</footer>
+    </main>
+  </div>
+  <script>
+    const byId=id=>document.getElementById(id);
+    const status=byId('status'),detail=byId('detail'),dot=byId('dot'),runs=byId('runs'),button=byId('refresh');
+    async function refresh(){
+      button.disabled=true;button.textContent='Đang kiểm tra…';
+      try{
+        const response=await fetch('/api/status',{cache:'no-store'});
+        if(!response.ok)throw Error('status unavailable');
+        const d=await response.json();
+        if(d.run?.url)runs.href=d.run.url;
+        dot.className='dot';
+        if(d.run?.status==='in_progress'||d.run?.status==='queued'){
+          status.textContent='Máy ảo đang được chuẩn bị';
+          detail.textContent='GitHub có phiên '+(d.run.status==='queued'?'chờ chạy':'đang chạy')+'. Chưa có bằng chứng desktop Hyprland đã kết nối với Cloudflare. Xem phiên chạy để biết tình trạng cụ thể.';
+          dot.classList.add('waiting');
+        }else{
+          status.textContent='Chưa có desktop trực tuyến';
+          detail.textContent='Không có phiên máy ảo đang hoạt động được xác nhận. Website luôn truy cập được nhưng LUNOR OS chưa thể điều khiển trên trang này.';
+        }
+      }catch(e){
+        status.textContent='Chưa xác minh được trạng thái';
+        detail.textContent='Không thể lấy trạng thái GitHub lúc này. Đừng hiểu điều này là máy ảo đang chạy; xem trực tiếp trên GitHub để kiểm tra.';
+      }finally{button.disabled=false;button.textContent='Kiểm tra trạng thái'}
+    }
+    byId('refresh').addEventListener('click',refresh);refresh();
+  </script>
+</body>
+</html>
