@@ -65,10 +65,57 @@ docker run --name "$vm_container" --rm --device /dev/kvm -p 127.0.0.1:5900:5900 
       -drive "file=$base,format=qcow2,if=none,id=disk0" \
       -device qemu-xhci,id=xhci -device usb-storage,bus=xhci.0,drive=disk0,bootindex=1 \
       -device virtio-vga -display none -vnc 0.0.0.0:0 \
-      -usb -device usb-tablet -netdev user,id=net0 \
+      -usb -device usb-tablet -netdev user,id=net0,hostfwd=tcp:127.0.0.1:2233-:22 \
       -device virtio-net-pci,netdev=net0 \
+      -qmp unix:/w/preview-debug/desktop-qmp.sock,server,nowait \
       -pidfile /w/preview-debug/qemu.pid -serial file:/w/preview-debug/serial.log -daemonize
     echo "LUNOR_PREVIEW_VM_RUNNING"
+    guest_key="$(dirname "$base")/id_ed25519"
+    guest() {
+      timeout 12s ssh -i "$guest_key" -p 2233 -o BatchMode=yes \
+        -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 \
+        -o LogLevel=ERROR omarchy@127.0.0.1 "$1" </dev/null
+    }
+    echo "Waiting for installed guest SSH, not just VNC port..."
+    guest_ssh_ready=false
+    for i in $(seq 1 45); do
+      if guest "true" >/dev/null 2>&1; then guest_ssh_ready=true; break; fi
+      kill -0 "$(cat /w/preview-debug/qemu.pid)" 2>/dev/null || break
+      sleep 4
+    done
+    if ! $guest_ssh_ready; then
+      echo "FAIL: installed guest SSH never became ready; no preview link will be published." >&2
+      exit 1
+    fi
+    desktop_ready() {
+      guest "test -d /run/user/1000/hypr && find /run/user/1000/hypr -mindepth 1 -maxdepth 1 -print -quit | grep -q ." >/dev/null 2>&1
+    }
+    qmp_key() {
+      key="$1"
+      cat <<QMP | socat -t 2 - "UNIX-CONNECT:/w/preview-debug/desktop-qmp.sock" >/dev/null 2>&1
+{"execute":"qmp_capabilities"}
+{"execute":"send-key","arguments":{"keys":[{"type":"qcode","data":"$key"}]}}
+QMP
+    }
+    echo "Waiting for actual Hyprland desktop. Automating the demo SDDM login if needed..."
+    hypr_ready=false
+    for i in $(seq 1 24); do
+      if desktop_ready; then hypr_ready=true; break; fi
+      # The standard unencrypted ISO harness otherwise needs the demo password
+      # entered at SDDM; users should not have to do this during timed QA.
+      if (( i >= 4 && i % 3 == 1 )); then
+        for key in o m a r c h y ret; do qmp_key "$key" || true; sleep 0.15; done
+      fi
+      kill -0 "$(cat /w/preview-debug/qemu.pid)" 2>/dev/null || break
+      sleep 10
+    done
+    if ! $hypr_ready; then
+      echo "FAIL: installed guest did not reach Hyprland desktop. Do not show a premature 60-minute web link." >&2
+      exit 1
+    fi
+    touch /w/preview-debug/desktop-ready
+    echo "LUNOR_DESKTOP_READY"
     while kill -0 "$(cat /w/preview-debug/qemu.pid)" 2>/dev/null; do sleep 4; done
     echo "LUNOR VM exited" >&2
     exit 1
@@ -76,20 +123,27 @@ docker run --name "$vm_container" --rm --device /dev/kvm -p 127.0.0.1:5900:5900 
 docker_pid=$!
 
 deadline=$((SECONDS+1800))
-until (echo >/dev/tcp/127.0.0.1/5900) >/dev/null 2>&1; do
+# A listening VNC socket alone is NOT desktop readiness.
+# Only publish the link after the installed guest confirms an active Hyprland session.
+until [[ -f preview-debug/desktop-ready ]]; do
   if ! kill -0 "$docker_pid" 2>/dev/null; then
     echo "::error::VM installation failed."
     tail -n 80 preview-debug/install.log || true
     exit 1
   fi
   if (( SECONDS >= deadline )); then
-    echo "::error::VM did not start within 30 minutes."
+    echo "::error::LUNOR desktop did not become ready within 30 minutes."
     tail -n 80 preview-debug/install.log || true
     exit 1
   fi
   sleep 5
 done
 
+# Guest says Hyprland is ready; also require the current VNC display socket.
+(echo >/dev/tcp/127.0.0.1/5900) >/dev/null 2>&1 || {
+  echo "::error::Desktop ready but VNC is unreachable."; exit 1;
+}
+echo "::notice title=LUNOR Desktop Ready::Hyprland is running; preparing the browser session."
 curl --retry 3 --retry-delay 2 -fsSL \
   https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
   -o preview-debug/cloudflared
