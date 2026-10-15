@@ -1,0 +1,6 @@
+Explicit approval: user requested Stage 2 implementation.
+Run: one-time VM disk reuse QA — install once, then test two independent Hyprland boots from unchanged QCOW2.
+Build baseline: source lunor/1.0-clean-branding at 2371ac9c1e3484d6b4c55120b4cf9ccda7962e98.
+Expected output: small public-safe text report only.
+Never upload demo QCOW2, credentials, SSH keys, screenshots, or access Windows disks.
+2026-10-16 test request #1.
