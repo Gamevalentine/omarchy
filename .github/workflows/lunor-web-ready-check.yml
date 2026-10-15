@@ -1,4 +1,5 @@
 name: LUNOR Web desktop readiness preflight
+# Static checks only; the expensive web VM is never launched here.
 
 on:
   push:
