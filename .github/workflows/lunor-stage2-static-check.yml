@@ -1,0 +1,48 @@
+name: LUNOR Stage 2 fast safety preflight
+
+on:
+  push:
+    branches: [lunor/stage2-reusable-vm]
+    paths:
+      - build/lunor-stage2-lab.sh
+      - .github/workflows/lunor-stage2-reuse-lab.yml
+      - .github/workflows/lunor-stage2-static-check.yml
+      - docs/LUNOR_GIAI_DOAN_2_MAY_AO.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage2-static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate scripts and release blockers — no VM, no ISO
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n build/lunor-stage2-lab.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          wf=Path(".github/workflows/lunor-stage2-reuse-lab.yml").read_text()
+          script=Path("build/lunor-stage2-lab.sh").read_text()
+          doc=Path("docs/LUNOR_GIAI_DOAN_2_MAY_AO.md").read_text()
+          asserts=[
+              ("manual run request", "build/lunor-stage2-run-request.txt" in wf),
+              ("pinned external source", "8d57ac988b734581d4070fdc832ca1f924e32112" in wf),
+              ("signed checksum ISO", "sha256sum --check release/*.sha256" in wf),
+              ("bounded runner", "timeout-minutes: 45" in wf),
+              ("one installation", script.count("--install-only")==1),
+              ("two reboots", "for boot_number in 1 2" in script and "--reuse-base" in script),
+              ("no local disks", '[[ "$PWD" == "/w/lunor-iso" ]]' in script),
+              ("no VM disk upload", "path: stage2-report/summary.txt" in wf and "*.qcow2" not in wf),
+              ("disable publication", "public_distribution=BLOCKED" in script),
+              ("source SHA unchanged on test", '[[ "$actual_sha" == "$initial_sha" ]]' in script),
+              ("stated security blockers", "SSH test key" in doc and "runner" in doc)
+          ]
+          for label,ok in asserts:
+              print(("PASS" if ok else "FAIL")+": "+label)
+          assert all(ok for _,ok in asserts), "Stage 2 safety preflight failed"
+          PY
