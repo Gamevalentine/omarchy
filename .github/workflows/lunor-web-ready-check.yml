@@ -1,0 +1,38 @@
+name: LUNOR Web desktop readiness preflight
+
+on:
+  push:
+    branches: [lunor/web-live-qa]
+    paths:
+      - build/lunor-web-live.sh
+      - .github/workflows/lunor-web-ready-check.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check script syntax
+        run: bash -n build/lunor-web-live.sh
+      - name: Verify startup gates (without downloading or starting LUNOR)
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'until [[ -f preview-debug/desktop-ready ]]; do' build/lunor-web-live.sh
+          grep -Fq 'touch /w/preview-debug/desktop-ready' build/lunor-web-live.sh
+          grep -Fq 'LUNOR_DESKTOP_READY' build/lunor-web-live.sh
+          grep -Fq 'guest_key=' build/lunor-web-live.sh
+          grep -Fq 'desktop_ready()' build/lunor-web-live.sh
+          grep -Fq 'hypr_ready=false' build/lunor-web-live.sh
+          grep -Fq 'echo "LUNOR HTTPS PREVIEW:' build/lunor-web-live.sh
+          grep -Fq 'end=$((SECONDS+3600))' build/lunor-web-live.sh
+          if grep -Fq 'until (echo >/dev/tcp/127.0.0.1/5900) >/dev/null 2>&1; do' build/lunor-web-live.sh; then
+            echo "::error::Premature VNC socket readiness gate is still present"
+            exit 1
+          fi
+          echo "PASS: startup and time-window guards configured."
