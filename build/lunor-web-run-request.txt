@@ -1,3 +1,3 @@
 On-demand LUNOR real-browser QA run request.
-Session #5, 2026-10-15: validate desktop-readiness gate, early visible GitHub URL, and full 60-minute desktop session.
-This is a temporary GitHub-run VM only; do not access local disks or start paid services.
+Session #6, 2026-10-15: user has re-enabled GitHub Actions. Verify that the installed real Hyprland desktop is ready before publishing HTTPS and that the 60-minute session stays alive in a separate workflow step.
+This is a temporary, isolated, user-requested GitHub VM test. No local Windows disks, no new paid service.
